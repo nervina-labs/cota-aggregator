@@ -1,6 +1,6 @@
-# compact-nft-aggregator
+# cota-aggregator
 
-The aggregator of compact-NFT service
+The aggregator of CoTA service
 
 ### Quick Start
 ```shell

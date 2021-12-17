@@ -7,7 +7,7 @@ mod utils;
 
 fn main() {
     let mut io = IoHandler::default();
-    io.add_method("generate_mint_compact_nft", |params: Params| async move {
+    io.add_method("generate_define_cota_cells", |params: Params| async move {
         match params {
             Params::Array(values) => {
                 println!("params: {:?}", values);
@@ -17,8 +17,8 @@ fn main() {
 
                 let mut response = Map::new();
                 response.insert(
-                    "registry_entries".to_string(),
-                    Value::String("generate_mint_compact_nft".to_string()),
+                    "define_entries".to_string(),
+                    Value::String("generate_define_cota_cells".to_string()),
                 );
                 response.insert(
                     "smt_root_hash".to_string(),
