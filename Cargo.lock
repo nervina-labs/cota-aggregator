@@ -253,16 +253,16 @@ dependencies = [
 name = "compact-nft-aggregator"
 version = "0.1.0"
 dependencies = [
- "compact-nft-smt",
+ "cota-smt",
  "failure",
  "hex",
  "jsonrpc-http-server",
 ]
 
 [[package]]
-name = "compact-nft-smt"
-version = "0.10.0"
-source = "git+https://github.com/nervina-labs/compact-nft-smt?branch=master#b0a7b8966bc6400f9ba0f93380e421c50c866e4d"
+name = "cota-smt"
+version = "0.1.0"
+source = "git+https://github.com/nervina-labs/cota-smt?branch=main#a1a8313a64f31aa8cca82afa014a774400f59982"
 dependencies = [
  "blake2b-ref 0.3.0",
  "cfg-if 0.1.10",

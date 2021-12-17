@@ -7,4 +7,4 @@ edition = "2018"
 jsonrpc-http-server = "18.0.0"
 hex = "0.4"
 failure = "0.1.8"
-nft-smt = {package = "compact-nft-smt", git = "https://github.com/nervina-labs/compact-nft-smt", branch = "master"}
+cota-smt = {package = "cota-smt", git = "https://github.com/nervina-labs/cota-smt", branch = "main"}
