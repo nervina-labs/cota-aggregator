@@ -8,7 +8,7 @@ pub const CONFIG_FILE: &str = "aggregator.toml";
 #[derive(Clone, Serialize, Deserialize)]
 pub struct Config {
     #[serde(default)]
-    pub database: String,
+    pub database_url: String,
 }
 
 pub fn load_config() -> Config {

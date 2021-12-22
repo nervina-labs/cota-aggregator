@@ -6,7 +6,7 @@ use std::sync::Mutex;
 
 lazy_static! {
     pub static ref CONN: Mutex<PooledConn> = {
-        let url = load_config().database;
+        let url = load_config().database_url;
         let pool = Pool::new(url).expect("Database pool error");
         Mutex::new(pool.get_conn().expect("Database connection error"))
     };
