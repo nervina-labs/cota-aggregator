@@ -3,6 +3,9 @@
 The aggregator of [CoTA](https://github.com/nervina-labs/ckb-cota-scripts) service
 
 ### Quick Start
+
+Update `database_url` in `aggregator.toml` with your mysql url
+
 ```shell
 cargo build
 
