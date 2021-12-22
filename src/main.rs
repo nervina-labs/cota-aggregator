@@ -1,11 +1,11 @@
 use jsonrpc_http_server::jsonrpc_core::{IoHandler, Params};
 use jsonrpc_http_server::ServerBuilder;
-use rpc::api::generate_registry_cota_smt;
+use rpc::api::generate_define_cota_smt;
 
 fn main() {
     let mut io = IoHandler::default();
     io.add_method("generate_define_cota_smt", move |params: Params| {
-        generate_registry_cota_smt(params)
+        generate_define_cota_smt(params)
     });
 
     let server = ServerBuilder::new(io)

@@ -8,6 +8,7 @@ edition = "2018"
 [dependencies]
 jsonrpc-http-server = "18.0.0"
 hex = "0.4"
+failure = "0.1.5"
 anyhow = "1.0"
 toml = "0.5"
 mysql = "20.0.0"

@@ -1,28 +1,25 @@
-use crate::smt::generate_registry_smt;
-use crate::utils::{check_request_params, parse_values};
+use failure::{Fail};
 use jsonrpc_http_server::jsonrpc_core::serde_json::Map;
 use jsonrpc_http_server::jsonrpc_core::{Error, Params, Value};
+use crate::request::define::DefineReq;
 
-pub async fn generate_registry_cota_smt(params: Params) -> Result<Value, Error> {
-    if let Params::Array(array) = params {
-        if let Some(error) = check_request_params(array.clone()) {
-            return Ok(error);
+pub async fn generate_define_cota_smt(params: Params) -> Result<Value, Error> {
+    if let Params::Map(map) = params {
+        match DefineReq::from_map(map) {
+            Ok(_define_req) => {
+                let mut response = Map::new();
+                response.insert("smt_root_hash".to_string(), Value::String("root_hash".to_owned()));
+                response.insert(
+                    "define_smt_entries".to_string(),
+                    Value::String("define_smt_entries".to_owned()),
+                );
+                return Ok(Value::Object(response));
+            },
+            Err(e) => Ok(Value::String(e.cause().unwrap().to_string()))
         }
-
-        let parameters = parse_values(array);
-
-        let (root_hash, registry_entries_hex) = generate_registry_smt(parameters);
-
-        let mut response = Map::new();
-        response.insert("smt_root_hash".to_string(), Value::String(root_hash));
-        response.insert(
-            "registry_smt_entries".to_string(),
-            Value::String(registry_entries_hex),
-        );
-
-        return Ok(Value::Object(response));
+    } else {
+        Ok(Value::String(
+            "Request parameter should be a map".to_owned(),
+        ))
     }
-    Ok(Value::String(
-        "Request parameter should be an array".to_owned(),
-    ))
 }
