@@ -1,14 +1,14 @@
+use crate::error::Error;
+use crate::utils::HexParser;
 use jsonrpc_http_server::jsonrpc_core::serde_json::Map;
 use jsonrpc_http_server::jsonrpc_core::Value;
-use crate::error::Error;
-use crate::utils::{HexParser};
 
 #[derive(Copy, Clone, Eq, PartialEq)]
 pub struct DefineReq {
     lock_hash: [u8; 32],
-    cota_id: [u8; 20],
-    total: [u8; 4],
-    issued: [u8; 4],
+    cota_id:   [u8; 20],
+    total:     [u8; 4],
+    issued:    [u8; 4],
     configure: u8,
 }
 

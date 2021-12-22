@@ -5,10 +5,16 @@ pub enum Error {
     #[fail(display = "Request parameter [{}] parse error", _0)]
     RequestParamNotFound(String),
 
-    #[fail(display = "Request parameter [{}] must be hex string starting with 0x", _0)]
+    #[fail(
+        display = "Request parameter [{}] must be hex string starting with 0x",
+        _0
+    )]
     RequestParamHexInvalid(String),
 
-    #[fail(display = "Request parameter length, got {:x}, expected: {:x}", got, expected)]
+    #[fail(
+        display = "Request parameter length, got {:x}, expected: {:x}",
+        got, expected
+    )]
     RequestParamHexLenError { got: usize, expected: usize },
 
     #[fail(display = "Other error: {}", _0)]
