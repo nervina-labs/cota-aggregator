@@ -5,6 +5,7 @@ edition = "2018"
 
 [dependencies]
 jsonrpc-http-server = "18.0.0"
-hex = "0.4"
-failure = "0.1.8"
-cota-smt = {package = "cota-smt", git = "https://github.com/nervina-labs/cota-smt", branch = "main"}
+rpc = {path = "rpc", version = "0.1.0"}
+
+[workspace]
+members = ["rpc"]

@@ -1,0 +1,17 @@
+[package]
+name = "rpc"
+version = "0.1.0"
+edition = "2018"
+
+# See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
+
+[dependencies]
+jsonrpc-http-server = "18.0.0"
+hex = "0.4"
+anyhow = "1.0"
+toml = "0.5"
+mysql = "20.0.0"
+lazy_static = "1.4"
+serde = { version = "1.0", features = [ "derive" ] }
+openssl = { version = "0.10", features = ["vendored"] }
+cota-smt = {package = "cota-smt", git = "https://github.com/nervina-labs/cota-smt", branch = "main"}

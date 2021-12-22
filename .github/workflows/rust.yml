@@ -23,4 +23,4 @@ jobs:
         run: cargo build
 
       - name: Test aggregator
-        run: cargo test
+        run: cargo test --all

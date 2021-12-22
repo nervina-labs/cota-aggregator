@@ -1,34 +1,11 @@
-use crate::utils::check_request_params;
-use jsonrpc_http_server::jsonrpc_core::serde_json::Map;
-use jsonrpc_http_server::jsonrpc_core::{IoHandler, Params, Value};
+use jsonrpc_http_server::jsonrpc_core::{IoHandler, Params};
 use jsonrpc_http_server::ServerBuilder;
-
-mod utils;
+use rpc::api::generate_registry_cota_smt;
 
 fn main() {
     let mut io = IoHandler::default();
-    io.add_method("generate_define_cota_cells", |params: Params| async move {
-        match params {
-            Params::Array(values) => {
-                println!("params: {:?}", values);
-                if let Some(error) = check_request_params(values.clone()) {
-                    return Ok(error);
-                }
-
-                let mut response = Map::new();
-                response.insert(
-                    "define_entries".to_string(),
-                    Value::String("generate_define_cota_cells".to_string()),
-                );
-                response.insert(
-                    "smt_root_hash".to_string(),
-                    Value::String("smt_root_hash".to_string()),
-                );
-
-                Ok(Value::Object(response))
-            }
-            _ => Ok(Value::String("Request parameter format error".to_owned())),
-        }
+    io.add_method("generate_define_cota_smt", move |params: Params| {
+        generate_registry_cota_smt(params)
     });
 
     let server = ServerBuilder::new(io)
