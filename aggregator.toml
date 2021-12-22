@@ -1,0 +1,1 @@
+database = "mysql://root:password@localhost:3306/cota"
