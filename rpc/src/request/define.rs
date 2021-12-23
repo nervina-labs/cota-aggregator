@@ -5,11 +5,11 @@ use jsonrpc_http_server::jsonrpc_core::Value;
 
 #[derive(Copy, Clone, Eq, PartialEq)]
 pub struct DefineReq {
-    lock_hash: [u8; 32],
-    cota_id:   [u8; 20],
-    total:     [u8; 4],
-    issued:    [u8; 4],
-    configure: u8,
+    pub lock_hash: [u8; 32],
+    pub cota_id:   [u8; 20],
+    pub total:     [u8; 4],
+    pub issued:    [u8; 4],
+    pub configure: u8,
 }
 
 impl DefineReq {
