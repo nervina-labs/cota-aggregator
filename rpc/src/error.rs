@@ -2,7 +2,7 @@ use failure::Fail;
 
 #[derive(Debug, Fail, Eq, PartialEq)]
 pub enum Error {
-    #[fail(display = "Request parameter [{}] parse error", _0)]
+    #[fail(display = "Request parameter [{}] not found", _0)]
     RequestParamNotFound(String),
 
     #[fail(
@@ -30,5 +30,22 @@ impl From<String> for Error {
 impl From<&str> for Error {
     fn from(err: &str) -> Error {
         Error::Other(err.to_owned())
+    }
+}
+
+impl Error {
+    pub fn to_msg(self) -> String {
+        match self {
+            Self::RequestParamNotFound(msg) => format!("Request parameter {} not found", msg),
+            Self::RequestParamHexInvalid(msg) => format!(
+                "Request parameter {} must be hex string starting with 0x",
+                msg
+            ),
+            Self::RequestParamHexLenError { got, expected } => format!(
+                "Request parameter length, got {:x}, expected: {:x}",
+                got, expected
+            ),
+            Self::Other(msg) => format!("Other error: {}", msg),
+        }
     }
 }

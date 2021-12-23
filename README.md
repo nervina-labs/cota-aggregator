@@ -20,8 +20,8 @@ cargo test
 echo '{
     "id": 2,
     "jsonrpc": "2.0",
-    "method": "generate_define_cota_cells",
-    "params": ["0xea28c98f38b4a57aa81756b167bb37fa42daf67edbc9863afb8172096ed301c2"]
+    "method": "generate_define_cota_smt",
+    "params": {"lock_hash": "0x1c5a6f36e6f1485e4df40906f22247888545dd00590a22d985d3be1f63b62db1", "cota_id" : "0xea28c98f38b4a57aa81756b167bb37fa42daf67e", "total": "0x00000050", "issued": "0x00000000", "configure": "0x00"}
 }' \
 | tr -d '\n' \
 | curl -H 'content-type: application/json' -d @- \

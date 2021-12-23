@@ -28,7 +28,7 @@ pub fn get_define_cota_of_lock_hash(lock_hash: [u8; 32]) -> Vec<DefineDb> {
     let res = CONN
         .lock()
         .unwrap()
-        .query_map(format!("select * from define_cota_nft_kv_pairs where lock_hash = {} and lock_hash_crc = {}", lock_hash_hex, lock_hash_crc),
+        .query_map(format!("select * from define_cota_nft_kv_pairs where lock_hash = '{}' and lock_hash_crc = '{}'", lock_hash_hex, lock_hash_crc),
                    |(cota_id, total, issued, configure)| DefineDb {
                         cota_id: parse_cota_id(cota_id),
                         total,
