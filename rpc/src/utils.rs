@@ -32,6 +32,7 @@ impl HexParser for Map<String, Value> {
             .map_err(|_| Error::RequestParamHexInvalid(v.to_string()))?;
         if result.len() != bytes_count {
             return Err(Error::RequestParamHexLenError {
+                msg:      key.to_owned(),
                 got:      result.len(),
                 expected: bytes_count,
             });
@@ -82,6 +83,7 @@ mod tests {
         assert_eq!(
             map.get_hex_bytes_filed("lock_hash", 30),
             Err(Error::RequestParamHexLenError {
+                msg:      "lock_hash".to_owned(),
                 got:      32,
                 expected: 30,
             })

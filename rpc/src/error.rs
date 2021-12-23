@@ -12,10 +12,14 @@ pub enum Error {
     RequestParamHexInvalid(String),
 
     #[fail(
-        display = "Request parameter length, got {:x}, expected: {:x}",
-        got, expected
+        display = "Request parameter {} length, got {:x}, expected: {:x}",
+        msg, got, expected
     )]
-    RequestParamHexLenError { got: usize, expected: usize },
+    RequestParamHexLenError {
+        msg:      String,
+        got:      usize,
+        expected: usize,
+    },
 
     #[fail(display = "Other error: {}", _0)]
     Other(String),
@@ -36,14 +40,14 @@ impl From<&str> for Error {
 impl Error {
     pub fn to_msg(self) -> String {
         match self {
-            Self::RequestParamNotFound(msg) => format!("Request parameter {} not found", msg),
+            Self::RequestParamNotFound(msg) => format!("Request parameter '{}' not found", msg),
             Self::RequestParamHexInvalid(msg) => format!(
-                "Request parameter {} must be hex string starting with 0x",
+                "Request parameter '{}' must be hex string starting with 0x",
                 msg
             ),
-            Self::RequestParamHexLenError { got, expected } => format!(
-                "Request parameter length, got {:x}, expected: {:x}",
-                got, expected
+            Self::RequestParamHexLenError { msg, got, expected } => format!(
+                "Request parameter '{}' length, got {:x}, expected: {:x}",
+                msg, got, expected
             ),
             Self::Other(msg) => format!("Other error: {}", msg),
         }
