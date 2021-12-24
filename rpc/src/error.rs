@@ -2,11 +2,11 @@ use failure::Fail;
 
 #[derive(Debug, Fail, Eq, PartialEq)]
 pub enum Error {
-    #[fail(display = "Request parameter [{}] not found", _0)]
+    #[fail(display = "Request parameter '{}' not found", _0)]
     RequestParamNotFound(String),
 
     #[fail(
-        display = "Request parameter [{}] must be hex string starting with 0x",
+        display = "Request parameter '{}' must be hex string starting with 0x",
         _0
     )]
     RequestParamHexInvalid(String),
@@ -20,6 +20,9 @@ pub enum Error {
         got:      usize,
         expected: usize,
     },
+
+    #[fail(display = "Request parameter '{}' type error", _0)]
+    RequestParamTypeError(String),
 
     #[fail(display = "Other error: {}", _0)]
     Other(String),
@@ -49,6 +52,7 @@ impl Error {
                 "Request parameter '{}' length, got {:x}, expected: {:x}",
                 msg, got, expected
             ),
+            Self::RequestParamTypeError(msg) => format!("Request parameter '{}' type error", msg),
             Self::Other(msg) => format!("Other error: {}", msg),
         }
     }

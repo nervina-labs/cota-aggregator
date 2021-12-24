@@ -46,6 +46,34 @@ pub fn generate_crc(v: &[u8]) -> u32 {
     CRC.checksum(v)
 }
 
+pub fn parse_bytes72(value: String) -> [u8; 72] {
+    let mut bytes = [0u8; 72];
+    let value_vec = hex::decode(value).expect("Parse hex to [u8; 72] bytes error");
+    bytes.copy_from_slice(&value_vec);
+    bytes
+}
+
+pub fn parse_bytes32(value: String) -> [u8; 32] {
+    let mut bytes = [0u8; 32];
+    let value_vec = hex::decode(value).expect("Parse hex to [u8; 32] bytes error");
+    bytes.copy_from_slice(&value_vec);
+    bytes
+}
+
+pub fn parse_bytes20(value: String) -> [u8; 20] {
+    let mut bytes = [0u8; 20];
+    let value_vec = hex::decode(value).expect("Parse hex to [u8; 20] bytes error");
+    bytes.copy_from_slice(&value_vec);
+    bytes
+}
+
+pub fn parse_bytes4(value: String) -> [u8; 4] {
+    let mut bytes = [0u8; 4];
+    let value_vec = hex::decode(value).expect("Parse hex to [u8; 4] bytes error");
+    bytes.copy_from_slice(&value_vec);
+    bytes
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;
