@@ -1,40 +1,15 @@
-use crate::db::{mysql::get_define_cota_of_lock_hash, types::DefineDb};
+use crate::db::{mysql::get_define_cota_by_lock_hash, types::DefineDb};
 use crate::request::define::DefineReq;
-use crate::smt::constants::DEFINE_NFT_SMT_TYPE;
-use cota_smt::common::{Uint16, Uint32, *};
+use crate::smt::common::generate_history_smt;
+use crate::smt::common::{generate_define_key, generate_define_value};
+use cota_smt::common::*;
 use cota_smt::define::DefineCotaNFTEntriesBuilder;
 use cota_smt::molecule::prelude::*;
-use cota_smt::smt::{Blake2bHasher, H256, SMT};
-
-fn generate_define_key(cota_id: &[u8]) -> (DefineCotaNFTId, H256) {
-    let cota_id = CotaId::from_slice(cota_id).unwrap();
-    let smt_type = Uint16::from_slice(&DEFINE_NFT_SMT_TYPE.to_be_bytes()).unwrap();
-    let define_key = DefineCotaNFTIdBuilder::default()
-        .cota_id(cota_id)
-        .smt_type(smt_type)
-        .build();
-    let mut define_key_bytes = [0u8; 32];
-    define_key_bytes[0..22].copy_from_slice(define_key.as_slice());
-    let key = H256::from(define_key_bytes);
-    (define_key, key)
-}
-
-fn generate_define_value(total: &[u8], issued: &[u8], configure: u8) -> (DefineCotaNFTValue, H256) {
-    let define_value = DefineCotaNFTValueBuilder::default()
-        .total(Uint32::from_slice(total).unwrap())
-        .issued(Uint32::from_slice(issued).unwrap())
-        .configure(Byte::from(configure))
-        .build();
-    let mut define_value_bytes = [0u8; 32];
-    define_value_bytes[0..9].copy_from_slice(define_value.as_slice());
-    let value = H256::from(define_value_bytes);
-    (define_value, value)
-}
+use cota_smt::smt::{Blake2bHasher, H256};
 
 pub fn generate_define_smt(define_req: DefineReq) -> (String, String) {
-    let mut smt = SMT::default();
-
-    let db_defines = get_define_cota_of_lock_hash(define_req.lock_hash);
+    let mut smt = generate_history_smt(define_req.lock_hash);
+    let db_defines = get_define_cota_by_lock_hash(define_req.lock_hash);
     if !db_defines.is_empty() {
         for DefineDb {
             cota_id,
@@ -43,9 +18,9 @@ pub fn generate_define_smt(define_req: DefineReq) -> (String, String) {
             configure,
         } in db_defines
         {
-            let (_, key) = generate_define_key(&cota_id);
+            let (_, key) = generate_define_key(cota_id);
             let (_, value) =
-                generate_define_value(&total.to_be_bytes(), &issued.to_be_bytes(), configure);
+                generate_define_value(total.to_be_bytes(), issued.to_be_bytes(), configure);
             smt.update(key, value).expect("SMT update leave error");
         }
     }
@@ -58,8 +33,8 @@ pub fn generate_define_smt(define_req: DefineReq) -> (String, String) {
         configure,
         ..
     } = define_req;
-    let (define_key, key) = generate_define_key(&cota_id);
-    let (define_value, value) = generate_define_value(&total, &issued, configure);
+    let (define_key, key) = generate_define_key(cota_id);
+    let (define_value, value) = generate_define_value(total, issued, configure);
 
     smt.update(key, value).expect("SMT update leave error");
     update_leaves.push((key, value));
