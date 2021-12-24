@@ -1,2 +1,2 @@
 pub(crate) mod define;
-mod mint;
+pub(crate) mod mint;
