@@ -14,8 +14,8 @@ lazy_static! {
     };
 }
 
-fn parse_cota_id(cota_id: String) -> [u8; 32] {
-    let mut cota_id_bytes = [0u8; 32];
+fn parse_cota_id(cota_id: String) -> [u8; 20] {
+    let mut cota_id_bytes = [0u8; 20];
     let cota_id_vec = hex::decode(cota_id).expect("Parse cota_id hex to bytes error");
     cota_id_bytes.copy_from_slice(&cota_id_vec);
     cota_id_bytes
