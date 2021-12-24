@@ -46,32 +46,36 @@ pub fn generate_crc(v: &[u8]) -> u32 {
     CRC.checksum(v)
 }
 
-pub fn parse_bytes72(value: String) -> [u8; 72] {
-    let mut bytes = [0u8; 72];
-    let value_vec = hex::decode(value).expect("Parse hex to [u8; 72] bytes error");
+pub fn parse_bytes36(value: String) -> Result<[u8; 36], Error> {
+    let mut bytes = [0u8; 36];
+    let value_vec = hex::decode(value).map_err(|_| Error::ParseHexError)?;
     bytes.copy_from_slice(&value_vec);
-    bytes
+    Ok(bytes)
 }
 
-pub fn parse_bytes32(value: String) -> [u8; 32] {
+pub fn parse_bytes32(value: String) -> Result<[u8; 32], Error> {
     let mut bytes = [0u8; 32];
-    let value_vec = hex::decode(value).expect("Parse hex to [u8; 32] bytes error");
+    let value_vec = hex::decode(value).map_err(|_| Error::ParseHexError)?;
     bytes.copy_from_slice(&value_vec);
-    bytes
+    Ok(bytes)
 }
 
-pub fn parse_bytes20(value: String) -> [u8; 20] {
+pub fn parse_bytes20(value: String) -> Result<[u8; 20], Error> {
     let mut bytes = [0u8; 20];
-    let value_vec = hex::decode(value).expect("Parse hex to [u8; 20] bytes error");
+    let value_vec = hex::decode(value).map_err(|_| Error::ParseHexError)?;
     bytes.copy_from_slice(&value_vec);
-    bytes
+    Ok(bytes)
 }
 
-pub fn parse_bytes4(value: String) -> [u8; 4] {
+pub fn parse_bytes4(value: String) -> Result<[u8; 4], Error> {
     let mut bytes = [0u8; 4];
-    let value_vec = hex::decode(value).expect("Parse hex to [u8; 4] bytes error");
+    let value_vec = hex::decode(value).map_err(|_| Error::ParseHexError)?;
     bytes.copy_from_slice(&value_vec);
-    bytes
+    Ok(bytes)
+}
+
+pub fn parse_bytes(value: String) -> Result<Vec<u8>, Error> {
+    hex::decode(value).map_err(|_| Error::ParseHexError)
 }
 
 #[cfg(test)]
@@ -88,7 +92,7 @@ mod tests {
     }
 
     #[test]
-    fn text_get_hex_bytes_filed() {
+    fn test_get_hex_bytes_filed() {
         let mut map = Map::new();
         map.insert(
             "lock_hash".to_owned(),
@@ -136,7 +140,44 @@ mod tests {
     }
 
     #[test]
-    fn text_generate_crc() {
+    fn test_generate_crc() {
         assert_eq!(generate_crc("cota".as_bytes()), 985327312u32);
+    }
+
+    #[test]
+    fn test_parse_bytes36() {
+        assert_eq!(
+            parse_bytes36(
+                "1c5a6f36e6f1485e4df40906f22247888545dd00590a22d9h5d3be1f63b62db100000000"
+                    .to_string()
+            ),
+            Err(Error::ParseHexError)
+        );
+    }
+
+    #[test]
+    fn test_parse_bytes32() {
+        assert_eq!(
+            parse_bytes32(
+                "1c5a6f36e6f1485e4df40906f22247888545dd00590a22d9h5d3be1f63b62db1".to_string()
+            ),
+            Err(Error::ParseHexError)
+        );
+    }
+
+    #[test]
+    fn test_parse_bytes20() {
+        assert_eq!(
+            parse_bytes20("f14aca18aae9df723af304469d8f4ebbc174a938".to_string()),
+            Ok([
+                241, 74, 202, 24, 170, 233, 223, 114, 58, 243, 4, 70, 157, 143, 78, 187, 193, 116,
+                169, 56
+            ])
+        );
+    }
+
+    #[test]
+    fn test_parse_bytes4() {
+        assert_eq!(parse_bytes4("f14acd10".to_string()), Ok([241, 74, 205, 16]));
     }
 }
