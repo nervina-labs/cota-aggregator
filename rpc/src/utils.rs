@@ -53,13 +53,6 @@ pub fn parse_bytes36(value: String) -> Result<[u8; 36], Error> {
     Ok(bytes)
 }
 
-pub fn parse_bytes32(value: String) -> Result<[u8; 32], Error> {
-    let mut bytes = [0u8; 32];
-    let value_vec = hex::decode(value).map_err(|_| Error::ParseHexError)?;
-    bytes.copy_from_slice(&value_vec);
-    Ok(bytes)
-}
-
 pub fn parse_bytes20(value: String) -> Result<[u8; 20], Error> {
     let mut bytes = [0u8; 20];
     let value_vec = hex::decode(value).map_err(|_| Error::ParseHexError)?;
@@ -156,16 +149,6 @@ mod tests {
     }
 
     #[test]
-    fn test_parse_bytes32() {
-        assert_eq!(
-            parse_bytes32(
-                "1c5a6f36e6f1485e4df40906f22247888545dd00590a22d9h5d3be1f63b62db1".to_string()
-            ),
-            Err(Error::ParseHexError)
-        );
-    }
-
-    #[test]
     fn test_parse_bytes20() {
         assert_eq!(
             parse_bytes20("f14aca18aae9df723af304469d8f4ebbc174a938".to_string()),
@@ -179,5 +162,15 @@ mod tests {
     #[test]
     fn test_parse_bytes4() {
         assert_eq!(parse_bytes4("f14acd10".to_string()), Ok([241, 74, 205, 16]));
+    }
+
+    #[test]
+    fn test_parse_bytes() {
+        assert_eq!(
+            parse_bytes(
+                "1c5a6f36e6f1485e4df40906f22247888545dd00590a22d9h5d3be1f63b62db1".to_string()
+            ),
+            Err(Error::ParseHexError)
+        );
     }
 }

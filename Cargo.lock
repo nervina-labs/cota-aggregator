@@ -394,7 +394,7 @@ checksum = "5827cebf4670468b8772dd191856768aedcb1b0278a04f989f7766351917b9dc"
 [[package]]
 name = "cota-smt"
 version = "0.1.0"
-source = "git+https://github.com/nervina-labs/cota-smt?branch=main#a1a8313a64f31aa8cca82afa014a774400f59982"
+source = "git+https://github.com/nervina-labs/cota-smt?branch=develop#6cdc2aeac21fc731c07743483716b078440a5917"
 dependencies = [
  "blake2b-ref 0.3.0",
  "cfg-if 0.1.10",

@@ -9,7 +9,7 @@ use crate::smt::common::{
 use cota_smt::common::*;
 use cota_smt::mint::MintCotaNFTEntriesBuilder;
 use cota_smt::molecule::prelude::*;
-use cota_smt::smt::{blake2b_256, Blake2bHasher, H256};
+use cota_smt::smt::{Blake2bHasher, H256};
 use jsonrpc_http_server::jsonrpc_core::Value;
 
 pub fn generate_mint_smt(mint_req: MintReq) -> Result<(Value, Value), Error> {
@@ -69,12 +69,11 @@ pub fn generate_mint_smt(mint_req: MintReq) -> Result<(Value, Value), Error> {
         let (withdrawal_key, key) = generate_withdrawal_key(cota_id, token_index);
         withdrawal_keys.push(withdrawal_key);
 
-        let to_lock_hash = blake2b_256(&to_lock_script);
         let (withdrawal_value, value) = generate_withdrawal_value(
             configure,
             state,
             characteristic,
-            to_lock_hash,
+            to_lock_script,
             mint_req.out_point,
         );
         withdrawal_values.push(withdrawal_value);

@@ -1,6 +1,6 @@
 use crate::config::load_config;
 use crate::db::types::{ClaimDb, DefineDb, HoldDb, WithdrawDb};
-use crate::utils::{generate_crc, parse_bytes20, parse_bytes32, parse_bytes36, parse_bytes4};
+use crate::utils::{generate_crc, parse_bytes, parse_bytes20, parse_bytes36, parse_bytes4};
 use lazy_static::lazy_static;
 use mysql::prelude::*;
 use mysql::*;
@@ -78,13 +78,13 @@ pub fn get_withdrawal_cota_by_lock_hash(lock_hash: [u8; 32]) -> Vec<WithdrawDb> 
         .lock()
         .unwrap()
         .query_map(format!("select * from withdraw_cota_nft_kv_pairs where lock_hash = '{}' and lock_hash_crc = '{}'", lock_hash_hex, lock_hash_crc),
-                   |(cota_id, token_index, configure, state, characteristic, receiver_lock_hash, out_point)| WithdrawDb {
+                   |(cota_id, token_index, configure, state, characteristic, receiver_lock_script, out_point)| WithdrawDb {
                         cota_id: parse_bytes20(cota_id).unwrap(),
                         token_index: parse_bytes4(token_index).unwrap(),
                         configure,
                         state,
                         characteristic: parse_bytes20(characteristic).unwrap(),
-                        receiver_lock_hash: parse_bytes32(receiver_lock_hash).unwrap(),
+                        receiver_lock_script: parse_bytes(receiver_lock_script).unwrap(),
                         out_point: parse_bytes36(out_point).unwrap(),
             },
         ).expect("Query withdrawal data error")

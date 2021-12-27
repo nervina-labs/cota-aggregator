@@ -82,7 +82,7 @@ pub fn generate_withdrawal_value(
     configure: u8,
     state: u8,
     characteristic: [u8; 20],
-    to_lock_hash: [u8; 32],
+    to_lock_script: Vec<u8>,
     out_point: [u8; 36],
 ) -> (WithdrawalCotaNFTValue, H256) {
     let cota_info = CotaNFTInfoBuilder::default()
@@ -90,10 +90,11 @@ pub fn generate_withdrawal_value(
         .state(Byte::from(state))
         .characteristic(Characteristic::from_slice(&characteristic).unwrap())
         .build();
+    let to_lock_bytes: Vec<Byte> = to_lock_script.iter().map(|v| Byte::from(*v)).collect();
     let withdrawal_value = WithdrawalCotaNFTValueBuilder::default()
         .nft_info(cota_info)
         .out_point(OutPointSlice::from_slice(&out_point[12..]).unwrap())
-        .to(LockHashSlice::from_slice(&to_lock_hash[0..20]).unwrap())
+        .to_lock(BytesBuilder::default().set(to_lock_bytes).build())
         .build();
     let value = H256::from(blake2b_256(withdrawal_value.as_slice()));
     (withdrawal_value, value)
@@ -159,7 +160,7 @@ pub fn generate_history_smt(lock_hash: [u8; 32]) -> SMT {
             configure,
             state,
             characteristic,
-            receiver_lock_hash,
+            receiver_lock_script,
             out_point,
         } = withdrawal_db;
         let (_, key) = generate_withdrawal_key(cota_id, token_index);
@@ -167,7 +168,7 @@ pub fn generate_history_smt(lock_hash: [u8; 32]) -> SMT {
             configure,
             state,
             characteristic,
-            receiver_lock_hash,
+            receiver_lock_script,
             out_point,
         );
         smt.update(key, value).expect("SMT update leave error");

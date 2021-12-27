@@ -15,15 +15,15 @@ pub struct HoldDb {
     pub characteristic: [u8; 20],
 }
 
-#[derive(Copy, Clone, Eq, PartialEq)]
+#[derive(Clone, Eq, PartialEq)]
 pub struct WithdrawDb {
-    pub cota_id:            [u8; 20],
-    pub token_index:        [u8; 4],
-    pub out_point:          [u8; 36],
-    pub state:              u8,
-    pub configure:          u8,
-    pub characteristic:     [u8; 20],
-    pub receiver_lock_hash: [u8; 32],
+    pub cota_id:              [u8; 20],
+    pub token_index:          [u8; 4],
+    pub out_point:            [u8; 36],
+    pub state:                u8,
+    pub configure:            u8,
+    pub characteristic:       [u8; 20],
+    pub receiver_lock_script: Vec<u8>,
 }
 
 #[derive(Copy, Clone, Eq, PartialEq)]
