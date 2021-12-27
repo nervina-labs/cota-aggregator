@@ -1,4 +1,5 @@
 use failure::Fail;
+use jsonrpc_http_server::jsonrpc_core::{Error as RpcError, ErrorCode};
 
 #[derive(Debug, Fail, Eq, PartialEq)]
 pub enum Error {
@@ -62,6 +63,16 @@ impl Error {
             Self::ParseHexError => "Parse hex error".to_string(),
             Self::CotaIdHasNotDefined(msg) => format!("The cota_id '{}' has not defined", msg),
             Self::Other(msg) => format!("Other error: {}", msg),
+        }
+    }
+}
+
+impl Into<RpcError> for Error {
+    fn into(self) -> RpcError {
+        RpcError {
+            code:    ErrorCode::InvalidParams,
+            message: self.to_msg(),
+            data:    None,
         }
     }
 }

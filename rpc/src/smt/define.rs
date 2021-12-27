@@ -6,9 +6,10 @@ use cota_smt::common::*;
 use cota_smt::define::DefineCotaNFTEntriesBuilder;
 use cota_smt::molecule::prelude::*;
 use cota_smt::smt::{Blake2bHasher, H256};
+use jsonrpc_http_server::jsonrpc_core::serde_json::Map;
 use jsonrpc_http_server::jsonrpc_core::Value;
 
-pub fn generate_define_smt(define_req: DefineReq) -> (Value, Value) {
+pub fn generate_define_smt(define_req: DefineReq) -> Map<String, Value> {
     let mut smt = generate_history_smt(define_req.lock_hash);
     let db_defines = get_define_cota_by_lock_hash(define_req.lock_hash);
     if !db_defines.is_empty() {
@@ -93,8 +94,11 @@ pub fn generate_define_smt(define_req: DefineReq) -> (Value, Value) {
 
     println!("define_entries_hex: {:?}", define_entries_hex);
 
-    (
-        Value::String(root_hash_hex),
+    let mut result: Map<String, Value> = Map::new();
+    result.insert("smt_root_hash".to_string(), Value::String(root_hash_hex));
+    result.insert(
+        "define_smt_entries".to_string(),
         Value::String(define_entries_hex),
-    )
+    );
+    result
 }
