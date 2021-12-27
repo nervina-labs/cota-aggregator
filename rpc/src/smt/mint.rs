@@ -10,8 +10,9 @@ use cota_smt::common::*;
 use cota_smt::mint::MintCotaNFTEntriesBuilder;
 use cota_smt::molecule::prelude::*;
 use cota_smt::smt::{blake2b_256, Blake2bHasher, H256};
+use jsonrpc_http_server::jsonrpc_core::Value;
 
-pub fn generate_mint_smt(mint_req: MintReq) -> Result<(String, String), Error> {
+pub fn generate_mint_smt(mint_req: MintReq) -> Result<(Value, Value), Error> {
     let withdrawals = mint_req.withdrawals;
     let withdrawals_len = withdrawals.len();
     if withdrawals_len == 0 {
@@ -140,5 +141,8 @@ pub fn generate_mint_smt(mint_req: MintReq) -> Result<(String, String), Error> {
 
     println!("mint_entries_hex: {:?}", mint_entries_hex);
 
-    Ok((root_hash_hex, mint_entries_hex))
+    Ok((
+        Value::String(root_hash_hex),
+        Value::String(mint_entries_hex),
+    ))
 }
