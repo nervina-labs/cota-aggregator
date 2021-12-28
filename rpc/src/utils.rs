@@ -48,34 +48,35 @@ pub fn generate_crc(v: &[u8]) -> u32 {
 
 pub fn parse_bytes36(value: String) -> Result<[u8; 36], Error> {
     let mut bytes = [0u8; 36];
-    let value_vec = hex::decode(value).map_err(|_| Error::ParseHexError)?;
+    let value_vec = hex::decode(value.clone()).map_err(|_| Error::RequestParamHexInvalid(value))?;
     bytes.copy_from_slice(&value_vec);
     Ok(bytes)
 }
 
 pub fn parse_bytes32(value: String) -> Result<[u8; 32], Error> {
     let mut bytes = [0u8; 32];
-    let value_vec = hex::decode(value).map_err(|_| Error::ParseHexError)?;
+    let value_vec = hex::decode(value.clone()).map_err(|_| Error::RequestParamHexInvalid(value))?;
     bytes.copy_from_slice(&value_vec);
     Ok(bytes)
 }
 
 pub fn parse_bytes20(value: String) -> Result<[u8; 20], Error> {
     let mut bytes = [0u8; 20];
-    let value_vec = hex::decode(value).map_err(|_| Error::ParseHexError)?;
+    let value_vec = hex::decode(value.clone()).map_err(|_| Error::RequestParamHexInvalid(value))?;
     bytes.copy_from_slice(&value_vec);
     Ok(bytes)
 }
 
 pub fn parse_bytes4(value: String) -> Result<[u8; 4], Error> {
     let mut bytes = [0u8; 4];
-    let value_vec = hex::decode(value).map_err(|_| Error::ParseHexError)?;
+    let value_vec = hex::decode(value.clone()).map_err(|_| Error::RequestParamHexInvalid(value))?;
     bytes.copy_from_slice(&value_vec);
     Ok(bytes)
 }
 
 pub fn parse_bytes(value: String) -> Result<Vec<u8>, Error> {
-    hex::decode(value).map_err(|_| Error::ParseHexError)
+    let v = remove_0x(&value);
+    hex::decode(v).map_err(|_| Error::RequestParamHexInvalid(value))
 }
 
 #[cfg(test)]
@@ -142,6 +143,14 @@ mod tests {
     #[test]
     fn test_generate_crc() {
         assert_eq!(generate_crc("cota".as_bytes()), 985327312u32);
+        assert_eq!(
+            generate_crc(
+                &"41a7a00cced6ecc5be4ec248c01096b705e4cd9d8b0a5ef5cdb6760a3742f5de"
+                    .as_bytes()
+                    .to_vec()
+            ),
+            2934249110
+        )
     }
 
     #[test]
@@ -151,7 +160,10 @@ mod tests {
                 "1c5a6f36e6f1485e4df40906f22247888545dd00590a22d9h5d3be1f63b62db100000000"
                     .to_string()
             ),
-            Err(Error::ParseHexError)
+            Err(Error::RequestParamHexInvalid(
+                "1c5a6f36e6f1485e4df40906f22247888545dd00590a22d9h5d3be1f63b62db100000000"
+                    .to_owned()
+            ))
         );
     }
 
@@ -161,7 +173,9 @@ mod tests {
             parse_bytes36(
                 "1c5a6f36e6f1485e4df40906f22247888545dd00590a22d9h5d3be1f63b62db1".to_string()
             ),
-            Err(Error::ParseHexError)
+            Err(Error::RequestParamHexInvalid(
+                "1c5a6f36e6f1485e4df40906f22247888545dd00590a22d9h5d3be1f63b62db1".to_owned()
+            ))
         );
     }
 
@@ -187,7 +201,9 @@ mod tests {
             parse_bytes(
                 "1c5a6f36e6f1485e4df40906f22247888545dd00590a22d9h5d3be1f63b62db1".to_string()
             ),
-            Err(Error::ParseHexError)
+            Err(Error::RequestParamHexInvalid(
+                "1c5a6f36e6f1485e4df40906f22247888545dd00590a22d9h5d3be1f63b62db1".to_owned()
+            ))
         );
     }
 }
