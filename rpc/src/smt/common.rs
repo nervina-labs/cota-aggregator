@@ -1,5 +1,6 @@
 use crate::db::mysql::get_all_cota_by_lock_hash;
 use crate::db::types::{ClaimDb, DefineDb, HoldDb, WithdrawDb};
+use crate::error::Error;
 use crate::smt::constants::{
     CLAIM_NFT_SMT_TYPE, DEFINE_NFT_SMT_TYPE, HOLD_NFT_SMT_TYPE, WITHDRAWAL_NFT_SMT_TYPE,
 };
@@ -126,9 +127,9 @@ pub fn generate_claim_value() -> (Byte32, H256) {
     (claim_value, value)
 }
 
-pub fn generate_history_smt(lock_hash: [u8; 32]) -> SMT {
+pub fn generate_history_smt(lock_hash: [u8; 32]) -> Result<SMT, Error> {
     let mut smt: SMT = SMT::default();
-    let (defines, holds, withdrawals, claims) = get_all_cota_by_lock_hash(lock_hash);
+    let (defines, holds, withdrawals, claims) = get_all_cota_by_lock_hash(lock_hash)?;
     for define_db in defines {
         let DefineDb {
             cota_id,
@@ -183,5 +184,5 @@ pub fn generate_history_smt(lock_hash: [u8; 32]) -> SMT {
         let (_, value) = generate_claim_value();
         smt.update(key, value).expect("SMT update leave error");
     }
-    smt
+    Ok(smt)
 }

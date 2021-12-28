@@ -1,4 +1,5 @@
 use crate::db::{mysql::get_define_cota_by_lock_hash, types::DefineDb};
+use crate::error::Error;
 use crate::request::define::DefineReq;
 use crate::smt::common::generate_history_smt;
 use crate::smt::common::{generate_define_key, generate_define_value};
@@ -9,9 +10,9 @@ use cota_smt::smt::{Blake2bHasher, H256};
 use jsonrpc_http_server::jsonrpc_core::serde_json::Map;
 use jsonrpc_http_server::jsonrpc_core::Value;
 
-pub fn generate_define_smt(define_req: DefineReq) -> Map<String, Value> {
-    let mut smt = generate_history_smt(define_req.lock_hash);
-    let db_defines = get_define_cota_by_lock_hash(define_req.lock_hash);
+pub fn generate_define_smt(define_req: DefineReq) -> Result<Map<String, Value>, Error> {
+    let mut smt = generate_history_smt(define_req.lock_hash)?;
+    let db_defines = get_define_cota_by_lock_hash(define_req.lock_hash)?;
     if !db_defines.is_empty() {
         for DefineDb {
             cota_id,
@@ -23,7 +24,8 @@ pub fn generate_define_smt(define_req: DefineReq) -> Map<String, Value> {
             let (_, key) = generate_define_key(cota_id);
             let (_, value) =
                 generate_define_value(total.to_be_bytes(), issued.to_be_bytes(), configure);
-            smt.update(key, value).expect("SMT update leave error");
+            smt.update(key, value)
+                .expect("define SMT update leave error");
         }
     }
 
@@ -38,7 +40,8 @@ pub fn generate_define_smt(define_req: DefineReq) -> Map<String, Value> {
     let (define_key, key) = generate_define_key(cota_id);
     let (define_value, value) = generate_define_value(total, issued, configure);
 
-    smt.update(key, value).expect("SMT update leave error");
+    smt.update(key, value)
+        .expect("define SMT update leave error");
     update_leaves.push((key, value));
 
     let root_hash = smt.root().clone();
@@ -52,10 +55,9 @@ pub fn generate_define_smt(define_req: DefineReq) -> Map<String, Value> {
         .merkle_proof(update_leaves.iter().map(|leave| leave.0).collect())
         .unwrap();
     let define_merkle_proof_compiled = define_merkle_proof.compile(update_leaves.clone()).unwrap();
-    let verify_result = define_merkle_proof_compiled
+    define_merkle_proof_compiled
         .verify::<Blake2bHasher>(&root_hash, update_leaves.clone())
-        .expect("smt proof verify failed");
-    assert!(verify_result, "smt proof verify failed");
+        .expect("define smt proof verify failed");
 
     let merkel_proof_vec: Vec<u8> = define_merkle_proof_compiled.into();
     let merkel_proof_bytes = BytesBuilder::default()
@@ -100,5 +102,5 @@ pub fn generate_define_smt(define_req: DefineReq) -> Map<String, Value> {
         "define_smt_entries".to_string(),
         Value::String(define_entries_hex),
     );
-    result
+    Ok(result)
 }

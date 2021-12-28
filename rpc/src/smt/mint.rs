@@ -19,7 +19,7 @@ pub fn generate_mint_smt(mint_req: MintReq) -> Result<Map<String, Value>, Error>
     if withdrawals_len == 0 {
         return Err(Error::RequestParamNotFound("withdrawals".to_string()));
     }
-    let db_define = get_define_cota_by_lock_hash_and_cota_id(mint_req.lock_hash, mint_req.cota_id);
+    let db_define = get_define_cota_by_lock_hash_and_cota_id(mint_req.lock_hash, mint_req.cota_id)?;
     if db_define.is_none() {
         let cota_id_hex = hex::encode(mint_req.cota_id);
         return Err(Error::CotaIdHasNotDefined(cota_id_hex));
@@ -29,7 +29,7 @@ pub fn generate_mint_smt(mint_req: MintReq) -> Result<Map<String, Value>, Error>
     let mut define_new_values: Vec<DefineCotaNFTValue> = Vec::new();
     let mut withdrawal_keys: Vec<CotaNFTId> = Vec::new();
     let mut withdrawal_values: Vec<WithdrawalCotaNFTValue> = Vec::new();
-    let mut smt = generate_history_smt(mint_req.lock_hash);
+    let mut smt = generate_history_smt(mint_req.lock_hash)?;
     let mut update_leaves: Vec<(H256, H256)> = Vec::with_capacity(withdrawals_len + 1);
     let DefineDb {
         cota_id,
@@ -50,7 +50,7 @@ pub fn generate_mint_smt(mint_req: MintReq) -> Result<Map<String, Value>, Error>
     define_new_values.push(define_new_value);
 
     update_leaves.push((key, value));
-    smt.update(key, value).expect("SMT update leave error");
+    smt.update(key, value).expect("mint SMT update leave error");
 
     let mut action_vec: Vec<u8> = Vec::new();
     if withdrawals_len == 1 {
@@ -80,7 +80,7 @@ pub fn generate_mint_smt(mint_req: MintReq) -> Result<Map<String, Value>, Error>
         withdrawal_values.push(withdrawal_value);
 
         update_leaves.push((key, value));
-        smt.update(key, value).expect("SMT update leave error");
+        smt.update(key, value).expect("mint SMT update leave error");
     }
     let root_hash = smt.root().clone();
     let mut root_hash_bytes = [0u8; 32];
@@ -93,10 +93,9 @@ pub fn generate_mint_smt(mint_req: MintReq) -> Result<Map<String, Value>, Error>
         .merkle_proof(update_leaves.iter().map(|leave| leave.0).collect())
         .unwrap();
     let mint_merkle_proof_compiled = mint_merkle_proof.compile(update_leaves.clone()).unwrap();
-    let verify_result = mint_merkle_proof_compiled
+    mint_merkle_proof_compiled
         .verify::<Blake2bHasher>(&root_hash, update_leaves.clone())
-        .expect("smt proof verify failed");
-    assert!(verify_result, "smt proof verify failed");
+        .expect("mint smt proof verify failed");
 
     let merkel_proof_vec: Vec<u8> = mint_merkle_proof_compiled.into();
     let merkel_proof_bytes = BytesBuilder::default()

@@ -31,6 +31,9 @@ pub enum Error {
     #[fail(display = "The cota_id '{}' has not defined", _0)]
     CotaIdHasNotDefined(String),
 
+    #[fail(display = "Database '{}' query error", _0)]
+    DatabaseQueryError(String),
+
     #[fail(display = "Other error: {}", _0)]
     Other(String),
 }
@@ -62,6 +65,7 @@ impl Error {
             Self::RequestParamTypeError(msg) => format!("Request parameter '{}' type error", msg),
             Self::ParseHexError => "Parse hex error".to_string(),
             Self::CotaIdHasNotDefined(msg) => format!("The cota_id '{}' has not defined", msg),
+            Self::DatabaseQueryError(msg) => format!("Database '{}' query error", msg),
             Self::Other(msg) => format!("Other error: {}", msg),
         }
     }
