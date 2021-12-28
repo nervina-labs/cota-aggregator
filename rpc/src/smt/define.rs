@@ -99,7 +99,7 @@ pub fn generate_define_smt(define_req: DefineReq) -> Result<Map<String, Value>, 
     let mut result: Map<String, Value> = Map::new();
     result.insert("smt_root_hash".to_string(), Value::String(root_hash_hex));
     result.insert(
-        "define_smt_entries".to_string(),
+        "define_smt_entry".to_string(),
         Value::String(define_entries_hex),
     );
     Ok(result)

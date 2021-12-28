@@ -143,7 +143,7 @@ pub fn generate_mint_smt(mint_req: MintReq) -> Result<Map<String, Value>, Error>
     let mut result = Map::new();
     result.insert("smt_root_hash".to_string(), Value::String(root_hash_hex));
     result.insert(
-        "mint_smt_entries".to_string(),
+        "mint_smt_entry".to_string(),
         Value::String(mint_entries_hex),
     );
     Ok(result)
