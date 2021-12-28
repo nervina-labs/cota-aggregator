@@ -27,12 +27,12 @@ pub fn get_define_cota_by_lock_hash(lock_hash: [u8; 32]) -> Result<Vec<DefineDb>
         .unwrap()
         .query_map(format!("select cota_id, total, issued, configure  from define_cota_nft_kv_pairs where lock_hash_crc = '{}' and lock_hash = '{}'", lock_hash_crc, lock_hash_hex),
                    |(cota_id, total, issued, configure)| DefineDb {
-                       cota_id: parse_bytes20_value(cota_id),
+                       cota_id: parse_mysql_bytes20_value(cota_id),
                        total: from_value::<u32>(total),
                        issued: from_value::<u32>(issued),
                        configure: from_value::<u8>(configure),
                     },
-        ).map_err(|_| Error::DatabaseQueryError("define".to_string()))
+        ).map_err(|e| Error::DatabaseQueryError(e.to_string()))
 }
 
 pub fn get_define_cota_by_lock_hash_and_cota_id(
@@ -42,7 +42,7 @@ pub fn get_define_cota_by_lock_hash_and_cota_id(
     let (lock_hash_hex, lock_hash_crc) = parse_lock_hash(lock_hash);
     let cota_id_hex = hex::encode(cota_id);
 
-    let res = CONN
+    let result = CONN
         .lock()
         .unwrap()
         .query_map(format!("select total, issued, configure from define_cota_nft_kv_pairs where lock_hash_crc = '{}' and lock_hash = '{}' and cota_id = '{}'", lock_hash_crc, lock_hash_hex, cota_id_hex),
@@ -53,24 +53,23 @@ pub fn get_define_cota_by_lock_hash_and_cota_id(
                        configure: from_value::<u8>(configure),
                    },
         ).map_err(|e| Error::DatabaseQueryError(e.to_string()))?;
-    Ok(res.get(0).map(|v| *v))
+    Ok(result.get(0).map(|v| *v))
 }
 
 pub fn get_hold_cota_by_lock_hash(lock_hash: [u8; 32]) -> Result<Vec<HoldDb>, Error> {
     let (lock_hash_hex, lock_hash_crc) = parse_lock_hash(lock_hash);
-
     CONN
         .lock()
         .unwrap()
         .query_map(format!("select * from hold_cota_nft_kv_pairs where lock_hash_crc = '{}' and lock_hash = '{}'", lock_hash_crc, lock_hash_hex),
                    |(cota_id, token_index, configure, state, characteristic)| HoldDb {
-                       cota_id: parse_bytes20_value(cota_id),
-                       token_index: parse_bytes4_value(token_index),
+                       cota_id: parse_mysql_bytes20_value(cota_id),
+                       token_index: parse_mysql_bytes4_value(token_index),
                        configure:from_value::<u8>(configure),
                        state: from_value::<u8>(state),
-                       characteristic: parse_bytes20_value(characteristic),
+                       characteristic: parse_mysql_bytes20_value(characteristic),
                    },
-        ).map_err(|_| Error::DatabaseQueryError("hold".to_string()))
+        ).map_err(|e| Error::DatabaseQueryError(e.to_string()))
 }
 
 pub fn get_withdrawal_cota_by_lock_hash(lock_hash: [u8; 32]) -> Result<Vec<WithdrawDb>, Error> {
@@ -80,13 +79,13 @@ pub fn get_withdrawal_cota_by_lock_hash(lock_hash: [u8; 32]) -> Result<Vec<Withd
     let withdrawals_db = conn
         .query_map(format!("select * from withdraw_cota_nft_kv_pairs where lock_hash_crc = '{}' and lock_hash = '{}'", lock_hash_crc, lock_hash_hex),
                    |(cota_id, token_index, configure, state, characteristic, receiver_lock_script_id, out_point)| WithdrawWithScriptIdDb {
-                        cota_id: parse_bytes20_value(cota_id),
-                        token_index: parse_bytes4_value(token_index),
+                        cota_id: parse_mysql_bytes20_value(cota_id),
+                        token_index: parse_mysql_bytes4_value(token_index),
                         configure:from_value::<u8>(configure),
                         state: from_value::<u8>(state),
-                        characteristic: parse_bytes20_value(characteristic),
+                        characteristic: parse_mysql_bytes20_value(characteristic),
                         receiver_lock_script_id: from_value::<u64>(receiver_lock_script_id),
-                        out_point: parse_bytes36_value(out_point),
+                        out_point: parse_mysql_bytes36_value(out_point),
             },
         ).map_err(|_| Error::DatabaseQueryError("withdraw".to_string()))?;
     let receiver_lock_script_ids: Vec<String> = withdrawals_db
@@ -102,12 +101,12 @@ pub fn get_withdrawal_cota_by_lock_hash(lock_hash: [u8; 32]) -> Result<Vec<Withd
                 format!("select * from scripts where id in ({})", script_id_array),
                 |(id, code_hash, hash_type, args): (Value, Value, Value, Value)| ScriptDb {
                     id:        from_value::<u64>(id),
-                    code_hash: parse_bytes32_value(code_hash),
+                    code_hash: parse_mysql_bytes32_value(code_hash),
                     hash_type: from_value::<u8>(hash_type),
-                    args:      parse_bytes_value(args),
+                    args:      parse_mysql_bytes_value(args),
                 },
             )
-            .map_err(|_| Error::DatabaseQueryError("receiver_lock_script".to_string()))?
+            .map_err(|e| Error::DatabaseQueryError(e.to_string()))?
             .iter()
             .map(|script_db| {
                 let args_bytes: Vec<Byte> = script_db.args.iter().map(|v| Byte::from(*v)).collect();
@@ -143,11 +142,11 @@ pub fn get_claim_cota_by_lock_hash(lock_hash: [u8; 32]) -> Result<Vec<ClaimDb>, 
         .unwrap()
         .query_map(format!("select * from claimed_cota_nft_kv_pairs where lock_hash_crc = '{}' and lock_hash = '{}'", lock_hash_crc, lock_hash_hex),
                    |(cota_id, token_index, out_point): (Value, Value, Value)| ClaimDb {
-                       cota_id: parse_bytes20_value(cota_id),
-                       token_index: parse_bytes4_value(token_index),
-                       out_point: parse_bytes36_value(out_point),
+                       cota_id: parse_mysql_bytes20_value(cota_id),
+                       token_index: parse_mysql_bytes4_value(token_index),
+                       out_point: parse_mysql_bytes36_value(out_point),
                    },
-        ).map_err(|_| Error::DatabaseQueryError("claim".to_string()))
+        ).map_err(|e| Error::DatabaseQueryError(e.to_string()))
 }
 
 pub fn get_all_cota_by_lock_hash(
@@ -167,27 +166,27 @@ fn parse_lock_hash(lock_hash: [u8; 32]) -> (String, u32) {
     )
 }
 
-fn parse_bytes4_value(v: Value) -> [u8; 4] {
+fn parse_mysql_bytes4_value(v: Value) -> [u8; 4] {
     let vec = from_value::<Vec<u8>>(v);
     parse_bytes4(String::from_utf8(vec).unwrap()).unwrap()
 }
 
-fn parse_bytes20_value(v: Value) -> [u8; 20] {
+fn parse_mysql_bytes20_value(v: Value) -> [u8; 20] {
     let vec = from_value::<Vec<u8>>(v);
     parse_bytes20(String::from_utf8(vec).unwrap()).unwrap()
 }
 
-fn parse_bytes32_value(v: Value) -> [u8; 32] {
+fn parse_mysql_bytes32_value(v: Value) -> [u8; 32] {
     let vec = from_value::<Vec<u8>>(v);
     parse_bytes32(String::from_utf8(vec).unwrap()).unwrap()
 }
 
-fn parse_bytes36_value(v: Value) -> [u8; 36] {
+fn parse_mysql_bytes36_value(v: Value) -> [u8; 36] {
     let vec = from_value::<Vec<u8>>(v);
     parse_bytes36(String::from_utf8(vec).unwrap()).unwrap()
 }
 
-fn parse_bytes_value(v: Value) -> Vec<u8> {
+fn parse_mysql_bytes_value(v: Value) -> Vec<u8> {
     let vec = from_value::<Vec<u8>>(v);
     parse_bytes(String::from_utf8(vec).unwrap()).unwrap()
 }
