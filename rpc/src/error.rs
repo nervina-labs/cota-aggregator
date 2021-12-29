@@ -28,6 +28,9 @@ pub enum Error {
     #[fail(display = "The cota_id '{}' has not defined", _0)]
     CotaIdHasNotDefined(String),
 
+    #[fail(display = "The cota_id and token_index has not withdrawn")]
+    CotaIdAndTokenIndexHasNotWithdrawn,
+
     #[fail(display = "Database '{}' query error", _0)]
     DatabaseQueryError(String),
 
@@ -61,6 +64,9 @@ impl Error {
             ),
             Self::RequestParamTypeError(msg) => format!("Request parameter '{}' type error", msg),
             Self::CotaIdHasNotDefined(msg) => format!("The cota_id '{}' has not defined", msg),
+            Self::CotaIdAndTokenIndexHasNotWithdrawn => {
+                "The cota_id and token_index has not withdrawn".to_owned()
+            }
             Self::DatabaseQueryError(msg) => format!("Database '{}' query error", msg),
             Self::Other(msg) => format!("Other error: {}", msg),
         }

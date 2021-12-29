@@ -20,8 +20,9 @@ impl Claim {
 
 #[derive(Clone, Eq, PartialEq)]
 pub struct ClaimReq {
-    pub lock_hash: [u8; 32],
-    pub claims:    Vec<Claim>,
+    pub lock_script:          Vec<u8>,
+    pub withdrawal_lock_hash: [u8; 32],
+    pub claims:               Vec<Claim>,
 }
 
 impl ClaimReq {
@@ -35,14 +36,15 @@ impl ClaimReq {
         let mut claim_vec: Vec<Claim> = Vec::new();
         for claim in claims_value.as_array().unwrap() {
             if !claim.is_object() {
-                return Err(Error::RequestParamTypeError("withdrawals".to_owned()));
+                return Err(Error::RequestParamTypeError("claims".to_owned()));
             }
             claim_vec.push(Claim::from_map(claim.as_object().unwrap())?)
         }
 
         Ok(ClaimReq {
-            lock_hash: map.get_hex_bytes_filed::<32>("lock_hash")?,
-            claims:    claim_vec,
+            lock_script:          map.get_hex_vec_filed("lock_script")?,
+            withdrawal_lock_hash: map.get_hex_bytes_filed::<32>("withdrawal_lock_hash")?,
+            claims:               claim_vec,
         })
     }
 }
