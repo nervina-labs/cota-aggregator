@@ -113,13 +113,13 @@ mod tests {
         map.insert("total".to_owned(), Value::String("0x0000008g".to_owned()));
 
         assert_eq!(
-            map.get_hex_bytes_filed("lock_hash", 32).unwrap(),
+            map.get_hex_vec_filed("lock_hash").unwrap(),
             hex::decode("1c5a6f36e6f1485e4df40906f22247888545dd00590a22d985d3be1f63b62db1")
                 .unwrap()
         );
 
         assert_eq!(
-            map.get_hex_bytes_filed("lock_hash", 30),
+            map.get_hex_bytes_filed::<30>("lock_hash"),
             Err(Error::RequestParamHexLenError {
                 msg:      "lock_hash".to_owned(),
                 got:      32,
@@ -128,19 +128,19 @@ mod tests {
         );
 
         assert_eq!(
-            map.get_hex_bytes_filed("lock_has", 32),
+            map.get_hex_bytes_filed::<32>("lock_has"),
             Err(Error::RequestParamNotFound("lock_has".to_owned()))
         );
 
         assert_eq!(
-            map.get_hex_bytes_filed("cota_id", 20),
+            map.get_hex_bytes_filed::<20>("cota_id"),
             Err(Error::RequestParamHexInvalid(
                 "\"f14aca18aae9df753af304469d8f4ebbc174a938\"".to_owned()
             ))
         );
 
         assert_eq!(
-            map.get_hex_bytes_filed("total", 4),
+            map.get_hex_bytes_filed::<4>("total"),
             Err(Error::RequestParamHexInvalid("\"0x0000008g\"".to_owned()))
         );
     }
