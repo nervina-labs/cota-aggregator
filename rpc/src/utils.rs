@@ -14,11 +14,12 @@ fn remove_0x(str: &str) -> &str {
 }
 
 pub trait HexParser {
-    fn get_hex_bytes_filed(&self, key: &str, bytes_count: usize) -> Result<Vec<u8>, Error>;
+    fn get_hex_bytes_filed<const N: usize>(&self, key: &str) -> Result<[u8; N], Error>;
+    fn get_hex_vec_filed(&self, key: &str) -> Result<Vec<u8>, Error>;
 }
 
 impl HexParser for Map<String, Value> {
-    fn get_hex_bytes_filed(&self, key: &str, bytes_count: usize) -> Result<Vec<u8>, Error> {
+    fn get_hex_bytes_filed<const N: usize>(&self, key: &str) -> Result<[u8; N], Error> {
         let v = self
             .get(key)
             .ok_or(Error::RequestParamNotFound(key.to_owned()))?;
@@ -32,13 +33,24 @@ impl HexParser for Map<String, Value> {
         let hex_without_0x = remove_0x(hex_str);
         let result = hex::decode(hex_without_0x)
             .map_err(|_| Error::RequestParamHexInvalid(v.to_string()))?;
-        if result.len() != bytes_count {
+        if result.len() != N {
             return Err(Error::RequestParamHexLenError {
                 msg:      key.to_owned(),
                 got:      result.len(),
-                expected: bytes_count,
+                expected: N,
             });
         }
+        Ok(parse_n(result))
+    }
+
+    fn get_hex_vec_filed(&self, key: &str) -> Result<Vec<u8>, Error> {
+        let v = self
+            .get(key)
+            .ok_or(Error::RequestParamNotFound(key.to_owned()))?;
+        if !v.is_string() {
+            return Err(Error::RequestParamTypeError(key.to_owned()));
+        }
+        let result = parse_bytes(v.as_str().unwrap().to_owned())?;
         Ok(result)
     }
 }
@@ -46,6 +58,12 @@ impl HexParser for Map<String, Value> {
 pub fn generate_crc(v: &[u8]) -> u32 {
     const CRC: Crc<u32> = Crc::<u32>::new(&CRC_32_ISO_HDLC);
     CRC.checksum(v)
+}
+
+fn parse_n<const N: usize>(vec: Vec<u8>) -> [u8; N] {
+    vec.try_into().unwrap_or_else(|v: Vec<u8>| {
+        panic!("Expected a Vec of length {} but it was {}", N, v.len())
+    })
 }
 
 pub fn parse_bytes_n<const N: usize>(value: String) -> Result<[u8; N], Error> {
@@ -58,10 +76,7 @@ pub fn parse_bytes_n<const N: usize>(value: String) -> Result<[u8; N], Error> {
             expected: N,
         });
     }
-    let result: [u8; N] = vec.try_into().unwrap_or_else(|v: Vec<u8>| {
-        panic!("Expected a Vec of length {} but it was {}", N, v.len())
-    });
-    Ok(result)
+    Ok(parse_n(vec))
 }
 
 pub fn parse_bytes(value: String) -> Result<Vec<u8>, Error> {

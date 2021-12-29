@@ -14,30 +14,12 @@ pub struct DefineReq {
 
 impl DefineReq {
     pub fn from_map(map: Map<String, Value>) -> Result<Self, Error> {
-        let lock_hash_vec = map.get_hex_bytes_filed("lock_hash", 32)?;
-        let mut lock_hash = [0u8; 32];
-        lock_hash.copy_from_slice(&lock_hash_vec);
-
-        let cota_id_vec = map.get_hex_bytes_filed("cota_id", 20)?;
-        let mut cota_id = [0u8; 20];
-        cota_id.copy_from_slice(&cota_id_vec);
-
-        let total_vec = map.get_hex_bytes_filed("total", 4)?;
-        let mut total = [0u8; 4];
-        total.copy_from_slice(&total_vec);
-
-        let issued_vec = map.get_hex_bytes_filed("issued", 4)?;
-        let mut issued = [0u8; 4];
-        issued.copy_from_slice(&issued_vec);
-
-        let configure = map.get_hex_bytes_filed("configure", 1)?[0];
-
         Ok(DefineReq {
-            lock_hash,
-            cota_id,
-            total,
-            issued,
-            configure,
+            lock_hash: map.get_hex_bytes_filed::<32>("lock_hash")?,
+            cota_id:   map.get_hex_bytes_filed::<20>("cota_id")?,
+            total:     map.get_hex_bytes_filed::<4>("total")?,
+            issued:    map.get_hex_bytes_filed::<4>("issued")?,
+            configure: map.get_hex_bytes_filed::<1>("configure")?[0],
         })
     }
 }
