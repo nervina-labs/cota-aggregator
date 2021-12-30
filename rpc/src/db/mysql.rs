@@ -142,8 +142,7 @@ pub fn get_withdrawal_cota_by_lock_hash(
     let withdraw_db_vec: Vec<WithdrawDb> = if receiver_lock_script_ids.is_empty() {
         vec![]
     } else {
-        let script_map: HashMap<String, Vec<u8>> =
-            get_script_map_by_ids(conn, receiver_lock_script_ids)?;
+        let script_map = get_script_map_by_ids(conn, receiver_lock_script_ids)?;
         withdrawals_db
             .iter()
             .map(|withdrawal| WithdrawDb {

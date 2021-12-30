@@ -41,6 +41,7 @@ pub fn generate_withdrawal_smt(withdrawal_req: WithdrawalReq) -> Result<Map<Stri
             generate_hold_value(hold_db.configure, hold_db.state, hold_db.characteristic);
         hold_values.push(hold_value);
         let (_, value) = generate_empty_value();
+        update_leaves.push((key, value));
         smt.update(key, value)
             .expect("withdraw SMT update leave error");
 
