@@ -19,7 +19,7 @@ pub struct HoldDb {
 pub struct WithdrawWithScriptIdDb {
     pub cota_id:                 [u8; 20],
     pub token_index:             [u8; 4],
-    pub out_point:               [u8; 36],
+    pub out_point:               [u8; 24],
     pub state:                   u8,
     pub configure:               u8,
     pub characteristic:          [u8; 20],
@@ -38,7 +38,7 @@ pub struct ScriptDb {
 pub struct WithdrawDb {
     pub cota_id:              [u8; 20],
     pub token_index:          [u8; 4],
-    pub out_point:            [u8; 36],
+    pub out_point:            [u8; 24],
     pub state:                u8,
     pub configure:            u8,
     pub characteristic:       [u8; 20],
@@ -49,5 +49,5 @@ pub struct WithdrawDb {
 pub struct ClaimDb {
     pub cota_id:     [u8; 20],
     pub token_index: [u8; 4],
-    pub out_point:   [u8; 36],
+    pub out_point:   [u8; 24],
 }

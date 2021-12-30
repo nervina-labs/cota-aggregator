@@ -84,7 +84,7 @@ pub fn generate_withdrawal_value(
     state: u8,
     characteristic: [u8; 20],
     to_lock_script: Vec<u8>,
-    out_point: [u8; 36],
+    out_point: [u8; 24],
 ) -> (WithdrawalCotaNFTValue, H256) {
     let cota_info = CotaNFTInfoBuilder::default()
         .configure(Byte::from(configure))
@@ -94,7 +94,7 @@ pub fn generate_withdrawal_value(
     let to_lock_bytes: Vec<Byte> = to_lock_script.iter().map(|v| Byte::from(*v)).collect();
     let withdrawal_value = WithdrawalCotaNFTValueBuilder::default()
         .nft_info(cota_info)
-        .out_point(OutPointSlice::from_slice(&out_point[12..]).unwrap())
+        .out_point(OutPointSlice::from_slice(&out_point).unwrap())
         .to_lock(BytesBuilder::default().set(to_lock_bytes).build())
         .build();
     let value = H256::from(blake2b_256(withdrawal_value.as_slice()));
@@ -104,7 +104,7 @@ pub fn generate_withdrawal_value(
 pub fn generate_claim_key(
     cota_id: [u8; 20],
     token_index: [u8; 4],
-    out_point: [u8; 36],
+    out_point: [u8; 24],
 ) -> (ClaimCotaNFTKey, H256) {
     let nft_id = CotaNFTIdBuilder::default()
         .smt_type(Uint16::from_slice(&CLAIM_NFT_SMT_TYPE.to_be_bytes()).unwrap())
@@ -113,7 +113,7 @@ pub fn generate_claim_key(
         .build();
     let claimed_key = ClaimCotaNFTKeyBuilder::default()
         .nft_id(nft_id)
-        .out_point(OutPointSlice::from_slice(&out_point[12..]).unwrap())
+        .out_point(OutPointSlice::from_slice(&out_point).unwrap())
         .build();
     let key = H256::from(blake2b_256(claimed_key.as_slice()));
     (claimed_key, key)
@@ -125,6 +125,12 @@ pub fn generate_claim_value() -> (Byte32, H256) {
         .build();
     let value = H256::from([255u8; 32]);
     (claim_value, value)
+}
+
+pub fn generate_empty_value() -> (Byte32, H256) {
+    let empty_value = Byte32Builder::default().set([Byte::from(0u8); 32]).build();
+    let value = H256::from([0u8; 32]);
+    (empty_value, value)
 }
 
 pub fn generate_history_smt(lock_hash: [u8; 32]) -> Result<SMT, Error> {

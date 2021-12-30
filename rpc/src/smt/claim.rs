@@ -29,6 +29,7 @@ pub fn generate_claim_smt(claim_req: ClaimReq) -> Result<Map<String, Value>, Err
         claim_req.withdrawal_lock_hash,
         cota_id_and_token_index_pairs,
     )?;
+    println!("{:?}", sender_withdrawals.len());
     if sender_withdrawals.is_empty() || sender_withdrawals.len() != claims_len {
         return Err(Error::CotaIdAndTokenIndexHasNotWithdrawn);
     }
