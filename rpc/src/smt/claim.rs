@@ -35,14 +35,14 @@ pub fn generate_claim_smt(claim_req: ClaimReq) -> Result<Map<String, Value>, Err
 
     let mut hold_keys: Vec<CotaNFTId> = Vec::new();
     let mut hold_values: Vec<CotaNFTInfo> = Vec::new();
-    let mut withdrawal_smt = generate_history_smt((&claim_req).withdrawal_lock_hash)?;
+    let withdrawal_smt = generate_history_smt((&claim_req).withdrawal_lock_hash)?;
     let mut withdrawal_update_leaves: Vec<(H256, H256)> = Vec::with_capacity(claims_len);
 
     let mut claim_keys: Vec<ClaimCotaNFTKey> = Vec::new();
     let mut key_vec: Vec<H256> = Vec::new();
     let mut claim_values: Vec<Byte32> = Vec::new();
     let mut claim_smt = generate_history_smt(blake2b_256(&claim_req.lock_script))?;
-    let mut claim_update_leaves: Vec<(H256, H256)> = Vec::with_capacity(claims_len);
+    let mut claim_update_leaves: Vec<(H256, H256)> = Vec::with_capacity(claims_len * 2);
     for withdrawal in sender_withdrawals {
         let WithdrawDb {
             cota_id,
@@ -61,9 +61,6 @@ pub fn generate_claim_smt(claim_req: ClaimReq) -> Result<Map<String, Value>, Err
             claim_req.clone().lock_script,
             out_point,
         );
-        withdrawal_smt
-            .update(key, value)
-            .expect("withdrawal SMT update leave error");
         withdrawal_update_leaves.push((key, value));
 
         let (hold_key, key) = generate_hold_key(cota_id, token_index);
@@ -80,6 +77,7 @@ pub fn generate_claim_smt(claim_req: ClaimReq) -> Result<Map<String, Value>, Err
         key_vec.push(key);
     }
     let withdrawal_root_hash = withdrawal_smt.root().clone();
+    println!("withdrawal_root_hash: {:?}", withdrawal_root_hash);
     let withdraw_merkle_proof = withdrawal_smt
         .merkle_proof(
             withdrawal_update_leaves
