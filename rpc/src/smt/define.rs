@@ -9,10 +9,11 @@ use cota_smt::molecule::prelude::*;
 use cota_smt::smt::{Blake2bHasher, H256};
 use jsonrpc_http_server::jsonrpc_core::serde_json::Map;
 use jsonrpc_http_server::jsonrpc_core::Value;
+use log::info;
 
 pub fn generate_define_smt(define_req: DefineReq) -> Result<Map<String, Value>, Error> {
-    let mut smt = generate_history_smt(define_req.lock_hash)?;
-    let db_defines = get_define_cota_by_lock_hash(define_req.lock_hash)?;
+    let mut smt = generate_history_smt(define_req.lock_hash);
+    let db_defines = get_define_cota_by_lock_hash(define_req.lock_hash);
     if !db_defines.is_empty() {
         for DefineDb {
             cota_id,
@@ -49,7 +50,7 @@ pub fn generate_define_smt(define_req: DefineReq) -> Result<Map<String, Value>, 
     root_hash_bytes.copy_from_slice(root_hash.as_slice());
     let root_hash_hex = hex::encode(root_hash_bytes);
 
-    println!("smt root hash: {:?}", root_hash_hex);
+    info!("smt_root_hash: {:?}", root_hash_hex);
 
     let define_merkle_proof = smt
         .merkle_proof(update_leaves.iter().map(|leave| leave.0).collect())
@@ -94,7 +95,7 @@ pub fn generate_define_smt(define_req: DefineReq) -> Result<Map<String, Value>, 
 
     let define_entries_hex = hex::encode(define_entries.as_slice());
 
-    println!("define_entries_hex: {:?}", define_entries_hex);
+    info!("define_smt_entry: {:?}", define_entries_hex);
 
     let mut result: Map<String, Value> = Map::new();
     result.insert("smt_root_hash".to_string(), Value::String(root_hash_hex));

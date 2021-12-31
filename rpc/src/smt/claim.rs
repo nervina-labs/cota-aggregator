@@ -12,6 +12,7 @@ use cota_smt::smt::{blake2b_256, Blake2bHasher, H256};
 use cota_smt::transfer::ClaimCotaNFTEntriesBuilder;
 use jsonrpc_http_server::jsonrpc_core::serde_json::Map;
 use jsonrpc_http_server::jsonrpc_core::Value;
+use log::info;
 
 pub fn generate_claim_smt(claim_req: ClaimReq) -> Result<Map<String, Value>, Error> {
     let claims = claim_req.clone().claims;
@@ -28,20 +29,20 @@ pub fn generate_claim_smt(claim_req: ClaimReq) -> Result<Map<String, Value>, Err
     let sender_withdrawals = get_withdrawal_cota_by_lock_hash(
         claim_req.withdrawal_lock_hash,
         cota_id_and_token_index_pairs,
-    )?;
+    );
     if sender_withdrawals.is_empty() || sender_withdrawals.len() != claims_len {
         return Err(Error::CotaIdAndTokenIndexHasNotWithdrawn);
     }
 
     let mut hold_keys: Vec<CotaNFTId> = Vec::new();
     let mut hold_values: Vec<CotaNFTInfo> = Vec::new();
-    let withdrawal_smt = generate_history_smt((&claim_req).withdrawal_lock_hash)?;
+    let withdrawal_smt = generate_history_smt((&claim_req).withdrawal_lock_hash);
     let mut withdrawal_update_leaves: Vec<(H256, H256)> = Vec::with_capacity(claims_len);
 
     let mut claim_keys: Vec<ClaimCotaNFTKey> = Vec::new();
     let mut key_vec: Vec<H256> = Vec::new();
     let mut claim_values: Vec<Byte32> = Vec::new();
-    let mut claim_smt = generate_history_smt(blake2b_256(&claim_req.lock_script))?;
+    let mut claim_smt = generate_history_smt(blake2b_256(&claim_req.lock_script));
     let mut claim_update_leaves: Vec<(H256, H256)> = Vec::with_capacity(claims_len * 2);
     for withdrawal in sender_withdrawals {
         let WithdrawDb {
@@ -77,7 +78,7 @@ pub fn generate_claim_smt(claim_req: ClaimReq) -> Result<Map<String, Value>, Err
         key_vec.push(key);
     }
     let withdrawal_root_hash = withdrawal_smt.root().clone();
-    println!("withdrawal_root_hash: {:?}", withdrawal_root_hash);
+    info!("withdrawal_root_hash: {:?}", withdrawal_root_hash);
     let withdraw_merkle_proof = withdrawal_smt
         .merkle_proof(
             withdrawal_update_leaves
@@ -154,7 +155,7 @@ pub fn generate_claim_smt(claim_req: ClaimReq) -> Result<Map<String, Value>, Err
 
     let claim_entries_hex = hex::encode(claim_entries.as_slice());
 
-    println!("claim_entries_hex: {:?}", claim_entries_hex);
+    info!("claim_smt_entry: {:?}", claim_entries_hex);
 
     let mut result = Map::new();
     result.insert(

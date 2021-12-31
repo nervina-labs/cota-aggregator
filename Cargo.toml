@@ -5,6 +5,7 @@ edition = "2018"
 
 [dependencies]
 jsonrpc-http-server = "18.0.0"
+env_logger = "0.9"
 rpc = {path = "rpc", version = "0.1.0"}
 
 [workspace]

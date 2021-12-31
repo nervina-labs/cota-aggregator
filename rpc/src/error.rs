@@ -34,9 +34,6 @@ pub enum Error {
     #[fail(display = "The cota_id and token_index has not held")]
     CotaIdAndTokenIndexHasNotHeld,
 
-    #[fail(display = "Database '{}' query error", _0)]
-    DatabaseQueryError(String),
-
     #[fail(display = "Other error: {}", _0)]
     Other(String),
 }
@@ -73,7 +70,6 @@ impl Error {
             Self::CotaIdAndTokenIndexHasNotHeld => {
                 "The cota_id and token_index has not held".to_owned()
             }
-            Self::DatabaseQueryError(msg) => format!("Database '{}' query error", msg),
             Self::Other(msg) => format!("Other error: {}", msg),
         }
     }

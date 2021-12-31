@@ -1,6 +1,5 @@
 use crate::db::mysql::get_all_cota_by_lock_hash;
 use crate::db::types::{ClaimDb, DefineDb, HoldDb, WithdrawDb};
-use crate::error::Error;
 use crate::smt::constants::{
     CLAIM_NFT_SMT_TYPE, DEFINE_NFT_SMT_TYPE, HOLD_NFT_SMT_TYPE, WITHDRAWAL_NFT_SMT_TYPE,
 };
@@ -8,6 +7,7 @@ use cota_smt::common::{Uint16, Uint32, *};
 use cota_smt::molecule::prelude::*;
 use cota_smt::smt::SMT;
 use cota_smt::smt::{blake2b_256, H256};
+use log::error;
 
 pub fn generate_define_key(cota_id: [u8; 20]) -> (DefineCotaNFTId, H256) {
     let cota_id = CotaId::from_slice(&cota_id).unwrap();
@@ -133,9 +133,9 @@ pub fn generate_empty_value() -> (Byte32, H256) {
     (empty_value, value)
 }
 
-pub fn generate_history_smt(lock_hash: [u8; 32]) -> Result<SMT, Error> {
+pub fn generate_history_smt(lock_hash: [u8; 32]) -> SMT {
     let mut smt: SMT = SMT::default();
-    let (defines, holds, withdrawals, claims) = get_all_cota_by_lock_hash(lock_hash)?;
+    let (defines, holds, withdrawals, claims) = get_all_cota_by_lock_hash(lock_hash);
     for define_db in defines {
         let DefineDb {
             cota_id,
@@ -146,7 +146,9 @@ pub fn generate_history_smt(lock_hash: [u8; 32]) -> Result<SMT, Error> {
         let (_, key) = generate_define_key(cota_id);
         let (_, value) =
             generate_define_value(total.to_be_bytes(), issued.to_be_bytes(), configure);
-        smt.update(key, value).expect("SMT update leave error");
+        smt.update(key, value)
+            .map_err(|_| error!("Define SMT update leave error"))
+            .unwrap();
     }
     for hold_db in holds {
         let HoldDb {
@@ -158,7 +160,9 @@ pub fn generate_history_smt(lock_hash: [u8; 32]) -> Result<SMT, Error> {
         } = hold_db;
         let (_, key) = generate_hold_key(cota_id, token_index);
         let (_, value) = generate_hold_value(configure, state, characteristic);
-        smt.update(key, value).expect("SMT update leave error");
+        smt.update(key, value)
+            .map_err(|_| error!("Hold SMT update leave error"))
+            .unwrap();
     }
     for withdrawal_db in withdrawals {
         let WithdrawDb {
@@ -178,7 +182,9 @@ pub fn generate_history_smt(lock_hash: [u8; 32]) -> Result<SMT, Error> {
             receiver_lock_script,
             out_point,
         );
-        smt.update(key, value).expect("SMT update leave error");
+        smt.update(key, value)
+            .map_err(|_| error!("Withdrawal SMT update leave error"))
+            .unwrap();
     }
     for claim_db in claims {
         let ClaimDb {
@@ -188,7 +194,9 @@ pub fn generate_history_smt(lock_hash: [u8; 32]) -> Result<SMT, Error> {
         } = claim_db;
         let (_, key) = generate_claim_key(cota_id, token_index, out_point);
         let (_, value) = generate_claim_value();
-        smt.update(key, value).expect("SMT update leave error");
+        smt.update(key, value)
+            .map_err(|_| error!("Claim SMT update leave error"))
+            .unwrap();
     }
-    Ok(smt)
+    smt
 }

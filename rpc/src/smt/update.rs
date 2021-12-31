@@ -10,7 +10,7 @@ use jsonrpc_http_server::jsonrpc_core::serde_json::Map;
 use jsonrpc_http_server::jsonrpc_core::Value;
 
 pub fn generate_update_smt(update_req: UpdateReq) -> Result<Map<String, Value>, Error> {
-    let mut smt = generate_history_smt(update_req.lock_hash)?;
+    let mut smt = generate_history_smt(update_req.lock_hash);
     let nfts = update_req.nfts;
     if nfts.is_empty() {
         return Err(Error::RequestParamNotFound("nfts".to_string()));
@@ -20,7 +20,7 @@ pub fn generate_update_smt(update_req: UpdateReq) -> Result<Map<String, Value>, 
             .map(|nft| (nft.cota_id, nft.token_index))
             .collect(),
     );
-    let db_holds = get_hold_cota_by_lock_hash(update_req.lock_hash, cota_id_and_token_index_pairs)?;
+    let db_holds = get_hold_cota_by_lock_hash(update_req.lock_hash, cota_id_and_token_index_pairs);
     if db_holds.is_empty() || db_holds.len() != nfts.len() {
         return Err(Error::CotaIdAndTokenIndexHasNotHeld);
     }

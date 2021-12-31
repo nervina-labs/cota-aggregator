@@ -12,6 +12,7 @@ use cota_smt::molecule::prelude::*;
 use cota_smt::smt::{Blake2bHasher, H256};
 use jsonrpc_http_server::jsonrpc_core::serde_json::Map;
 use jsonrpc_http_server::jsonrpc_core::Value;
+use log::info;
 
 pub fn generate_mint_smt(mint_req: MintReq) -> Result<Map<String, Value>, Error> {
     let withdrawals = mint_req.withdrawals;
@@ -19,7 +20,7 @@ pub fn generate_mint_smt(mint_req: MintReq) -> Result<Map<String, Value>, Error>
     if withdrawals_len == 0 {
         return Err(Error::RequestParamNotFound("withdrawals".to_string()));
     }
-    let db_define = get_define_cota_by_lock_hash_and_cota_id(mint_req.lock_hash, mint_req.cota_id)?;
+    let db_define = get_define_cota_by_lock_hash_and_cota_id(mint_req.lock_hash, mint_req.cota_id);
     if db_define.is_none() {
         let cota_id_hex = hex::encode(mint_req.cota_id);
         return Err(Error::CotaIdHasNotDefined(cota_id_hex));
@@ -29,7 +30,7 @@ pub fn generate_mint_smt(mint_req: MintReq) -> Result<Map<String, Value>, Error>
     let mut define_new_values: Vec<DefineCotaNFTValue> = Vec::new();
     let mut withdrawal_keys: Vec<CotaNFTId> = Vec::new();
     let mut withdrawal_values: Vec<WithdrawalCotaNFTValue> = Vec::new();
-    let mut smt = generate_history_smt(mint_req.lock_hash)?;
+    let mut smt = generate_history_smt(mint_req.lock_hash);
     let mut update_leaves: Vec<(H256, H256)> = Vec::with_capacity(withdrawals_len + 1);
     let DefineDb {
         cota_id,
@@ -87,7 +88,7 @@ pub fn generate_mint_smt(mint_req: MintReq) -> Result<Map<String, Value>, Error>
     root_hash_bytes.copy_from_slice(root_hash.as_slice());
     let root_hash_hex = hex::encode(root_hash_bytes);
 
-    println!("smt root hash: {:?}", root_hash_hex);
+    info!("smt root hash: {:?}", root_hash_hex);
 
     let mint_merkle_proof = smt
         .merkle_proof(update_leaves.iter().map(|leave| leave.0).collect())
@@ -138,7 +139,7 @@ pub fn generate_mint_smt(mint_req: MintReq) -> Result<Map<String, Value>, Error>
 
     let mint_entries_hex = hex::encode(mint_entries.as_slice());
 
-    println!("mint_entries_hex: {:?}", mint_entries_hex);
+    info!("mint_smt_entry: {:?}", mint_entries_hex);
 
     let mut result = Map::new();
     result.insert("smt_root_hash".to_string(), Value::String(root_hash_hex));

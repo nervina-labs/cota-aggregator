@@ -13,7 +13,7 @@ use jsonrpc_http_server::jsonrpc_core::serde_json::Map;
 use jsonrpc_http_server::jsonrpc_core::Value;
 
 pub fn generate_withdrawal_smt(withdrawal_req: WithdrawalReq) -> Result<Map<String, Value>, Error> {
-    let mut smt = generate_history_smt(withdrawal_req.lock_hash)?;
+    let mut smt = generate_history_smt(withdrawal_req.lock_hash);
     let withdrawals = withdrawal_req.withdrawals;
     if withdrawals.is_empty() {
         return Err(Error::RequestParamNotFound("withdrawals".to_string()));
@@ -25,7 +25,7 @@ pub fn generate_withdrawal_smt(withdrawal_req: WithdrawalReq) -> Result<Map<Stri
             .collect(),
     );
     let db_holds =
-        get_hold_cota_by_lock_hash(withdrawal_req.lock_hash, cota_id_and_token_index_pairs)?;
+        get_hold_cota_by_lock_hash(withdrawal_req.lock_hash, cota_id_and_token_index_pairs);
     if db_holds.is_empty() || db_holds.len() != withdrawals.len() {
         return Err(Error::CotaIdAndTokenIndexHasNotHeld);
     }
