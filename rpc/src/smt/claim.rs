@@ -29,20 +29,20 @@ pub fn generate_claim_smt(claim_req: ClaimReq) -> Result<Map<String, Value>, Err
     let sender_withdrawals = get_withdrawal_cota_by_lock_hash(
         claim_req.withdrawal_lock_hash,
         cota_id_and_token_index_pairs,
-    );
+    )?;
     if sender_withdrawals.is_empty() || sender_withdrawals.len() != claims_len {
         return Err(Error::CotaIdAndTokenIndexHasNotWithdrawn);
     }
 
     let mut hold_keys: Vec<CotaNFTId> = Vec::new();
     let mut hold_values: Vec<CotaNFTInfo> = Vec::new();
-    let withdrawal_smt = generate_history_smt((&claim_req).withdrawal_lock_hash);
+    let withdrawal_smt = generate_history_smt((&claim_req).withdrawal_lock_hash)?;
     let mut withdrawal_update_leaves: Vec<(H256, H256)> = Vec::with_capacity(claims_len);
 
     let mut claim_keys: Vec<ClaimCotaNFTKey> = Vec::new();
     let mut key_vec: Vec<H256> = Vec::new();
     let mut claim_values: Vec<Byte32> = Vec::new();
-    let mut claim_smt = generate_history_smt(blake2b_256(&claim_req.lock_script));
+    let mut claim_smt = generate_history_smt(blake2b_256(&claim_req.lock_script))?;
     let mut claim_update_leaves: Vec<(H256, H256)> = Vec::with_capacity(claims_len * 2);
     for withdrawal in sender_withdrawals {
         let WithdrawDb {
@@ -78,7 +78,6 @@ pub fn generate_claim_smt(claim_req: ClaimReq) -> Result<Map<String, Value>, Err
         key_vec.push(key);
     }
     let withdrawal_root_hash = withdrawal_smt.root().clone();
-    info!("withdrawal_root_hash: {:?}", withdrawal_root_hash);
     let withdraw_merkle_proof = withdrawal_smt
         .merkle_proof(
             withdrawal_update_leaves
@@ -111,6 +110,8 @@ pub fn generate_claim_smt(claim_req: ClaimReq) -> Result<Map<String, Value>, Err
     let mut root_hash_bytes = [0u8; 32];
     root_hash_bytes.copy_from_slice(claim_root_hash.as_slice());
     let claim_root_hash_hex = hex::encode(root_hash_bytes);
+
+    info!("claim_smt_root_hash: {:?}", claim_root_hash_hex);
 
     let claim_merkle_proof = claim_smt
         .merkle_proof(claim_update_leaves.iter().map(|leave| leave.0).collect())

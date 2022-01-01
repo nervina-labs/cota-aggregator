@@ -8,9 +8,10 @@ use cota_smt::smt::{Blake2bHasher, H256};
 use cota_smt::update::UpdateCotaNFTEntriesBuilder;
 use jsonrpc_http_server::jsonrpc_core::serde_json::Map;
 use jsonrpc_http_server::jsonrpc_core::Value;
+use log::info;
 
 pub fn generate_update_smt(update_req: UpdateReq) -> Result<Map<String, Value>, Error> {
-    let mut smt = generate_history_smt(update_req.lock_hash);
+    let mut smt = generate_history_smt(update_req.lock_hash)?;
     let nfts = update_req.nfts;
     if nfts.is_empty() {
         return Err(Error::RequestParamNotFound("nfts".to_string()));
@@ -20,7 +21,7 @@ pub fn generate_update_smt(update_req: UpdateReq) -> Result<Map<String, Value>, 
             .map(|nft| (nft.cota_id, nft.token_index))
             .collect(),
     );
-    let db_holds = get_hold_cota_by_lock_hash(update_req.lock_hash, cota_id_and_token_index_pairs);
+    let db_holds = get_hold_cota_by_lock_hash(update_req.lock_hash, cota_id_and_token_index_pairs)?;
     if db_holds.is_empty() || db_holds.len() != nfts.len() {
         return Err(Error::CotaIdAndTokenIndexHasNotHeld);
     }
@@ -47,7 +48,7 @@ pub fn generate_update_smt(update_req: UpdateReq) -> Result<Map<String, Value>, 
     root_hash_bytes.copy_from_slice(root_hash.as_slice());
     let root_hash_hex = hex::encode(root_hash_bytes);
 
-    println!("smt root hash: {:?}", root_hash_hex);
+    info!("update_smt_root_hash: {:?}", root_hash_hex);
 
     let update_merkle_proof = smt
         .merkle_proof(update_leaves.iter().map(|leave| leave.0).collect())
@@ -86,7 +87,7 @@ pub fn generate_update_smt(update_req: UpdateReq) -> Result<Map<String, Value>, 
 
     let update_entries_hex = hex::encode(update_entries.as_slice());
 
-    println!("update_entries_hex: {:?}", update_entries_hex);
+    info!("update_smt_entry: {:?}", update_entries_hex);
 
     let mut result: Map<String, Value> = Map::new();
     result.insert("smt_root_hash".to_string(), Value::String(root_hash_hex));

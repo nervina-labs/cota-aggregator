@@ -12,8 +12,8 @@ use jsonrpc_http_server::jsonrpc_core::Value;
 use log::info;
 
 pub fn generate_define_smt(define_req: DefineReq) -> Result<Map<String, Value>, Error> {
-    let mut smt = generate_history_smt(define_req.lock_hash);
-    let db_defines = get_define_cota_by_lock_hash(define_req.lock_hash);
+    let mut smt = generate_history_smt(define_req.lock_hash)?;
+    let db_defines = get_define_cota_by_lock_hash(define_req.lock_hash)?;
     if !db_defines.is_empty() {
         for DefineDb {
             cota_id,
@@ -50,7 +50,7 @@ pub fn generate_define_smt(define_req: DefineReq) -> Result<Map<String, Value>, 
     root_hash_bytes.copy_from_slice(root_hash.as_slice());
     let root_hash_hex = hex::encode(root_hash_bytes);
 
-    info!("smt_root_hash: {:?}", root_hash_hex);
+    info!("define_smt_root_hash: {:?}", root_hash_hex);
 
     let define_merkle_proof = smt
         .merkle_proof(update_leaves.iter().map(|leave| leave.0).collect())
