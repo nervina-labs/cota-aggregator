@@ -26,7 +26,7 @@ pub struct WithdrawWithScriptIdDb {
     pub receiver_lock_script_id: u64,
 }
 
-#[derive(Clone, Eq, PartialEq)]
+#[derive(Debug, Clone, Eq, PartialEq)]
 pub struct ScriptDb {
     pub id:        u64,
     pub code_hash: [u8; 32],

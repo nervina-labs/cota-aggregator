@@ -167,26 +167,23 @@ pub fn get_withdrawal_cota_by_lock_hash(
         .iter()
         .map(|withdrawal| withdrawal.receiver_lock_script_id.to_string())
         .collect();
-    let withdraw_db_vec: Vec<WithdrawDb> = if receiver_lock_script_ids.is_empty() {
-        vec![]
-    } else {
-        let script_map = get_script_map_by_ids(conn, receiver_lock_script_ids)?;
-        withdrawals_db
-            .iter()
-            .map(|withdrawal| WithdrawDb {
-                cota_id:              withdrawal.cota_id,
-                token_index:          withdrawal.token_index,
-                configure:            withdrawal.configure,
-                state:                withdrawal.state,
-                characteristic:       withdrawal.characteristic,
-                receiver_lock_script: script_map
-                    .get(&withdrawal.receiver_lock_script_id.to_string())
-                    .unwrap()
-                    .clone(),
-                out_point:            withdrawal.out_point,
-            })
-            .collect()
-    };
+    let mut withdraw_db_vec: Vec<WithdrawDb> = vec![];
+    let script_map = get_script_map_by_ids(conn, receiver_lock_script_ids)?;
+    for withdrawal in withdrawals_db {
+        let lock_script = script_map
+            .get(&withdrawal.receiver_lock_script_id.to_string())
+            .ok_or(Error::DatabaseQueryError("scripts".to_owned()))?
+            .clone();
+        withdraw_db_vec.push(WithdrawDb {
+            cota_id:              withdrawal.cota_id,
+            token_index:          withdrawal.token_index,
+            configure:            withdrawal.configure,
+            state:                withdrawal.state,
+            characteristic:       withdrawal.characteristic,
+            receiver_lock_script: lock_script,
+            out_point:            withdrawal.out_point,
+        })
+    }
     Ok(withdraw_db_vec)
 }
 
@@ -212,6 +209,8 @@ fn get_script_map_by_ids(
             error!("Query scripts error: {}", e.to_string());
             Error::DatabaseQueryError(e.to_string())
         })?;
+
+    println!("{:?}", script_id_array);
 
     let scripts: Vec<(String, Vec<u8>)> = scripts_db
         .iter()
