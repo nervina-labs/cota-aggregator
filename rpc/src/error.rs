@@ -68,13 +68,13 @@ impl Error {
             Self::RequestParamTypeError(msg) => format!("Request parameter '{}' type error", msg),
             Self::CotaIdHasNotDefined(msg) => format!("The cota_id '{}' has not defined", msg),
             Self::CotaIdAndTokenIndexHasNotWithdrawn => {
-                "The cota_id and token_index has not withdrawn".to_owned()
+                "The cota_id and token_index has not withdrawn".into()
             }
             Self::CotaIdAndTokenIndexHasNotHeld => {
-                "The cota_id and token_index has not held".to_owned()
+                "The cota_id and token_index has not held".into()
             }
-            Self::DatabaseQueryError(_) => "Internal error".to_string(),
-            Self::Other(_) => format!("Internal error"),
+            Self::DatabaseQueryError(_) => "Internal error".into(),
+            Self::Other(_) => "Internal error".into(),
         }
     }
 }

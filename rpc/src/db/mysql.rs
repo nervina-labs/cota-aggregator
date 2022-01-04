@@ -27,9 +27,8 @@ pub fn get_define_cota_by_lock_hash(lock_hash: [u8; 32]) -> Result<Vec<DefineDb>
         .unwrap()
         .query_map(
             format!(
-                "select cota_id, total, issued, configure \
-                                from define_cota_nft_kv_pairs where lock_hash_crc = '{}' \
-                                and lock_hash = '{}'",
+                "select cota_id, total, issued, configure from define_cota_nft_kv_pairs \
+                where lock_hash_crc = '{}' and lock_hash = '{}'",
                 lock_hash_crc, lock_hash_hex
             ),
             |(cota_id, total, issued, configure)| DefineDb {
@@ -58,8 +57,7 @@ pub fn get_define_cota_by_lock_hash_and_cota_id(
         .query_map(
             format!(
                 "select total, issued, configure from define_cota_nft_kv_pairs \
-                                 where lock_hash_crc = '{}' and lock_hash = '{}' \
-                                 and cota_id = '{}'",
+                 where lock_hash_crc = '{}' and lock_hash = '{}' and cota_id = '{}'",
                 lock_hash_crc, lock_hash_hex, cota_id_hex
             ),
             |(total, issued, configure): (Value, Value, Value)| DefineDb {
@@ -83,10 +81,7 @@ pub fn get_hold_cota_by_lock_hash(
     let (lock_hash_hex, lock_hash_crc) = parse_lock_hash(lock_hash);
     let statement = match cota_id_and_token_index_pairs {
         Some(pairs) => {
-            let cota_id_hexes: Vec<String> = pairs.iter().map(|pair| hex::encode(pair.0)).collect();
-            let token_index_hexes: Vec<String> = pairs.iter().map(|pair| u32::from_be_bytes(pair.1).to_string()).collect();
-            let cota_id_array = cota_id_hexes.join("','");
-            let token_index_array = token_index_hexes.join(",");
+            let (cota_id_array, token_index_array) = parse_cota_id_and_token_index_pairs(pairs);
             format!(
                 "select cota_id, token_index, configure, state, characteristic from hold_cota_nft_kv_pairs where \
                  lock_hash_crc = '{}' and lock_hash = '{}' and cota_id in ('{}') and token_index in ({})",
@@ -95,8 +90,7 @@ pub fn get_hold_cota_by_lock_hash(
         }
         None => format!(
             "select cota_id, token_index, configure, state, characteristic from hold_cota_nft_kv_pairs \
-            where lock_hash_crc = '{}' and lock_hash = '{}'",
-            lock_hash_crc, lock_hash_hex
+            where lock_hash_crc = '{}' and lock_hash = '{}'", lock_hash_crc, lock_hash_hex
         ),
     };
     CONN.lock()
@@ -125,10 +119,7 @@ pub fn get_withdrawal_cota_by_lock_hash(
 
     let statement = match cota_id_and_token_index_pairs {
         Some(pairs) =>  {
-            let cota_id_hexes: Vec<String> = pairs.iter().map(|pair| hex::encode(pair.0)).collect();
-            let token_index_hexes: Vec<String> = pairs.iter().map(|pair| u32::from_be_bytes(pair.1).to_string()).collect();
-            let cota_id_array = cota_id_hexes.join("','");
-            let token_index_array = token_index_hexes.join(",");
+            let (cota_id_array, token_index_array) = parse_cota_id_and_token_index_pairs(pairs);
             format!("select cota_id, token_index, configure, state, characteristic, receiver_lock_script_id, out_point \
                     from withdraw_cota_nft_kv_pairs where lock_hash_crc = '{}' and lock_hash = '{}' and cota_id in ('{}') \
                     and token_index in ({})", lock_hash_crc, lock_hash_hex, cota_id_array, token_index_array)
@@ -210,19 +201,9 @@ fn get_script_map_by_ids(
             Error::DatabaseQueryError(e.to_string())
         })?;
 
-    println!("{:?}", script_id_array);
-
     let scripts: Vec<(String, Vec<u8>)> = scripts_db
         .iter()
-        .map(|script_db| {
-            let args_bytes: Vec<Byte> = script_db.args.iter().map(|v| Byte::from(*v)).collect();
-            let script = ScriptBuilder::default()
-                .code_hash(Byte32::from_slice(&script_db.code_hash[..]).unwrap())
-                .hash_type(Byte::from(script_db.hash_type))
-                .args(BytesBuilder::default().set(args_bytes).build())
-                .build();
-            (script_db.id.to_string(), script.as_slice().to_vec())
-        })
+        .map(|script_db| (script_db.id.to_string(), generate_script_vec(script_db)))
         .collect();
     let script_map: HashMap<String, Vec<u8>> = scripts.into_iter().collect();
     Ok(script_map)
@@ -275,4 +256,23 @@ fn parse_mysql_bytes_n<const N: usize>(v: Value) -> [u8; N] {
 fn parse_mysql_bytes_value(v: Value) -> Vec<u8> {
     let vec = from_value::<Vec<u8>>(v);
     parse_bytes(String::from_utf8(vec).unwrap()).unwrap()
+}
+
+fn parse_cota_id_and_token_index_pairs(pairs: Vec<([u8; 20], [u8; 4])>) -> (String, String) {
+    let cota_id_hexes: Vec<String> = pairs.iter().map(|pair| hex::encode(pair.0)).collect();
+    let token_index_hexes: Vec<String> = pairs
+        .iter()
+        .map(|pair| u32::from_be_bytes(pair.1).to_string())
+        .collect();
+    (cota_id_hexes.join("','"), token_index_hexes.join(","))
+}
+
+fn generate_script_vec(script_db: &ScriptDb) -> Vec<u8> {
+    let args_bytes: Vec<Byte> = script_db.args.iter().map(|v| Byte::from(*v)).collect();
+    let script = ScriptBuilder::default()
+        .code_hash(Byte32::from_slice(&script_db.code_hash[..]).unwrap())
+        .hash_type(Byte::from(script_db.hash_type))
+        .args(BytesBuilder::default().set(args_bytes).build())
+        .build();
+    script.as_slice().to_vec()
 }

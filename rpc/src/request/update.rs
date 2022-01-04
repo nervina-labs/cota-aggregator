@@ -1,4 +1,5 @@
 use crate::error::Error;
+use crate::request::helper::{parse_vec_map, DbParser};
 use crate::utils::HexParser;
 use jsonrpc_http_server::jsonrpc_core::serde_json::Map;
 use jsonrpc_http_server::jsonrpc_core::Value;
@@ -11,8 +12,8 @@ pub struct Nft {
     pub characteristic: [u8; 20],
 }
 
-impl Nft {
-    pub fn from_map(map: &Map<String, Value>) -> Result<Self, Error> {
+impl DbParser for Nft {
+    fn from_map(map: &Map<String, Value>) -> Result<Self, Error> {
         Ok(Nft {
             cota_id:        map.get_hex_bytes_filed::<20>("cota_id")?,
             token_index:    map.get_hex_bytes_filed::<4>("token_index")?,
@@ -30,23 +31,9 @@ pub struct UpdateReq {
 
 impl UpdateReq {
     pub fn from_map(map: &Map<String, Value>) -> Result<Self, Error> {
-        let nfts_value = map
-            .get("nfts")
-            .ok_or(Error::RequestParamNotFound("nfts".to_owned()))?;
-        if !nfts_value.is_array() {
-            return Err(Error::RequestParamTypeError("nfts".to_owned()));
-        }
-        let mut nft_vec: Vec<Nft> = Vec::new();
-        for nft in nfts_value.as_array().unwrap() {
-            if !nft.is_object() {
-                return Err(Error::RequestParamTypeError("nfts".to_owned()));
-            }
-            nft_vec.push(Nft::from_map(nft.as_object().unwrap())?)
-        }
-
         Ok(UpdateReq {
             lock_hash: map.get_hex_bytes_filed::<32>("lock_hash")?,
-            nfts:      nft_vec,
+            nfts:      parse_vec_map::<Nft>(map, "nfts")?,
         })
     }
 }

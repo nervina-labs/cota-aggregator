@@ -1,4 +1,5 @@
 use crate::error::Error;
+use crate::request::helper::{parse_vec_map, DbParser};
 use crate::utils::HexParser;
 use jsonrpc_http_server::jsonrpc_core::serde_json::Map;
 use jsonrpc_http_server::jsonrpc_core::Value;
@@ -10,8 +11,8 @@ pub struct TransferWithdrawal {
     pub to_lock_script: Vec<u8>,
 }
 
-impl TransferWithdrawal {
-    pub fn from_map(map: &Map<String, Value>) -> Result<Self, Error> {
+impl DbParser for TransferWithdrawal {
+    fn from_map(map: &Map<String, Value>) -> Result<Self, Error> {
         Ok(TransferWithdrawal {
             cota_id:        map.get_hex_bytes_filed::<20>("cota_id")?,
             token_index:    map.get_hex_bytes_filed::<4>("token_index")?,
@@ -29,26 +30,10 @@ pub struct WithdrawalReq {
 
 impl WithdrawalReq {
     pub fn from_map(map: &Map<String, Value>) -> Result<Self, Error> {
-        let withdrawals_value = map
-            .get("withdrawals")
-            .ok_or(Error::RequestParamNotFound("withdrawals".to_owned()))?;
-        if !withdrawals_value.is_array() {
-            return Err(Error::RequestParamTypeError("withdrawals".to_owned()));
-        }
-        let mut withdrawal_vec: Vec<TransferWithdrawal> = Vec::new();
-        for withdrawal in withdrawals_value.as_array().unwrap() {
-            if !withdrawal.is_object() {
-                return Err(Error::RequestParamTypeError("withdrawals".to_owned()));
-            }
-            withdrawal_vec.push(TransferWithdrawal::from_map(
-                withdrawal.as_object().unwrap(),
-            )?)
-        }
-
         Ok(WithdrawalReq {
             lock_hash:   map.get_hex_bytes_filed::<32>("lock_hash")?,
             out_point:   map.get_hex_bytes_filed::<24>("out_point")?,
-            withdrawals: withdrawal_vec,
+            withdrawals: parse_vec_map::<TransferWithdrawal>(map, "withdrawals")?,
         })
     }
 }
