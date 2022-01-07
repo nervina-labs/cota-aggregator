@@ -1,5 +1,5 @@
 use crate::error::Error;
-use crate::request::helper::{parse_vec_map, DbParser};
+use crate::request::helper::{parse_vec_map, ReqParser};
 use crate::utils::HexParser;
 use jsonrpc_http_server::jsonrpc_core::serde_json::Map;
 use jsonrpc_http_server::jsonrpc_core::Value;
@@ -12,7 +12,7 @@ pub struct MintWithdrawal {
     pub to_lock_script: Vec<u8>,
 }
 
-impl DbParser for MintWithdrawal {
+impl ReqParser for MintWithdrawal {
     fn from_map(map: &Map<String, Value>) -> Result<Self, Error> {
         Ok(MintWithdrawal {
             token_index:    map.get_hex_bytes_filed::<4>("token_index")?,

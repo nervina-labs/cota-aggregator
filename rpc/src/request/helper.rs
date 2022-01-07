@@ -2,11 +2,11 @@ use crate::error::Error;
 use jsonrpc_http_server::jsonrpc_core::serde_json::Map;
 use jsonrpc_http_server::jsonrpc_core::Value;
 
-pub trait DbParser: Sized {
+pub trait ReqParser: Sized {
     fn from_map(map: &Map<String, Value>) -> Result<Self, Error>;
 }
 
-pub fn parse_vec_map<T: DbParser>(map: &Map<String, Value>, key: &str) -> Result<Vec<T>, Error> {
+pub fn parse_vec_map<T: ReqParser>(map: &Map<String, Value>, key: &str) -> Result<Vec<T>, Error> {
     let value = map
         .get(key)
         .ok_or(Error::RequestParamNotFound(key.to_owned()))?;

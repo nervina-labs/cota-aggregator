@@ -1,11 +1,13 @@
 use crate::request::claim::ClaimReq;
 use crate::request::define::DefineReq;
 use crate::request::mint::MintReq;
+use crate::request::transfer::TransferReq;
 use crate::request::update::UpdateReq;
 use crate::request::withdrawal::WithdrawalReq;
 use crate::smt::claim::generate_claim_smt;
 use crate::smt::define::generate_define_smt;
 use crate::smt::mint::generate_mint_smt;
+use crate::smt::transfer::generate_transfer_smt;
 use crate::smt::update::generate_update_smt;
 use crate::smt::withdrawal::generate_withdrawal_smt;
 use jsonrpc_http_server::jsonrpc_core::serde_json::Map;
@@ -43,5 +45,12 @@ pub async fn update_rpc(params: Params) -> Result<Value, Error> {
     let map: Map<String, Value> = Params::parse(params)?;
     let update_req = UpdateReq::from_map(&map).map_err(|err| err.into())?;
     let response = generate_update_smt(update_req).map_err(|err| err.into())?;
+    Ok(Value::Object(response))
+}
+
+pub async fn transfer_rpc(params: Params) -> Result<Value, Error> {
+    let map: Map<String, Value> = Params::parse(params)?;
+    let transfer_req = TransferReq::from_map(&map).map_err(|err| err.into())?;
+    let response = generate_transfer_smt(transfer_req).map_err(|err| err.into())?;
     Ok(Value::Object(response))
 }

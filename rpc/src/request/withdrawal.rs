@@ -1,5 +1,5 @@
 use crate::error::Error;
-use crate::request::helper::{parse_vec_map, DbParser};
+use crate::request::helper::{parse_vec_map, ReqParser};
 use crate::utils::HexParser;
 use jsonrpc_http_server::jsonrpc_core::serde_json::Map;
 use jsonrpc_http_server::jsonrpc_core::Value;
@@ -11,7 +11,7 @@ pub struct TransferWithdrawal {
     pub to_lock_script: Vec<u8>,
 }
 
-impl DbParser for TransferWithdrawal {
+impl ReqParser for TransferWithdrawal {
     fn from_map(map: &Map<String, Value>) -> Result<Self, Error> {
         Ok(TransferWithdrawal {
             cota_id:        map.get_hex_bytes_filed::<20>("cota_id")?,

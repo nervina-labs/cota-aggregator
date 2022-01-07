@@ -1,5 +1,5 @@
 use crate::error::Error;
-use crate::request::helper::{parse_vec_map, DbParser};
+use crate::request::helper::{parse_vec_map, ReqParser};
 use crate::utils::HexParser;
 use jsonrpc_http_server::jsonrpc_core::serde_json::Map;
 use jsonrpc_http_server::jsonrpc_core::Value;
@@ -12,7 +12,7 @@ pub struct Nft {
     pub characteristic: [u8; 20],
 }
 
-impl DbParser for Nft {
+impl ReqParser for Nft {
     fn from_map(map: &Map<String, Value>) -> Result<Self, Error> {
         Ok(Nft {
             cota_id:        map.get_hex_bytes_filed::<20>("cota_id")?,

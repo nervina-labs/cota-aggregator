@@ -1,5 +1,5 @@
 use crate::error::Error;
-use crate::request::helper::{parse_vec_map, DbParser};
+use crate::request::helper::{parse_vec_map, ReqParser};
 use crate::utils::HexParser;
 use jsonrpc_http_server::jsonrpc_core::serde_json::Map;
 use jsonrpc_http_server::jsonrpc_core::Value;
@@ -10,7 +10,7 @@ pub struct Claim {
     pub token_index: [u8; 4],
 }
 
-impl DbParser for Claim {
+impl ReqParser for Claim {
     fn from_map(map: &Map<String, Value>) -> Result<Self, Error> {
         Ok(Claim {
             cota_id:     map.get_hex_bytes_filed::<20>("cota_id")?,
