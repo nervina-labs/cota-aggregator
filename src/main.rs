@@ -1,5 +1,6 @@
 use jsonrpc_http_server::jsonrpc_core::{IoHandler, Params};
 use jsonrpc_http_server::ServerBuilder;
+use log::info;
 use rpc::api::{claim_rpc, define_rpc, mint_rpc, update_rpc, withdrawal_rpc};
 
 const DEFINE_RPC: &'static str = "generate_define_cota_smt";
@@ -23,6 +24,8 @@ fn main() {
         .threads(3)
         .start_http(&"127.0.0.1:3030".parse().unwrap())
         .unwrap();
+
+    info!("Cota aggregator server start");
 
     server.wait();
 }

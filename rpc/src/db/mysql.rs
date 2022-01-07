@@ -154,6 +154,9 @@ pub fn get_withdrawal_cota_by_lock_hash(
             error!("Query withdrawal error: {}", e.to_string());
             Error::DatabaseQueryError(e.to_string())
         })?;
+    if withdrawals_db.is_empty() {
+        return Ok(vec![]);
+    }
     let receiver_lock_script_ids: Vec<String> = withdrawals_db
         .iter()
         .map(|withdrawal| withdrawal.receiver_lock_script_id.to_string())

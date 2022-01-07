@@ -373,15 +373,6 @@ dependencies = [
 ]
 
 [[package]]
-name = "compact-nft-aggregator"
-version = "0.1.0"
-dependencies = [
- "env_logger",
- "jsonrpc-http-server",
- "rpc",
-]
-
-[[package]]
 name = "const_fn"
 version = "0.4.8"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -402,6 +393,16 @@ name = "core-foundation-sys"
 version = "0.8.3"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "5827cebf4670468b8772dd191856768aedcb1b0278a04f989f7766351917b9dc"
+
+[[package]]
+name = "cota-aggregator"
+version = "0.1.0"
+dependencies = [
+ "env_logger",
+ "jsonrpc-http-server",
+ "log",
+ "rpc",
+]
 
 [[package]]
 name = "cota-smt"
