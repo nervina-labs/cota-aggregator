@@ -2,7 +2,6 @@ use jsonrpc_http_server::jsonrpc_core::{IoHandler, Params};
 use jsonrpc_http_server::ServerBuilder;
 use log::info;
 use rpc::api::{claim_rpc, define_rpc, mint_rpc, transfer_rpc, update_rpc, withdrawal_rpc};
-use rpc::load_config;
 
 const DEFINE_RPC: &'static str = "generate_define_cota_smt";
 const MINT_RPC: &'static str = "generate_mint_cota_smt";
@@ -23,10 +22,9 @@ fn main() {
     io.add_method(UPDATE_RPC, move |params: Params| update_rpc(params));
     io.add_method(TRANSFER_RPC, move |params: Params| transfer_rpc(params));
 
-    let rpc_url = load_config().rpc_url;
     let server = ServerBuilder::new(io)
         .threads(3)
-        .start_http(&rpc_url.parse().unwrap())
+        .start_http(&"0.0.0.0:3030".parse().unwrap())
         .unwrap();
 
     info!("Cota aggregator server start");
