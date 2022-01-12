@@ -6,4 +6,4 @@ mod request;
 mod smt;
 mod utils;
 
-pub use config::{Config, load_config};
+pub use config::{load_config, Config};
