@@ -18,8 +18,11 @@ cargo test
 
 ```shell
 cargo build --release
-
 RUST_LOG=info ./target/release/cota-aggregator
+
+# or
+cargo install --path .
+RUST_LOG=info cota-aggregator
 ```
 
 ```shell
@@ -31,5 +34,5 @@ echo '{
 }' \
 | tr -d '\n' \
 | curl -H 'content-type: application/json' -d @- \
-http://localhost:3030
+http://127.0.0.1:3030
 ```
