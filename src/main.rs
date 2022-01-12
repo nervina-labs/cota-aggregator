@@ -25,7 +25,6 @@ fn main() {
     let server = ServerBuilder::new(io)
         .threads(3)
         .start_http(&"0.0.0.0:3030".parse().unwrap())
-        .start_http(&rpc_url.parse().unwrap())
         .unwrap();
 
     info!("Cota aggregator server start");
