@@ -53,3 +53,14 @@ echo '{
 | curl -H 'content-type: application/json' -d @- \
 http://127.0.0.1:3030
 ```
+
+### Deploy with docker
+
+```shell
+# Build cota-aggregator images from the Dockerfile and run cota-aggregator via docker
+docker build -t cota-aggregator .
+docker run -d -p 3030:3030 cota-aggregator:latest
+
+# or
+docker-compose up -d --build
+```
