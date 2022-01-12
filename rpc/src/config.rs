@@ -9,6 +9,9 @@ pub const CONFIG_FILE: &str = "aggregator.toml";
 pub struct Config {
     #[serde(default)]
     pub database_url: String,
+
+    #[serde(default)]
+    pub rpc_url: String,
 }
 
 impl Config {

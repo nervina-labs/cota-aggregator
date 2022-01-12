@@ -1,0 +1,15 @@
+version: '3'
+
+services:
+
+  cota-aggregator:
+    container_name: cota-aggregator
+    build:
+      context: .
+      dockerfile: Dockerfile
+    volumes:
+      - '.:/app'
+    ports:
+      - "3030:3030"
+    environment:
+      RUST_LOG: info
