@@ -18,8 +18,11 @@ cargo test
 
 ```shell
 cargo build --release
-
 RUST_LOG=info ./target/release/cota-aggregator
+
+# or
+cargo install --path .
+RUST_LOG=info cota-aggregator
 ```
 
 ```shell
