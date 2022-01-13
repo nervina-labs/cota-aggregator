@@ -4,7 +4,7 @@ The aggregator of [CoTA](https://github.com/nervina-labs/ckb-cota-scripts) servi
 
 ### Quick Start
 
-Update `database_url` in `aggregator.toml` with your mysql url
+Update `database_url` in `aggregator.toml` with your mysql url or set `DATABASE_URL` as environment variable
 
 ```shell
 cargo build
@@ -12,6 +12,12 @@ cargo build
 cargo run
 
 cargo test
+```
+
+If you set `DATABASE_URL` as environment variable, you can run as below:
+
+```shell
+DATABASE_URL=mysql://root:password@localhost:3306/db_name cargo run
 ```
 
 ### Usage
@@ -23,6 +29,17 @@ RUST_LOG=info ./target/release/cota-aggregator
 # or
 cargo install --path .
 RUST_LOG=info cota-aggregator
+```
+
+If you set `DATABASE_URL` as environment variable, you can run as below:
+
+```shell
+cargo build --release
+RUST_LOG=info DATABASE_URL=mysql://root:password@localhost:3306/db_name ./target/release/cota-aggregator
+
+# or
+cargo install --path .
+RUST_LOG=info DATABASE_URL=mysql://root:password@localhost:3306/db_name cota-aggregator
 ```
 
 ```shell

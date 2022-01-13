@@ -5,22 +5,34 @@ use std::{env, fs};
 
 pub const CONFIG_FILE: &str = "aggregator.toml";
 
-#[derive(Clone, Serialize, Deserialize)]
+#[derive(Clone, Serialize, Deserialize, Default)]
 pub struct Config {
     #[serde(default)]
     pub database_url: String,
 }
 
+impl Config {
+    pub fn new(database_url: String) -> Self {
+        let mut config = Config::default();
+        config.database_url = database_url;
+        config
+    }
+}
+
 pub fn load_config() -> Config {
-    let mut project_path = PathBuf::new();
-    project_path.push(env::current_dir().expect("Current directory error"));
-    let content = {
-        let mut config_path = project_path.clone();
-        config_path.push(CONFIG_FILE);
-        read_config_file(config_path).expect("Read config file error")
-    };
-    let config: Config = toml::from_slice(content.as_bytes()).expect("parse config");
-    config
+    if let Ok(database_url) = env::var("DATABASE_URL") {
+        Config::new(database_url)
+    } else {
+        let mut project_path = PathBuf::new();
+        project_path.push(env::current_dir().expect("Current directory error"));
+        let content = {
+            let mut config_path = project_path.clone();
+            config_path.push(CONFIG_FILE);
+            read_config_file(config_path).expect("Read config file error")
+        };
+        let config: Config = toml::from_slice(content.as_bytes()).expect("parse config");
+        config
+    }
 }
 
 fn read_config_file<P: AsRef<Path> + std::fmt::Debug>(path: P) -> Result<String> {
