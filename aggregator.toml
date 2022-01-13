@@ -1,1 +1,1 @@
-database_url = "mysql://root:password@localhost:3306/cota"
+database_url = "mysql://dylan:password@localhost:3306/db_name"
