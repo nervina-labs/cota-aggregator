@@ -407,7 +407,7 @@ dependencies = [
 [[package]]
 name = "cota-smt"
 version = "0.1.0"
-source = "git+https://github.com/nervina-labs/cota-smt?branch=develop#6cdc2aeac21fc731c07743483716b078440a5917"
+source = "git+https://github.com/nervina-labs/cota-smt?branch=main#6cdc2aeac21fc731c07743483716b078440a5917"
 dependencies = [
  "blake2b-ref 0.3.0",
  "cfg-if 0.1.10",

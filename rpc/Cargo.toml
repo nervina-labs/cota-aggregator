@@ -14,7 +14,7 @@ crc = "2.1.0"
 toml = "0.5"
 mysql = "20.0.0"
 lazy_static = "1.4"
-log = "0.4"
+log = {version = "0.4", features = ["release_max_level_info", "max_level_debug"]}
 serde = { version = "1.0", features = [ "derive" ] }
 openssl = { version = "0.10", features = ["vendored"] }
-cota-smt = {package = "cota-smt", git = "https://github.com/nervina-labs/cota-smt", branch = "develop"}
+cota-smt = {package = "cota-smt", git = "https://github.com/nervina-labs/cota-smt", branch = "main"}

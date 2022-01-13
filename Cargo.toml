@@ -5,7 +5,7 @@ edition = "2018"
 
 [dependencies]
 jsonrpc-http-server = "18.0.0"
-log = "0.4"
+log = {version = "0.4", features = ["release_max_level_info", "max_level_debug"]}
 env_logger = "0.9"
 rpc = {path = "rpc", version = "0.1.0"}
 
