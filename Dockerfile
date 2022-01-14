@@ -1,5 +1,5 @@
 FROM rust:1.56
-WORKDIR /usr/src/cota-aggregator
+WORKDIR /app
 COPY . .
 RUN CARGO_HTTP_MULTIPLEXING=false cargo fetch
 RUN cargo install --path .
