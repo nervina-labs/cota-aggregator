@@ -1,10 +1,22 @@
-FROM rust:1.56
+FROM clux/muslrust:stable as builder
+
 WORKDIR /app
+
 COPY . .
-COPY ./debian/config /usr/local/cargo
-RUN CARGO_HTTP_MULTIPLEXING=false cargo fetch
-RUN cargo install --path .
+COPY debian/config .cargo/config.toml
+
+RUN rustup target add x86_64-unknown-linux-musl
+RUN cargo build --release
+
+FROM alpine:latest
+COPY --from=builder /app/target/x86_64-unknown-linux-musl/release/cota-aggregator /app/cota-aggregator
+RUN chmod +x /app/cota-aggregator
+
+WORKDIR /app
+
 ENV RUST_LOG info
 ENV DATABASE_URL mysql://root:password@localhost:3306/db_name
+
 EXPOSE 3030
-CMD ["cota-aggregator"]
+
+CMD ["./cota-aggregator"]
