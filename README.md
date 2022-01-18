@@ -7,11 +7,11 @@ The aggregator of [CoTA](https://github.com/nervina-labs/ckb-cota-scripts) servi
 Update `database_url` in `aggregator.toml` with your mysql url or set `DATABASE_URL` as environment variable
 
 ```shell
-cargo build
+make build
 
-cargo run
+make run
 
-cargo test
+make test
 ```
 
 If you set `DATABASE_URL` as environment variable, you can run as below:
@@ -23,22 +23,22 @@ DATABASE_URL=mysql://root:password@localhost:3306/db_name cargo run
 ### Usage
 
 ```shell
-cargo build --release
+make build-release
 RUST_LOG=info ./target/release/cota-aggregator
 
 # or
-cargo install --path .
+make install
 RUST_LOG=info cota-aggregator
 ```
 
 If you set `DATABASE_URL` as environment variable, you can run as below:
 
 ```shell
-cargo build --release
+make build-release
 RUST_LOG=info DATABASE_URL=mysql://root:password@localhost:3306/db_name ./target/release/cota-aggregator
 
 # or
-cargo install --path .
+make install
 RUST_LOG=info DATABASE_URL=mysql://root:password@localhost:3306/db_name cota-aggregator
 ```
 

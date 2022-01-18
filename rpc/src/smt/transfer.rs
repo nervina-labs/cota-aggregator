@@ -4,13 +4,13 @@ use crate::error::Error;
 use crate::request::transfer::TransferReq;
 use crate::request::withdrawal::TransferWithdrawal;
 use crate::smt::common::{
-    generate_claim_key, generate_claim_value, generate_empty_value, generate_history_smt,
-    generate_hold_key, generate_hold_value, generate_withdrawal_key, generate_withdrawal_value,
+    generate_claim_key, generate_claim_value, generate_history_smt, generate_withdrawal_key,
+    generate_withdrawal_value,
 };
 use cota_smt::common::*;
 use cota_smt::molecule::prelude::*;
-use cota_smt::smt::{Blake2bHasher, H256};
-use cota_smt::transfer::WithdrawalCotaNFTEntriesBuilder;
+use cota_smt::smt::{blake2b_256, Blake2bHasher, H256};
+use cota_smt::transfer::TransferCotaNFTEntriesBuilder;
 use jsonrpc_http_server::jsonrpc_core::serde_json::Map;
 use jsonrpc_http_server::jsonrpc_core::Value;
 use log::info;
@@ -47,12 +47,14 @@ pub fn generate_transfer_smt(transfer_req: TransferReq) -> Result<Map<String, Va
         .set(action_vec.iter().map(|v| Byte::from(*v)).collect())
         .build();
 
-    let mut hold_keys: Vec<CotaNFTId> = Vec::new();
-    let mut hold_values: Vec<CotaNFTInfo> = Vec::new();
+    let mut claimed_keys: Vec<ClaimCotaNFTKey> = Vec::new();
+    let mut claimed_values: Vec<Byte32> = Vec::new();
     let mut withdrawal_keys: Vec<CotaNFTId> = Vec::new();
     let mut withdrawal_values: Vec<WithdrawalCotaNFTValue> = Vec::new();
-    let mut update_leaves: Vec<(H256, H256)> = Vec::with_capacity(transfers_len * 2);
-    let mut smt = generate_history_smt(transfer_req.lock_hash)?;
+    let mut transfer_update_leaves: Vec<(H256, H256)> = Vec::with_capacity(transfers_len * 2);
+    let mut withdrawal_update_leaves: Vec<(H256, H256)> = Vec::with_capacity(transfers_len);
+    let mut transfer_smt = generate_history_smt(blake2b_256(&transfer_req.lock_script))?;
+    let mut withdrawal_smt = generate_history_smt(transfer_req.withdrawal_lock_hash)?;
     for (withdrawal_db, transfer) in sender_withdrawals.into_iter().zip(transfers.clone()) {
         let WithdrawDb {
             cota_id,
@@ -64,54 +66,90 @@ pub fn generate_transfer_smt(transfer_req: TransferReq) -> Result<Map<String, Va
             ..
         } = withdrawal_db;
         let TransferWithdrawal { to_lock_script, .. } = transfer;
-        let (hold_key, key) = generate_hold_key(cota_id, token_index);
-        let (hold_value, _) = generate_hold_value(configure, state, characteristic);
-        hold_keys.push(hold_key);
-        hold_values.push(hold_value);
-        update_leaves.push((key, generate_empty_value().1));
-
-        let (_, key) = generate_claim_key(cota_id, token_index, out_point);
-        let (_, value) = generate_claim_value();
-        smt.update(key, value)
-            .expect("claim SMT update leave error");
 
         let (withdrawal_key, key) = generate_withdrawal_key(cota_id, token_index);
-        withdrawal_keys.push(withdrawal_key);
-        let (withdrawal_value, value) =
+        let (_, value) =
             generate_withdrawal_value(configure, state, characteristic, to_lock_script, out_point);
-        withdrawal_values.push(withdrawal_value);
-        update_leaves.push((key, value));
-        smt.update(key, value)
+        withdrawal_update_leaves.push((key, value));
+        withdrawal_smt
+            .update(key, value)
             .expect("withdraw SMT update leave error");
+
+        let (withdrawal_value, value) = generate_withdrawal_value(
+            configure,
+            state,
+            characteristic,
+            transfer_req.lock_script.clone(),
+            transfer_req.transfer_out_point,
+        );
+        withdrawal_keys.push(withdrawal_key);
+        withdrawal_values.push(withdrawal_value);
+        transfer_update_leaves.push((key, value));
+        transfer_smt
+            .update(key, value)
+            .expect("withdraw SMT update leave error");
+
+        let (claimed_key, key) = generate_claim_key(cota_id, token_index, out_point);
+        claimed_keys.push(claimed_key);
+        let (claimed_value, value) = generate_claim_value();
+        claimed_values.push(claimed_value);
+        transfer_update_leaves.push((key, value));
+        transfer_smt
+            .update(key, value)
+            .expect("claim SMT update leave error");
     }
 
-    let root_hash = smt.root().clone();
+    let root_hash = transfer_smt.root().clone();
     let mut root_hash_bytes = [0u8; 32];
     root_hash_bytes.copy_from_slice(root_hash.as_slice());
     let withdraw_root_hash_hex = hex::encode(root_hash_bytes);
 
     info!("transfer_smt_root_hash: {:?}", withdraw_root_hash_hex);
 
-    let withdrawal_merkle_proof = smt
-        .merkle_proof(update_leaves.iter().map(|leave| leave.0).collect())
+    let transfer_merkle_proof = transfer_smt
+        .merkle_proof(transfer_update_leaves.iter().map(|leave| leave.0).collect())
         .unwrap();
-    let withdrawal_merkle_proof_compiled = withdrawal_merkle_proof
-        .compile(update_leaves.clone())
+    let transfer_merkle_proof_compiled = transfer_merkle_proof
+        .compile(transfer_update_leaves.clone())
         .unwrap();
-    withdrawal_merkle_proof_compiled
-        .verify::<Blake2bHasher>(&root_hash, update_leaves.clone())
+    transfer_merkle_proof_compiled
+        .verify::<Blake2bHasher>(&root_hash, transfer_update_leaves.clone())
         .expect("withdraw smt proof verify failed");
 
-    let merkel_proof_vec: Vec<u8> = withdrawal_merkle_proof_compiled.into();
-    let merkel_proof_bytes = BytesBuilder::default()
-        .extend(merkel_proof_vec.iter().map(|v| Byte::from(*v)))
+    let transfer_merkel_proof_vec: Vec<u8> = transfer_merkle_proof_compiled.into();
+    let transfer_merkel_proof_bytes = BytesBuilder::default()
+        .extend(transfer_merkel_proof_vec.iter().map(|v| Byte::from(*v)))
         .build();
 
-    let withdrawal_entries = WithdrawalCotaNFTEntriesBuilder::default()
-        .hold_keys(HoldCotaNFTKeyVecBuilder::default().set(hold_keys).build())
-        .hold_values(
-            HoldCotaNFTValueVecBuilder::default()
-                .set(hold_values)
+    let withdrawal_root_hash = withdrawal_smt.root().clone();
+    let withdrawal_merkle_proof = withdrawal_smt
+        .merkle_proof(
+            withdrawal_update_leaves
+                .iter()
+                .map(|leave| leave.0)
+                .collect(),
+        )
+        .unwrap();
+    let withdrawal_merkle_proof_compiled = withdrawal_merkle_proof
+        .compile(withdrawal_update_leaves.clone())
+        .unwrap();
+    withdrawal_merkle_proof_compiled
+        .verify::<Blake2bHasher>(&withdrawal_root_hash, withdrawal_update_leaves.clone())
+        .expect("withdraw smt proof verify failed");
+    let withdrawal_merkel_proof_vec: Vec<u8> = withdrawal_merkle_proof_compiled.into();
+    let withdrawal_merkel_proof_bytes = BytesBuilder::default()
+        .extend(withdrawal_merkel_proof_vec.iter().map(|v| Byte::from(*v)))
+        .build();
+
+    let transfer_entries = TransferCotaNFTEntriesBuilder::default()
+        .claim_keys(
+            ClaimCotaNFTKeyVecBuilder::default()
+                .set(claimed_keys)
+                .build(),
+        )
+        .claim_values(
+            ClaimCotaNFTValueVecBuilder::default()
+                .set(claimed_values)
                 .build(),
         )
         .withdrawal_keys(
@@ -124,13 +162,14 @@ pub fn generate_transfer_smt(transfer_req: TransferReq) -> Result<Map<String, Va
                 .set(withdrawal_values)
                 .build(),
         )
-        .proof(merkel_proof_bytes)
+        .proof(transfer_merkel_proof_bytes)
+        .withdrawal_proof(withdrawal_merkel_proof_bytes)
         .action(action_bytes)
         .build();
 
-    let withdrawal_entries_hex = hex::encode(withdrawal_entries.as_slice());
+    let transfer_entries_hex = hex::encode(transfer_entries.as_slice());
 
-    info!("transfer_smt_entry: {:?}", withdrawal_entries_hex);
+    info!("transfer_smt_entry: {:?}", transfer_entries_hex);
 
     let mut result = Map::new();
     result.insert(
@@ -139,7 +178,7 @@ pub fn generate_transfer_smt(transfer_req: TransferReq) -> Result<Map<String, Va
     );
     result.insert(
         "transfer_smt_entry".to_string(),
-        Value::String(withdrawal_entries_hex),
+        Value::String(transfer_entries_hex),
     );
 
     Ok(result)
