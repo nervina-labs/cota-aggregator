@@ -85,8 +85,9 @@ pub fn generate_withdrawal_smt(withdrawal_req: WithdrawalReq) -> Result<Map<Stri
 
     let mut action_vec: Vec<u8> = Vec::new();
     if withdrawals.len() == 1 {
-        action_vec.extend("Transfer an NFT ".as_bytes());
-        action_vec.extend(&withdrawals.get(0).unwrap().cota_id);
+        action_vec.extend("Transfer the NFT ".as_bytes());
+        action_vec.extend(&withdrawals.first().unwrap().cota_id);
+        action_vec.extend(&withdrawals.first().unwrap().token_index);
         action_vec.extend(" to ".as_bytes());
         action_vec.extend(&withdrawals.get(0).unwrap().to_lock_script);
     }

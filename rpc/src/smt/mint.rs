@@ -55,10 +55,11 @@ pub fn generate_mint_smt(mint_req: MintReq) -> Result<Map<String, Value>, Error>
 
     let mut action_vec: Vec<u8> = Vec::new();
     if withdrawals_len == 1 {
-        action_vec.extend("Mint an NFT ".as_bytes());
+        action_vec.extend("Mint the NFT ".as_bytes());
         action_vec.extend(&cota_id);
+        action_vec.extend(&withdrawals.first().unwrap().token_index);
         action_vec.extend(" to ".as_bytes());
-        action_vec.extend(&withdrawals.get(0).unwrap().to_lock_script);
+        action_vec.extend(&withdrawals.first().unwrap().to_lock_script);
     }
 
     for MintWithdrawal {

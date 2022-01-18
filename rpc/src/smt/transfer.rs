@@ -2,6 +2,7 @@ use crate::db::mysql::get_withdrawal_cota_by_lock_hash;
 use crate::db::types::WithdrawDb;
 use crate::error::Error;
 use crate::request::transfer::TransferReq;
+use crate::request::withdrawal::TransferWithdrawal;
 use crate::smt::common::{
     generate_claim_key, generate_claim_value, generate_empty_value, generate_history_smt,
     generate_hold_key, generate_hold_value, generate_withdrawal_key, generate_withdrawal_value,
@@ -36,10 +37,11 @@ pub fn generate_transfer_smt(transfer_req: TransferReq) -> Result<Map<String, Va
 
     let mut action_vec: Vec<u8> = Vec::new();
     if transfers_len == 1 {
-        action_vec.extend("Transfer an NFT ".as_bytes());
-        action_vec.extend(&sender_withdrawals.get(0).unwrap().cota_id);
+        action_vec.extend("Transfer the NFT ".as_bytes());
+        action_vec.extend(&sender_withdrawals.first().unwrap().cota_id);
+        action_vec.extend(&sender_withdrawals.first().unwrap().token_index);
         action_vec.extend(" to ".as_bytes());
-        action_vec.extend(&transfers.get(0).unwrap().to_lock_script);
+        action_vec.extend(&transfers.first().unwrap().to_lock_script);
     }
     let action_bytes = BytesBuilder::default()
         .set(action_vec.iter().map(|v| Byte::from(*v)).collect())
@@ -61,6 +63,7 @@ pub fn generate_transfer_smt(transfer_req: TransferReq) -> Result<Map<String, Va
             out_point,
             ..
         } = withdrawal_db;
+        let TransferWithdrawal { to_lock_script, .. } = transfer;
         let (hold_key, key) = generate_hold_key(cota_id, token_index);
         let (hold_value, _) = generate_hold_value(configure, state, characteristic);
         hold_keys.push(hold_key);
@@ -74,13 +77,8 @@ pub fn generate_transfer_smt(transfer_req: TransferReq) -> Result<Map<String, Va
 
         let (withdrawal_key, key) = generate_withdrawal_key(cota_id, token_index);
         withdrawal_keys.push(withdrawal_key);
-        let (withdrawal_value, value) = generate_withdrawal_value(
-            configure,
-            state,
-            characteristic,
-            transfer.to_lock_script,
-            transfer_req.claim_out_point,
-        );
+        let (withdrawal_value, value) =
+            generate_withdrawal_value(configure, state, characteristic, to_lock_script, out_point);
         withdrawal_values.push(withdrawal_value);
         update_leaves.push((key, value));
         smt.update(key, value)
