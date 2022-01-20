@@ -68,8 +68,13 @@ pub fn generate_transfer_smt(transfer_req: TransferReq) -> Result<Map<String, Va
         let TransferWithdrawal { to_lock_script, .. } = transfer;
 
         let (withdrawal_key, key) = generate_withdrawal_key(cota_id, token_index);
-        let (_, value) =
-            generate_withdrawal_value(configure, state, characteristic, to_lock_script, out_point);
+        let (_, value) = generate_withdrawal_value(
+            configure,
+            state,
+            characteristic,
+            to_lock_script.clone(),
+            out_point,
+        );
         withdrawal_update_leaves.push((key, value));
         withdrawal_smt
             .update(key, value)
@@ -79,7 +84,7 @@ pub fn generate_transfer_smt(transfer_req: TransferReq) -> Result<Map<String, Va
             configure,
             state,
             characteristic,
-            transfer_req.lock_script.clone(),
+            to_lock_script,
             transfer_req.transfer_out_point,
         );
         withdrawal_keys.push(withdrawal_key);

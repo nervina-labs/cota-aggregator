@@ -11,7 +11,7 @@ use cota_smt::smt::{blake2b_256, H256};
 
 pub fn generate_define_key(cota_id: [u8; 20]) -> (DefineCotaNFTId, H256) {
     let cota_id = CotaId::from_slice(&cota_id).unwrap();
-    let smt_type = Uint16::from_slice(&DEFINE_NFT_SMT_TYPE.to_be_bytes()).unwrap();
+    let smt_type = Uint16::from_slice(&DEFINE_NFT_SMT_TYPE).unwrap();
     let define_key = DefineCotaNFTIdBuilder::default()
         .cota_id(cota_id)
         .smt_type(smt_type)
@@ -41,7 +41,7 @@ pub fn generate_define_value(
 pub fn generate_hold_key(cota_id: [u8; 20], token_index: [u8; 4]) -> (CotaNFTId, H256) {
     let hold_key = CotaNFTIdBuilder::default()
         .cota_id(CotaId::from_slice(&cota_id).unwrap())
-        .smt_type(Uint16::from_slice(&HOLD_NFT_SMT_TYPE.to_be_bytes()).unwrap())
+        .smt_type(Uint16::from_slice(&HOLD_NFT_SMT_TYPE).unwrap())
         .index(Uint32::from_slice(&token_index).unwrap())
         .build();
     let mut hold_key_bytes = [0u8; 32];
@@ -69,7 +69,7 @@ pub fn generate_hold_value(
 pub fn generate_withdrawal_key(cota_id: [u8; 20], token_index: [u8; 4]) -> (CotaNFTId, H256) {
     let withdrawal_key = CotaNFTIdBuilder::default()
         .cota_id(CotaId::from_slice(&cota_id).unwrap())
-        .smt_type(Uint16::from_slice(&WITHDRAWAL_NFT_SMT_TYPE.to_be_bytes()).unwrap())
+        .smt_type(Uint16::from_slice(&WITHDRAWAL_NFT_SMT_TYPE).unwrap())
         .index(Uint32::from_slice(&token_index).unwrap())
         .build();
     let mut withdrawal_key_bytes = [0u8; 32];
@@ -107,7 +107,7 @@ pub fn generate_claim_key(
     out_point: [u8; 24],
 ) -> (ClaimCotaNFTKey, H256) {
     let nft_id = CotaNFTIdBuilder::default()
-        .smt_type(Uint16::from_slice(&CLAIM_NFT_SMT_TYPE.to_be_bytes()).unwrap())
+        .smt_type(Uint16::from_slice(&CLAIM_NFT_SMT_TYPE).unwrap())
         .cota_id(CotaId::from_slice(&cota_id).unwrap())
         .index(Uint32::from_slice(&token_index).unwrap())
         .build();

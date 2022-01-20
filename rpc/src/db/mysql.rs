@@ -8,7 +8,7 @@ use cota_smt::molecule::prelude::Byte;
 use lazy_static::lazy_static;
 use log::error;
 use mysql::prelude::*;
-use mysql::{Value, *};
+use mysql::*;
 use std::collections::HashMap;
 use std::sync::MutexGuard;
 use std::{result::Result, sync::Mutex};
@@ -16,7 +16,7 @@ use std::{result::Result, sync::Mutex};
 lazy_static! {
     pub static ref CONN: Mutex<PooledConn> = {
         let url = load_config().database_url;
-        let pool = Pool::new(url).expect("Database pool error");
+        let pool = Pool::new(Opts::from_url(&url).unwrap()).expect("Database pool error");
         Mutex::new(pool.get_conn().expect("Database connection error"))
     };
 }
