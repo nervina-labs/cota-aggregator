@@ -432,7 +432,7 @@ dependencies = [
 [[package]]
 name = "cota-smt"
 version = "0.1.0"
-source = "git+https://github.com/nervina-labs/cota-smt?branch=one-step-claim-withdraw#e93527c3a0a4fbd69620b70cde62d1882735487a"
+source = "git+https://github.com/nervina-labs/cota-smt?branch=develop#ea47402db6f00f7a93c7e65515d2606dc0c4acef"
 dependencies = [
  "blake2b-ref 0.3.0",
  "cfg-if 0.1.10",
