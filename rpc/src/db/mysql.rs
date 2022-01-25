@@ -12,6 +12,7 @@ use mysql::*;
 use std::collections::HashMap;
 use std::sync::MutexGuard;
 use std::{result::Result, sync::Mutex};
+use std::env;
 
 lazy_static! {
     pub static ref CONN: Mutex<PooledConn> = {
