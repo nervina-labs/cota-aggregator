@@ -17,7 +17,7 @@ make test
 If you set `DATABASE_URL` as environment variable, you can run as below:
 
 ```shell
-DATABASE_URL=mysql://root:password@localhost:3306/db_name cargo run
+DATABASE_URL=mysql://root:password@localhost:3306/db_name make run
 ```
 
 ### Usage
