@@ -17,6 +17,7 @@ WORKDIR /app
 ENV RUST_LOG info
 ENV DATABASE_URL mysql://root:password@localhost:3306/db_name
 ENV MAX_POOL 20
+ENV MIN_POOL 10
 
 EXPOSE 3030
 

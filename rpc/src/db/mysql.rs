@@ -17,12 +17,17 @@ use std::env;
 lazy_static! {
     pub static ref CONN: Mutex<PooledConn> = {
         let url = load_config().database_url;
+        let min: usize = if let Ok(min_pool) = env::var("MIN_POOL") {
+            min_pool.parse::<usize>().unwrap()
+        } else {
+            10
+        };
         let max: usize = if let Ok(max_pool) = env::var("MAX_POOL") {
             max_pool.parse::<usize>().unwrap()
         } else {
             20
         };
-        let pool = Pool::new_manual(10usize, max, Opts::from_url(&url).unwrap()).expect("Database pool error");
+        let pool = Pool::new_manual(min, max, Opts::from_url(&url).unwrap()).expect("Database pool error");
         Mutex::new(pool.get_conn().expect("Database connection error"))
     };
 }
