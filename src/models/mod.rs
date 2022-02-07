@@ -1,13 +1,13 @@
 use crate::utils::{generate_crc, parse_bytes, parse_bytes_n};
 use mysql::*;
 
-pub mod define;
-pub mod withdraw;
-pub mod claimed;
-pub mod scripts;
-pub mod hold;
 pub mod check_info;
+pub mod claimed;
+pub mod define;
+pub mod hold;
+pub mod scripts;
 mod types;
+pub mod withdraw;
 
 use diesel::mysql::MysqlConnection;
 use diesel::r2d2::{self, ConnectionManager, PooledConnection};

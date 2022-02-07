@@ -2,20 +2,20 @@ pub mod api;
 mod config;
 mod db;
 mod error;
+mod models;
 mod request;
+pub mod schema;
 mod smt;
 mod utils;
-pub mod schema;
-mod models;
 
 #[macro_use]
 extern crate diesel;
 extern crate dotenv;
 
+use crate::api::*;
 use jsonrpc_http_server::jsonrpc_core::{IoHandler, Params};
 use jsonrpc_http_server::ServerBuilder;
 use log::info;
-use crate::api::*;
 
 const DEFINE_RPC: &'static str = "generate_define_cota_smt";
 const MINT_RPC: &'static str = "generate_mint_cota_smt";
