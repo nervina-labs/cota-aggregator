@@ -35,6 +35,7 @@ lazy_static! {
 
 pub fn get_define_cota_by_lock_hash(lock_hash: [u8; 32]) -> Result<Vec<DefineDb>, Error> {
     let (lock_hash_hex, lock_hash_crc) = parse_lock_hash(lock_hash);
+    println!("{}", lock_hash_hex);
     CONN.lock()
         .unwrap()
         .query_map(

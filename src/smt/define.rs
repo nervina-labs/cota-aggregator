@@ -13,6 +13,8 @@ use log::info;
 
 pub fn generate_define_smt(define_req: DefineReq) -> Result<Map<String, Value>, Error> {
     let mut smt = generate_history_smt(define_req.lock_hash)?;
+    let res = get_define_cota_by_lock_hash(define_req.lock_hash);
+    println!("{:?}", res.unwrap());
     let db_defines = get_define_cota_by_lock_hash(define_req.lock_hash)?;
     if !db_defines.is_empty() {
         for DefineDb {
