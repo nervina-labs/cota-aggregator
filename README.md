@@ -2,45 +2,26 @@
 
 The aggregator of [CoTA](https://talk.nervos.org/t/rfc-cota-a-compact-token-aggregator-standard-for-extremely-low-cost-nfts-and-fts/6338) service
 
-### Quick Start
+## Quick Start
 
-Update `database_url` in `aggregator.toml` with your mysql url or set `DATABASE_URL` as environment variable
+### Manual
 
-```shell
-make build
+- Rename `.env.example` to `.env` and update the database connection string in `DATABASE_URL` key.
+- Build with release profile: `make build-release`
+- Run with release profile: `make run-release`
 
-make run
-
-make test
-```
-
-If you set `DATABASE_URL` as environment variable, you can run as below:
+### docker
 
 ```shell
-DATABASE_URL=mysql://root:password@localhost:3306/db_name make run
-```
-
-### Usage
-
-```shell
-make build-release
-RUST_LOG=info ./target/release/cota-aggregator
+# Build cota-aggregator images from the Dockerfile and run cota-aggregator via docker
+docker build -t cota-aggregator .
+docker run -d -p 3030:3030 cota-aggregator:latest
 
 # or
-make install
-RUST_LOG=info cota-aggregator
+docker-compose up -d --build
 ```
 
-If you set `DATABASE_URL` as environment variable, you can run as below:
-
-```shell
-make build-release
-RUST_LOG=info DATABASE_URL=mysql://root:password@localhost:3306/db_name ./target/release/cota-aggregator
-
-# or
-make install
-RUST_LOG=info DATABASE_URL=mysql://root:password@localhost:3306/db_name cota-aggregator
-```
+### APIs
 
 ```shell
 echo '{
@@ -54,13 +35,3 @@ echo '{
 http://127.0.0.1:3030
 ```
 
-### Deploy with docker
-
-```shell
-# Build cota-aggregator images from the Dockerfile and run cota-aggregator via docker
-docker build -t cota-aggregator .
-docker run -d -p 3030:3030 cota-aggregator:latest
-
-# or
-docker-compose up -d --build
-```
