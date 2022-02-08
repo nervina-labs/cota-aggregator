@@ -2,6 +2,7 @@ use crc::{Crc, CRC_32_ISO_HDLC};
 use diesel::mysql::MysqlConnection;
 use diesel::r2d2::{self, ConnectionManager, PooledConnection};
 use dotenv::dotenv;
+use jsonrpc_http_server::jsonrpc_core::serde_json::from_str;
 use std::env;
 
 pub type SqlConnection = PooledConnection<ConnectionManager<MysqlConnection>>;
@@ -11,7 +12,11 @@ pub fn establish_connection() -> SqlConnection {
 
     let database_url = env::var("DATABASE_URL").expect("DATABASE_URL must be set");
     let manager = ConnectionManager::<MysqlConnection>::new(database_url);
-    let pool = r2d2::Pool::new(manager).unwrap();
+    let max: u32 = match env::var("MAX_POOL") {
+        Ok(max_) => from_str::<u32>(&max_).unwrap(),
+        Err(_e) => 20,
+    };
+    let pool = r2d2::Pool::builder().max_size(max).build(manager).unwrap();
     pool.get().expect("Error connecting to database")
 }
 
