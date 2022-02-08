@@ -118,4 +118,6 @@ mod tests {
             Err(Error::RequestParamHexInvalid("\"0x0000008g\"".to_owned()))
         );
     }
+
+    // TODO: Add more tests
 }

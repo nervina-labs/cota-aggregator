@@ -37,13 +37,34 @@ pub fn parse_bytes(value: String) -> Result<Vec<u8>, Error> {
 #[cfg(test)]
 mod tests {
     use super::*;
-
     #[test]
     fn test_remove_0x() {
         assert_eq!(remove_0x("0x123456"), "123456");
         assert_eq!(remove_0x("123456"), "123456");
         assert_eq!(remove_0x("0"), "0");
         assert_eq!(remove_0x("0x"), "");
+    }
+
+    #[test]
+    fn test_parse_vec_n() {
+        assert_eq!(
+            parse_vec_n::<20>(vec![
+                241, 74, 202, 24, 170, 233, 223, 114, 58, 243, 4, 70, 157, 143, 78, 187, 193, 116,
+                169, 56
+            ]),
+            [
+                241, 74, 202, 24, 170, 233, 223, 114, 58, 243, 4, 70, 157, 143, 78, 187, 193, 116,
+                169, 56
+            ]
+        );
+    }
+
+    #[test]
+    #[should_panic]
+    fn test_parse_vec_n_panic() {
+        parse_vec_n::<20>(vec![
+            241, 74, 202, 24, 170, 233, 223, 114, 58, 243, 4, 70, 157, 143, 78, 187, 193, 116, 169,
+        ]);
     }
 
     #[test]
