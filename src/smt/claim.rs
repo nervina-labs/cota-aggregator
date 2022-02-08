@@ -1,11 +1,10 @@
-use crate::db::mysql::get_withdrawal_cota_by_lock_hash;
-use crate::db::types::WithdrawDb;
-use crate::error::Error;
+use crate::models::withdrawal::{get_withdrawal_cota_by_lock_hash, WithdrawDb};
 use crate::request::claim::ClaimReq;
 use crate::smt::common::{
     generate_claim_key, generate_claim_value, generate_history_smt, generate_hold_key,
     generate_hold_value, generate_withdrawal_key, generate_withdrawal_value,
 };
+use crate::utils::error::Error;
 use cota_smt::common::*;
 use cota_smt::molecule::prelude::*;
 use cota_smt::smt::{blake2b_256, Blake2bHasher, H256};

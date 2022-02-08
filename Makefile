@@ -12,7 +12,10 @@ test:
 
 run:
 	cargo fmt
-	cargo run
+	RUST_LOG=info cargo run
+
+run-release:
+	RUST_LOG=info ./target/release/cota-aggregator
 
 install:
 	cargo fmt

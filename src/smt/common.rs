@@ -1,9 +1,12 @@
-use crate::db::mysql::get_all_cota_by_lock_hash;
-use crate::db::types::{ClaimDb, DefineDb, HoldDb, WithdrawDb};
-use crate::error::Error;
+use crate::models::claim::ClaimDb;
+use crate::models::common::get_all_cota_by_lock_hash;
+use crate::models::define::DefineDb;
+use crate::models::hold::HoldDb;
+use crate::models::withdrawal::WithdrawDb;
 use crate::smt::constants::{
     CLAIM_NFT_SMT_TYPE, DEFINE_NFT_SMT_TYPE, HOLD_NFT_SMT_TYPE, WITHDRAWAL_NFT_SMT_TYPE,
 };
+use crate::utils::error::Error;
 use cota_smt::common::{Uint16, Uint32, *};
 use cota_smt::molecule::prelude::*;
 use cota_smt::smt::SMT;

@@ -1,11 +1,10 @@
-use crate::db::mysql::get_define_cota_by_lock_hash_and_cota_id;
-use crate::db::types::DefineDb;
-use crate::error::Error;
+use crate::models::define::{get_define_cota_by_lock_hash_and_cota_id, DefineDb};
 use crate::request::mint::{MintReq, MintWithdrawal};
 use crate::smt::common::generate_history_smt;
 use crate::smt::common::{
     generate_define_key, generate_define_value, generate_withdrawal_key, generate_withdrawal_value,
 };
+use crate::utils::error::Error;
 use cota_smt::common::*;
 use cota_smt::mint::MintCotaNFTEntriesBuilder;
 use cota_smt::molecule::prelude::*;

@@ -1,6 +1,6 @@
-use crate::error::Error;
+use super::helper::HexParser;
 use crate::request::helper::{parse_vec_map, ReqParser};
-use crate::utils::HexParser;
+use crate::utils::error::Error;
 use jsonrpc_http_server::jsonrpc_core::serde_json::Map;
 use jsonrpc_http_server::jsonrpc_core::Value;
 

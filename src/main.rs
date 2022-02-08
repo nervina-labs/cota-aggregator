@@ -1,7 +1,18 @@
+#[macro_use]
+extern crate diesel;
+extern crate dotenv;
+
+use crate::api::*;
 use jsonrpc_http_server::jsonrpc_core::{IoHandler, Params};
 use jsonrpc_http_server::ServerBuilder;
 use log::info;
-use rpc::api::{claim_rpc, define_rpc, mint_rpc, transfer_rpc, update_rpc, withdrawal_rpc};
+
+pub mod api;
+mod models;
+mod request;
+pub mod schema;
+mod smt;
+mod utils;
 
 const DEFINE_RPC: &'static str = "generate_define_cota_smt";
 const MINT_RPC: &'static str = "generate_mint_cota_smt";

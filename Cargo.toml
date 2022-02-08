@@ -7,7 +7,15 @@ edition = "2018"
 jsonrpc-http-server = "18.0.0"
 log = {version = "0.4", features = ["release_max_level_info", "max_level_debug"]}
 env_logger = "0.9"
-rpc = {path = "rpc", version = "0.1.0"}
-
-[workspace]
-members = ["rpc"]
+hex = "0.4"
+failure = "0.1.5"
+anyhow = "1.0"
+crc = "2.1.0"
+toml = "0.5"
+mysql = "22.0.0"
+diesel = { version = "1.4.8", features = ["mysql", "r2d2", "numeric"] }
+dotenv = "0.15.0"
+lazy_static = "1.4"
+serde = { version = "1.0", features = [ "derive" ] }
+openssl = { version = "0.10", features = ["vendored"] }
+cota-smt = {package = "cota-smt", git = "https://github.com/nervina-labs/cota-smt", branch = "develop"}
