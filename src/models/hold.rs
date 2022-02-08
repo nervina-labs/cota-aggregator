@@ -1,8 +1,8 @@
-use crate::error::Error;
-use crate::models::{establish_connection, parse_lock_hash};
+use super::helper::{establish_connection, parse_cota_id_and_token_index_pairs, parse_lock_hash};
 use crate::schema::hold_cota_nft_kv_pairs::dsl::hold_cota_nft_kv_pairs;
 use crate::schema::hold_cota_nft_kv_pairs::*;
-use crate::utils::parse_bytes_n;
+use crate::utils::error::Error;
+use crate::utils::helper::parse_bytes_n;
 use diesel::*;
 use log::error;
 use serde::{Deserialize, Serialize};
@@ -35,7 +35,7 @@ pub fn get_hold_cota_by_lock_hash(
         .select((cota_id, token_index, configure, state, characteristic))
         .filter(lock_hash_crc.eq(lock_hash_crc_))
         .filter(lock_hash.eq(lock_hash_hex));
-    let mut result = match cota_id_and_token_index_pairs {
+    let result = match cota_id_and_token_index_pairs {
         Some(pairs) => {
             let (cota_id_array, token_index_array) = parse_cota_id_and_token_index_pairs(pairs);
             select
@@ -52,15 +52,6 @@ pub fn get_hold_cota_by_lock_hash(
         },
         |holds| Ok(parse_hold_cota_nft(holds)),
     )
-}
-
-fn parse_cota_id_and_token_index_pairs(pairs: Vec<([u8; 20], [u8; 4])>) -> (Vec<String>, Vec<u32>) {
-    let cota_id_hexes: Vec<String> = pairs.iter().map(|pair| hex::encode(pair.0)).collect();
-    let token_index_hexes: Vec<u32> = pairs
-        .iter()
-        .map(|pair| u32::from_be_bytes(pair.1))
-        .collect();
-    (cota_id_hexes, token_index_hexes)
 }
 
 fn parse_hold_cota_nft(holds: Vec<HoldCotaNft>) -> Vec<HoldDb> {

@@ -1,8 +1,8 @@
-use crate::db::{mysql::get_define_cota_by_lock_hash, types::DefineDb};
-use crate::error::Error;
+use crate::models::define::{get_define_cota_by_lock_hash, DefineDb};
 use crate::request::define::DefineReq;
 use crate::smt::common::generate_history_smt;
 use crate::smt::common::{generate_define_key, generate_define_value};
+use crate::utils::error::Error;
 use cota_smt::common::*;
 use cota_smt::define::DefineCotaNFTEntriesBuilder;
 use cota_smt::molecule::prelude::*;

@@ -1,7 +1,7 @@
-use crate::error::Error;
-use crate::models::{establish_connection, parse_lock_hash};
+use super::helper::{establish_connection, parse_lock_hash};
 use crate::schema::define_cota_nft_kv_pairs::dsl::*;
-use crate::utils::parse_bytes_n;
+use crate::utils::error::Error;
+use crate::utils::helper::parse_bytes_n;
 use diesel::*;
 use log::error;
 use serde::{Deserialize, Serialize};

@@ -1,7 +1,7 @@
-use crate::db::mysql::get_hold_cota_by_lock_hash;
-use crate::error::Error;
+use crate::models::hold::get_hold_cota_by_lock_hash;
 use crate::request::update::UpdateReq;
 use crate::smt::common::{generate_history_smt, generate_hold_key, generate_hold_value};
+use crate::utils::error::Error;
 use cota_smt::common::*;
 use cota_smt::molecule::prelude::*;
 use cota_smt::smt::{Blake2bHasher, H256};

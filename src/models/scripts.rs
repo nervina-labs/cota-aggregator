@@ -1,9 +1,9 @@
-use crate::error::Error;
-use crate::models::establish_connection;
+use super::helper::SqlConnection;
 use crate::schema::scripts::dsl::scripts;
 use crate::schema::scripts::*;
 use crate::schema::scripts::{args, code_hash, hash_type};
-use crate::utils::{parse_bytes, parse_bytes_n};
+use crate::utils::error::Error;
+use crate::utils::helper::{parse_bytes, parse_bytes_n};
 use cota_smt::ckb_types::packed::{Byte32, BytesBuilder, ScriptBuilder};
 use cota_smt::ckb_types::prelude::*;
 use cota_smt::molecule::prelude::Byte;
@@ -28,8 +28,10 @@ pub struct ScriptDb {
     pub args:      Vec<u8>,
 }
 
-fn get_script_map_by_ids(script_ids: Vec<i64>) -> Result<HashMap<String, Vec<u8>>, Error> {
-    let conn = &establish_connection();
+pub fn get_script_map_by_ids(
+    conn: &SqlConnection,
+    script_ids: Vec<i64>,
+) -> Result<HashMap<i64, Vec<u8>>, Error> {
     let scripts_db = scripts
         .select((id, code_hash, hash_type, args))
         .filter(id.eq_any(script_ids))
@@ -41,11 +43,11 @@ fn get_script_map_by_ids(script_ids: Vec<i64>) -> Result<HashMap<String, Vec<u8>
             },
             |scripts_| Ok(parse_script(scripts_)),
         )?;
-    let scripts_: Vec<(String, Vec<u8>)> = scripts_db
+    let scripts_: Vec<(i64, Vec<u8>)> = scripts_db
         .iter()
-        .map(|script_db| (script_db.id.to_string(), generate_script_vec(script_db)))
+        .map(|script_db| (script_db.id, generate_script_vec(script_db)))
         .collect();
-    let script_map: HashMap<String, Vec<u8>> = scripts_.into_iter().collect();
+    let script_map: HashMap<i64, Vec<u8>> = scripts_.into_iter().collect();
     Ok(script_map)
 }
 
