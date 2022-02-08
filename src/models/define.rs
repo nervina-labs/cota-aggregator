@@ -3,6 +3,7 @@ use crate::models::{establish_connection, parse_lock_hash};
 use crate::schema::define_cota_nft_kv_pairs::dsl::*;
 use crate::utils::parse_bytes_n;
 use diesel::*;
+use log::error;
 use serde::{Deserialize, Serialize};
 
 #[derive(Serialize, Deserialize, Queryable, Debug)]
@@ -30,18 +31,11 @@ pub fn get_define_cota_by_lock_hash(lock_hash_: [u8; 32]) -> Result<Vec<DefineDb
         .filter(lock_hash.eq(lock_hash_hex))
         .load::<DefineCotaNft>(conn)
         .map_or_else(
-            |e| Err(Error::DatabaseQueryError(e.to_string())),
-            |defines| {
-                Ok(defines
-                    .into_iter()
-                    .map(|define| DefineDb {
-                        cota_id:   parse_bytes_n::<20>(define.cota_id).unwrap(),
-                        total:     define.total,
-                        issued:    define.issued,
-                        configure: define.configure,
-                    })
-                    .collect())
+            |e| {
+                error!("Query define error: {}", e.to_string());
+                Err(Error::DatabaseQueryError(e.to_string()))
             },
+            |defines| Ok(parse_define_cota_nft(defines)),
         )
 }
 
@@ -59,18 +53,23 @@ pub fn get_define_cota_by_lock_hash_and_cota_id(
         .filter(cota_id.eq(cota_id_hex))
         .load::<DefineCotaNft>(conn)
         .map_or_else(
-            |e| Err(Error::DatabaseQueryError(e.to_string())),
-            |defines| {
-                Ok(defines
-                    .into_iter()
-                    .map(|define| DefineDb {
-                        cota_id:   parse_bytes_n::<20>(define.cota_id).unwrap(),
-                        total:     define.total,
-                        issued:    define.issued,
-                        configure: define.configure,
-                    })
-                    .collect())
+            |e| {
+                error!("Query define error: {}", e.to_string());
+                Err(Error::DatabaseQueryError(e.to_string()))
             },
+            |defines| Ok(parse_define_cota_nft(defines)),
         )?;
     Ok(defines.get(0).map(|v| *v))
+}
+
+fn parse_define_cota_nft(defines: Vec<DefineCotaNft>) -> Vec<DefineDb> {
+    defines
+        .into_iter()
+        .map(|define| DefineDb {
+            cota_id:   parse_bytes_n::<20>(define.cota_id).unwrap(),
+            total:     define.total,
+            issued:    define.issued,
+            configure: define.configure,
+        })
+        .collect()
 }

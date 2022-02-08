@@ -3,9 +3,8 @@ use crate::models::{establish_connection, parse_lock_hash};
 use crate::schema::hold_cota_nft_kv_pairs::dsl::hold_cota_nft_kv_pairs;
 use crate::schema::hold_cota_nft_kv_pairs::*;
 use crate::utils::parse_bytes_n;
-use diesel::dsl::And;
-use diesel::expression::array_comparison::In;
 use diesel::*;
+use log::error;
 use serde::{Deserialize, Serialize};
 
 #[derive(Serialize, Deserialize, Queryable, Debug)]
@@ -34,11 +33,8 @@ pub fn get_hold_cota_by_lock_hash(
     let (lock_hash_hex, lock_hash_crc_) = parse_lock_hash(lock_hash_);
     let select = hold_cota_nft_kv_pairs
         .select((cota_id, token_index, configure, state, characteristic))
-        .filter(
-            lock_hash_crc
-                .eq(lock_hash_crc_)
-                .and(lock_hash.eq(lock_hash_hex)),
-        );
+        .filter(lock_hash_crc.eq(lock_hash_crc_))
+        .filter(lock_hash.eq(lock_hash_hex));
     let mut result = match cota_id_and_token_index_pairs {
         Some(pairs) => {
             let (cota_id_array, token_index_array) = parse_cota_id_and_token_index_pairs(pairs);
@@ -50,19 +46,11 @@ pub fn get_hold_cota_by_lock_hash(
         None => select.load::<HoldCotaNft>(conn),
     };
     result.map_or_else(
-        |e| Err(Error::DatabaseQueryError(e.to_string())),
-        |holds| {
-            Ok(holds
-                .into_iter()
-                .map(|hold| HoldDb {
-                    cota_id:        parse_bytes_n::<20>(hold.cota_id).unwrap(),
-                    token_index:    hold.token_index.to_be_bytes(),
-                    state:          hold.state,
-                    configure:      hold.configure,
-                    characteristic: parse_bytes_n::<20>(hold.characteristic).unwrap(),
-                })
-                .collect())
+        |e| {
+            error!("Query hold error: {}", e.to_string());
+            Err(Error::DatabaseQueryError(e.to_string()))
         },
+        |holds| Ok(parse_hold_cota_nft(holds)),
     )
 }
 
@@ -73,4 +61,17 @@ fn parse_cota_id_and_token_index_pairs(pairs: Vec<([u8; 20], [u8; 4])>) -> (Vec<
         .map(|pair| u32::from_be_bytes(pair.1))
         .collect();
     (cota_id_hexes, token_index_hexes)
+}
+
+fn parse_hold_cota_nft(holds: Vec<HoldCotaNft>) -> Vec<HoldDb> {
+    holds
+        .into_iter()
+        .map(|hold| HoldDb {
+            cota_id:        parse_bytes_n::<20>(hold.cota_id).unwrap(),
+            token_index:    hold.token_index.to_be_bytes(),
+            state:          hold.state,
+            configure:      hold.configure,
+            characteristic: parse_bytes_n::<20>(hold.characteristic).unwrap(),
+        })
+        .collect()
 }
