@@ -37,7 +37,6 @@ pub fn parse_bytes(value: String) -> Result<Vec<u8>, Error> {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use jsonrpc_http_server::jsonrpc_core::Value;
 
     #[test]
     fn test_remove_0x() {
