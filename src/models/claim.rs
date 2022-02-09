@@ -1,4 +1,6 @@
 use super::helper::{establish_connection, parse_lock_hash};
+use crate::models::helper::SqlConnection;
+use crate::models::DBResult;
 use crate::schema::claimed_cota_nft_kv_pairs::dsl::claimed_cota_nft_kv_pairs;
 use crate::schema::claimed_cota_nft_kv_pairs::*;
 use crate::utils::error::Error;
@@ -20,7 +22,10 @@ pub struct ClaimDb {
     pub out_point:   [u8; 24],
 }
 
-pub fn get_claim_cota_by_lock_hash(lock_hash_: [u8; 32]) -> Result<Vec<ClaimDb>, Error> {
+pub fn get_claim_cota_by_lock_hash_with_conn(
+    conn: &SqlConnection,
+    lock_hash_: [u8; 32],
+) -> DBResult<ClaimDb> {
     let conn = &establish_connection();
     let (lock_hash_hex, lock_hash_crc_) = parse_lock_hash(lock_hash_);
     claimed_cota_nft_kv_pairs
@@ -35,6 +40,10 @@ pub fn get_claim_cota_by_lock_hash(lock_hash_: [u8; 32]) -> Result<Vec<ClaimDb>,
             },
             |claims| Ok(parse_claimed_cota_nft(claims)),
         )
+}
+
+pub fn get_claim_cota_by_lock_hash(lock_hash_: [u8; 32]) -> DBResult<ClaimDb> {
+    get_claim_cota_by_lock_hash_with_conn(&establish_connection(), lock_hash_)
 }
 
 fn parse_claimed_cota_nft(claims: Vec<ClaimCotaNft>) -> Vec<ClaimDb> {

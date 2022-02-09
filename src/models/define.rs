@@ -1,4 +1,6 @@
 use super::helper::{establish_connection, parse_lock_hash};
+use crate::models::helper::SqlConnection;
+use crate::models::DBResult;
 use crate::schema::define_cota_nft_kv_pairs::dsl::*;
 use crate::utils::error::Error;
 use crate::utils::helper::parse_bytes_n;
@@ -22,8 +24,10 @@ pub struct DefineDb {
     pub configure: u8,
 }
 
-pub fn get_define_cota_by_lock_hash(lock_hash_: [u8; 32]) -> Result<Vec<DefineDb>, Error> {
-    let conn = &establish_connection();
+pub fn get_define_cota_by_lock_hash_with_conn(
+    conn: &SqlConnection,
+    lock_hash_: [u8; 32],
+) -> DBResult<DefineDb> {
     let (lock_hash_hex, lock_hash_crc_) = parse_lock_hash(lock_hash_);
     define_cota_nft_kv_pairs
         .select((cota_id, total, issued, configure))
@@ -37,6 +41,10 @@ pub fn get_define_cota_by_lock_hash(lock_hash_: [u8; 32]) -> Result<Vec<DefineDb
             },
             |defines| Ok(parse_define_cota_nft(defines)),
         )
+}
+
+pub fn get_define_cota_by_lock_hash(lock_hash_: [u8; 32]) -> DBResult<DefineDb> {
+    get_define_cota_by_lock_hash_with_conn(&establish_connection(), lock_hash_)
 }
 
 pub fn get_define_cota_by_lock_hash_and_cota_id(

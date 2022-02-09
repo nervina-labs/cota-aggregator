@@ -3,8 +3,8 @@ use crate::schema::scripts::dsl::scripts;
 use crate::schema::scripts::*;
 use crate::schema::scripts::{args, code_hash, hash_type};
 use crate::utils::error::Error;
-use crate::utils::helper::{parse_bytes, parse_bytes_n};
-use cota_smt::ckb_types::packed::{Byte32, BytesBuilder, ScriptBuilder};
+use crate::utils::helper::{parse_bytes, parse_bytes_n, remove_0x};
+use cota_smt::ckb_types::packed::{Byte32, BytesBuilder, Script as LockScript, ScriptBuilder};
 use cota_smt::ckb_types::prelude::*;
 use cota_smt::molecule::prelude::Byte;
 use diesel::*;
@@ -49,6 +49,25 @@ pub fn get_script_map_by_ids(
         .collect();
     let script_map: HashMap<i64, Vec<u8>> = scripts_.into_iter().collect();
     Ok(script_map)
+}
+
+pub fn get_script_id_by_lock_script(
+    conn: &SqlConnection,
+    lock_script: &[u8],
+) -> Result<i64, Error> {
+    let lock = LockScript::from_slice(lock_script).unwrap();
+    let lock_code_hash = hex::encode(lock.code_hash().as_slice().to_vec());
+    let lock_args = hex::encode(lock.args().raw_data().to_vec());
+    scripts
+        .select(id)
+        .filter(code_hash.eq(lock_code_hash))
+        .filter(hash_type.eq(lock.hash_type().as_slice()[0]))
+        .filter(args.eq(lock_args))
+        .first::<i64>(conn)
+        .map_err(|e| {
+            error!("Query script error: {}", e.to_string());
+            Error::DatabaseQueryError(e.to_string())
+        })
 }
 
 fn parse_script(scripts_: Vec<Script>) -> Vec<ScriptDb> {

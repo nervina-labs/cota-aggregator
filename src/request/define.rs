@@ -13,7 +13,7 @@ pub struct DefineReq {
 }
 
 impl DefineReq {
-    pub fn from_map(map: Map<String, Value>) -> Result<Self, Error> {
+    pub fn from_map(map: &Map<String, Value>) -> Result<Self, Error> {
         Ok(DefineReq {
             lock_hash: map.get_hex_bytes_filed::<32>("lock_hash")?,
             cota_id:   map.get_hex_bytes_filed::<20>("cota_id")?,
