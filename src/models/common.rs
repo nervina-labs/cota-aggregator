@@ -2,7 +2,7 @@ use crate::models::claim::{get_claim_cota_by_lock_hash_with_conn, ClaimDb};
 use crate::models::define::{get_define_cota_by_lock_hash_with_conn, DefineDb};
 use crate::models::helper::establish_connection;
 use crate::models::hold::{
-    get_hold_cota_by_lock_hash, get_hold_cota_by_lock_hash_with_conn, HoldDb,
+    get_hold_cota_by_lock_hash_and_page, get_hold_cota_by_lock_hash_with_conn, HoldDb,
 };
 use crate::models::scripts::get_script_id_by_lock_script;
 use crate::models::withdrawal::{
@@ -24,21 +24,25 @@ pub fn get_all_cota_by_lock_hash(lock_hash: [u8; 32]) -> DBAllResult {
     Ok((defines, holds, withdrawals, claims))
 }
 
-pub fn get_hold_cota(lock_script: Vec<u8>) -> DBResult<HoldDb> {
+pub fn get_hold_cota(lock_script: Vec<u8>, page: i64, page_size: i64) -> DBResult<HoldDb> {
     let lock_hash = blake2b_256(&lock_script);
-    get_hold_cota_by_lock_hash(lock_hash, None)
+    get_hold_cota_by_lock_hash_and_page(lock_hash, page, page_size)
 }
 
-pub fn get_withdrawal_cota(lock_script: Vec<u8>) -> DBResult<WithdrawNFTDb> {
+pub fn get_withdrawal_cota(
+    lock_script: Vec<u8>,
+    page: i64,
+    page_size: i64,
+) -> DBResult<WithdrawNFTDb> {
     let conn = &establish_connection();
     let script_id = get_script_id_by_lock_script(conn, &lock_script)?;
-    get_withdrawal_cota_by_script_id(conn, script_id)
+    get_withdrawal_cota_by_script_id(conn, script_id, page, page_size)
 }
 
-pub fn get_mint_cota(lock_script: Vec<u8>) -> DBResult<WithdrawDb> {
+pub fn get_mint_cota(lock_script: Vec<u8>, page: i64, page_size: i64) -> DBResult<WithdrawDb> {
     let conn = &establish_connection();
     let lock_hash = blake2b_256(&lock_script);
     let defines = get_define_cota_by_lock_hash_with_conn(conn, lock_hash)?;
     let cota_ids: Vec<[u8; 20]> = defines.into_iter().map(|define| define.cota_id).collect();
-    get_withdrawal_cota_by_cota_ids(conn, lock_hash, cota_ids)
+    get_withdrawal_cota_by_cota_ids(conn, lock_hash, cota_ids, page, page_size)
 }

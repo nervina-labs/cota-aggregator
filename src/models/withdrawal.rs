@@ -92,6 +92,8 @@ pub fn get_withdrawal_cota_by_cota_ids(
     conn: &SqlConnection,
     lock_hash_: [u8; 32],
     cota_ids: Vec<[u8; 20]>,
+    page: i64,
+    page_size: i64,
 ) -> DBResult<WithdrawDb> {
     let (lock_hash_hex, lock_hash_crc_) = parse_lock_hash(lock_hash_);
     let cota_ids_: Vec<String> = cota_ids
@@ -111,6 +113,8 @@ pub fn get_withdrawal_cota_by_cota_ids(
         .filter(lock_hash_crc.eq(lock_hash_crc_))
         .filter(lock_hash.eq(lock_hash_hex))
         .filter(cota_id.eq_any(cota_ids_))
+        .limit(page_size)
+        .offset(page_size * page)
         .load::<WithdrawCotaNft>(conn)
         .map_err(|e| {
             error!("Query withdraw error: {}", e.to_string());
@@ -122,6 +126,8 @@ pub fn get_withdrawal_cota_by_cota_ids(
 pub fn get_withdrawal_cota_by_script_id(
     conn: &SqlConnection,
     script_id: i64,
+    page: i64,
+    page_size: i64,
 ) -> DBResult<WithdrawNFTDb> {
     let withdraw_cota_nfts: Vec<WithdrawCotaNft> = withdraw_cota_nft_kv_pairs
         .select((
@@ -134,6 +140,8 @@ pub fn get_withdrawal_cota_by_script_id(
             receiver_lock_script_id,
         ))
         .filter(receiver_lock_script_id.eq(script_id))
+        .limit(page_size)
+        .offset(page_size * page)
         .load::<WithdrawCotaNft>(conn)
         .map_err(|e| {
             error!("Query withdraw error: {}", e.to_string());

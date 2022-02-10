@@ -67,6 +67,29 @@ pub fn get_hold_cota_by_lock_hash(
     )
 }
 
+pub fn get_hold_cota_by_lock_hash_and_page(
+    lock_hash_: [u8; 32],
+    page: i64,
+    page_size: i64,
+) -> DBResult<HoldDb> {
+    let conn = &establish_connection();
+    let (lock_hash_hex, lock_hash_crc_) = parse_lock_hash(lock_hash_);
+    hold_cota_nft_kv_pairs
+        .select((cota_id, token_index, configure, state, characteristic))
+        .filter(lock_hash_crc.eq(lock_hash_crc_))
+        .filter(lock_hash.eq(lock_hash_hex))
+        .limit(page_size)
+        .offset(page_size * page)
+        .load::<HoldCotaNft>(conn)
+        .map_or_else(
+            |e| {
+                error!("Query hold error: {}", e.to_string());
+                Err(Error::DatabaseQueryError(e.to_string()))
+            },
+            |holds| Ok(parse_hold_cota_nft(holds)),
+        )
+}
+
 fn parse_hold_cota_nft(holds: Vec<HoldCotaNft>) -> Vec<HoldDb> {
     holds
         .into_iter()

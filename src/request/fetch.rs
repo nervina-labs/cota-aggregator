@@ -8,6 +8,8 @@ use jsonrpc_http_server::jsonrpc_core::Value;
 #[derive(Clone, Eq, PartialEq)]
 pub struct FetchReq {
     pub lock_script: Vec<u8>,
+    pub page:        i64,
+    pub page_size:   i64,
 }
 
 impl FetchReq {
@@ -16,6 +18,10 @@ impl FetchReq {
         if Script::from_slice(&lock_script).is_err() {
             return Err(Error::RequestParamTypeError("Script".to_string()));
         }
-        Ok(FetchReq { lock_script })
+        Ok(FetchReq {
+            lock_script,
+            page: map.get_i64_filed("page")?,
+            page_size: map.get_i64_filed("page_size")?,
+        })
     }
 }
