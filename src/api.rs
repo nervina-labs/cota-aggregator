@@ -67,8 +67,8 @@ pub async fn fetch_hold_rpc(params: Params) -> Result<Value, Error> {
         page,
         page_size,
     } = FetchReq::from_map(&map).map_err(|err| err.into())?;
-    let holds = get_hold_cota(lock_script, page, page_size).map_err(|err| err.into())?;
-    let response = parse_hold_response(holds)?;
+    let (holds, total) = get_hold_cota(lock_script, page, page_size).map_err(|err| err.into())?;
+    let response = parse_hold_response(holds, total, page_size);
     Ok(Value::Object(response))
 }
 
@@ -79,9 +79,9 @@ pub async fn fetch_withdrawal_rpc(params: Params) -> Result<Value, Error> {
         page,
         page_size,
     } = FetchReq::from_map(&map).map_err(|err| err.into())?;
-    let withdrawals =
+    let (withdrawals, total) =
         get_withdrawal_cota(lock_script, page, page_size).map_err(|err| err.into())?;
-    let response = parse_withdrawal_response(withdrawals)?;
+    let response = parse_withdrawal_response(withdrawals, total, page_size);
     Ok(Value::Object(response))
 }
 
@@ -92,7 +92,8 @@ pub async fn fetch_mint_rpc(params: Params) -> Result<Value, Error> {
         page,
         page_size,
     } = FetchReq::from_map(&map).map_err(|err| err.into())?;
-    let withdrawals = get_mint_cota(lock_script, page, page_size).map_err(|err| err.into())?;
-    let response = parse_mint_response(withdrawals)?;
+    let (withdrawals, total) =
+        get_mint_cota(lock_script, page, page_size).map_err(|err| err.into())?;
+    let response = parse_mint_response(withdrawals, total, page_size);
     Ok(Value::Object(response))
 }

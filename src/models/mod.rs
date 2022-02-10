@@ -9,3 +9,4 @@ pub(crate) mod scripts;
 pub(crate) mod withdrawal;
 
 type DBResult<T> = Result<Vec<T>, Error>;
+type DBTotalResult<T> = Result<(Vec<T>, i64), Error>;

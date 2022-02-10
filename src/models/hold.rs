@@ -1,6 +1,6 @@
 use super::helper::{establish_connection, parse_cota_id_and_token_index_pairs, parse_lock_hash};
 use crate::models::helper::SqlConnection;
-use crate::models::DBResult;
+use crate::models::{DBResult, DBTotalResult};
 use crate::schema::hold_cota_nft_kv_pairs::dsl::hold_cota_nft_kv_pairs;
 use crate::schema::hold_cota_nft_kv_pairs::*;
 use crate::utils::error::Error;
@@ -71,10 +71,20 @@ pub fn get_hold_cota_by_lock_hash_and_page(
     lock_hash_: [u8; 32],
     page: i64,
     page_size: i64,
-) -> DBResult<HoldDb> {
+) -> DBTotalResult<HoldDb> {
     let conn = &establish_connection();
     let (lock_hash_hex, lock_hash_crc_) = parse_lock_hash(lock_hash_);
-    hold_cota_nft_kv_pairs
+    let total: i64 = hold_cota_nft_kv_pairs
+        .filter(lock_hash_crc.eq(lock_hash_crc_))
+        .filter(lock_hash.eq(lock_hash_hex.clone()))
+        .count()
+        .get_result::<i64>(conn)
+        .map_err(|e| {
+            error!("Query hold error: {}", e.to_string());
+            Error::DatabaseQueryError(e.to_string())
+        })?;
+
+    let holds: Vec<HoldDb> = hold_cota_nft_kv_pairs
         .select((cota_id, token_index, configure, state, characteristic))
         .filter(lock_hash_crc.eq(lock_hash_crc_))
         .filter(lock_hash.eq(lock_hash_hex))
@@ -87,7 +97,8 @@ pub fn get_hold_cota_by_lock_hash_and_page(
                 Err(Error::DatabaseQueryError(e.to_string()))
             },
             |holds| Ok(parse_hold_cota_nft(holds)),
-        )
+        )?;
+    Ok((holds, total))
 }
 
 fn parse_hold_cota_nft(holds: Vec<HoldCotaNft>) -> Vec<HoldDb> {
