@@ -1,4 +1,6 @@
-use super::helper::{establish_connection, parse_lock_hash};
+use super::helper::parse_lock_hash;
+use crate::models::helper::SqlConnection;
+use crate::models::DBResult;
 use crate::schema::claimed_cota_nft_kv_pairs::dsl::claimed_cota_nft_kv_pairs;
 use crate::schema::claimed_cota_nft_kv_pairs::*;
 use crate::utils::error::Error;
@@ -20,8 +22,10 @@ pub struct ClaimDb {
     pub out_point:   [u8; 24],
 }
 
-pub fn get_claim_cota_by_lock_hash(lock_hash_: [u8; 32]) -> Result<Vec<ClaimDb>, Error> {
-    let conn = &establish_connection();
+pub fn get_claim_cota_by_lock_hash_with_conn(
+    conn: &SqlConnection,
+    lock_hash_: [u8; 32],
+) -> DBResult<ClaimDb> {
     let (lock_hash_hex, lock_hash_crc_) = parse_lock_hash(lock_hash_);
     claimed_cota_nft_kv_pairs
         .select((cota_id, token_index, out_point))

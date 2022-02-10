@@ -27,6 +27,7 @@ pub fn parse_vec_map<T: ReqParser>(map: &Map<String, Value>, key: &str) -> Resul
 pub trait HexParser {
     fn get_hex_bytes_filed<const N: usize>(&self, key: &str) -> Result<[u8; N], Error>;
     fn get_hex_vec_filed(&self, key: &str) -> Result<Vec<u8>, Error>;
+    fn get_i64_filed(&self, key: &str) -> Result<i64, Error>;
 }
 
 impl HexParser for Map<String, Value> {
@@ -64,6 +65,20 @@ impl HexParser for Map<String, Value> {
         let result = parse_bytes(v.as_str().unwrap().to_owned())?;
         Ok(result)
     }
+
+    fn get_i64_filed(&self, key: &str) -> Result<i64, Error> {
+        let v = self
+            .get(key)
+            .ok_or(Error::RequestParamNotFound(key.to_owned()))?;
+        if !v.is_string() {
+            return Err(Error::RequestParamTypeError(key.to_owned()));
+        }
+        let result: i64 = v.as_str().unwrap().parse().unwrap();
+        if result < 0 {
+            return Err(Error::RequestParamTypeError(key.to_owned()));
+        }
+        Ok(result)
+    }
 }
 
 #[cfg(test)]
@@ -85,6 +100,7 @@ mod tests {
             Value::String("f14aca18aae9df753af304469d8f4ebbc174a938".to_owned()),
         );
         map.insert("total".to_owned(), Value::String("0x0000008g".to_owned()));
+        map.insert("page".to_owned(), Value::String("32".to_owned()));
 
         assert_eq!(
             map.get_hex_vec_filed("lock_hash").unwrap(),
@@ -117,6 +133,8 @@ mod tests {
             map.get_hex_bytes_filed::<4>("total"),
             Err(Error::RequestParamHexInvalid("\"0x0000008g\"".to_owned()))
         );
+
+        assert_eq!(map.get_i64_filed("page"), Ok(32));
     }
 
     // TODO: Add more tests
