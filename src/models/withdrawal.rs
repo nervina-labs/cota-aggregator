@@ -124,6 +124,7 @@ pub fn get_withdrawal_cota_by_cota_ids(
         .filter(lock_hash_crc.eq(lock_hash_crc_))
         .filter(lock_hash.eq(lock_hash_hex))
         .filter(cota_id.eq_any(cota_ids_))
+        .order(updated_at.desc())
         .limit(page_size)
         .offset(page_size * page)
         .load::<WithdrawCotaNft>(conn)
@@ -161,6 +162,7 @@ pub fn get_withdrawal_cota_by_script_id(
             receiver_lock_script_id,
         ))
         .filter(receiver_lock_script_id.eq(script_id))
+        .order(updated_at.desc())
         .limit(page_size)
         .offset(page_size * page)
         .load::<WithdrawCotaNft>(conn)

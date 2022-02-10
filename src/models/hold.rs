@@ -88,6 +88,7 @@ pub fn get_hold_cota_by_lock_hash_and_page(
         .select((cota_id, token_index, configure, state, characteristic))
         .filter(lock_hash_crc.eq(lock_hash_crc_))
         .filter(lock_hash.eq(lock_hash_hex))
+        .order(updated_at.desc())
         .limit(page_size)
         .offset(page_size * page)
         .load::<HoldCotaNft>(conn)
