@@ -23,6 +23,7 @@ const UPDATE_RPC: &'static str = "generate_update_cota_smt";
 const TRANSFER_RPC: &'static str = "generate_transfer_cota_smt";
 const FETCH_HOLD_RPC: &'static str = "get_hold_cota_nft";
 const FETCH_WITHDRAWAL_RPC: &'static str = "get_withdrawal_cota_nft";
+const FETCH_MINT_RPC: &'static str = "get_mint_cota_nft";
 
 fn main() {
     env_logger::Builder::from_default_env()
@@ -39,6 +40,7 @@ fn main() {
     io.add_method(FETCH_WITHDRAWAL_RPC, move |params: Params| {
         fetch_withdrawal_rpc(params)
     });
+    io.add_method(FETCH_MINT_RPC, move |params: Params| fetch_mint_rpc(params));
 
     let server = ServerBuilder::new(io)
         .threads(3)

@@ -6,14 +6,15 @@ use crate::request::mint::MintReq;
 use crate::request::transfer::TransferReq;
 use crate::request::update::UpdateReq;
 use crate::request::withdrawal::WithdrawalReq;
-use crate::response::parser::{parse_hold_response, parse_withdrawal_response};
+use crate::response::parser::{
+    parse_hold_response, parse_mint_response, parse_withdrawal_response,
+};
 use crate::smt::claim::generate_claim_smt;
 use crate::smt::define::generate_define_smt;
 use crate::smt::mint::generate_mint_smt;
 use crate::smt::transfer::generate_transfer_smt;
 use crate::smt::update::generate_update_smt;
 use crate::smt::withdrawal::generate_withdrawal_smt;
-use crate::utils::error::Error as AppError;
 use jsonrpc_http_server::jsonrpc_core::serde_json::Map;
 use jsonrpc_http_server::jsonrpc_core::{Error, Params, Value};
 
@@ -71,5 +72,12 @@ pub async fn fetch_withdrawal_rpc(params: Params) -> Result<Value, Error> {
     let FetchReq { lock_script } = FetchReq::from_map(&map).map_err(|err| err.into())?;
     let response =
         parse_withdrawal_response(get_withdrawal_cota(lock_script).map_err(|err| err.into())?)?;
+    Ok(Value::Object(response))
+}
+
+pub async fn fetch_mint_rpc(params: Params) -> Result<Value, Error> {
+    let map: Map<String, Value> = Params::parse(params)?;
+    let FetchReq { lock_script } = FetchReq::from_map(&map).map_err(|err| err.into())?;
+    let response = parse_mint_response(get_mint_cota(lock_script).map_err(|err| err.into())?)?;
     Ok(Value::Object(response))
 }

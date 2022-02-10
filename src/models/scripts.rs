@@ -3,7 +3,7 @@ use crate::schema::scripts::dsl::scripts;
 use crate::schema::scripts::*;
 use crate::schema::scripts::{args, code_hash, hash_type};
 use crate::utils::error::Error;
-use crate::utils::helper::{parse_bytes, parse_bytes_n, remove_0x};
+use crate::utils::helper::{parse_bytes, parse_bytes_n};
 use cota_smt::ckb_types::packed::{Byte32, BytesBuilder, Script as LockScript, ScriptBuilder};
 use cota_smt::ckb_types::prelude::*;
 use cota_smt::molecule::prelude::Byte;

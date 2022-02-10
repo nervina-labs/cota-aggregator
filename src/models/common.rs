@@ -1,17 +1,13 @@
-use crate::models::claim::{
-    get_claim_cota_by_lock_hash, get_claim_cota_by_lock_hash_with_conn, ClaimDb,
-};
-use crate::models::define::{
-    get_define_cota_by_lock_hash, get_define_cota_by_lock_hash_with_conn, DefineDb,
-};
+use crate::models::claim::{get_claim_cota_by_lock_hash_with_conn, ClaimDb};
+use crate::models::define::{get_define_cota_by_lock_hash_with_conn, DefineDb};
 use crate::models::helper::establish_connection;
 use crate::models::hold::{
     get_hold_cota_by_lock_hash, get_hold_cota_by_lock_hash_with_conn, HoldDb,
 };
 use crate::models::scripts::get_script_id_by_lock_script;
 use crate::models::withdrawal::{
-    get_withdrawal_cota_by_lock_hash, get_withdrawal_cota_by_lock_hash_with_conn,
-    get_withdrawal_cota_by_script_id, WithdrawDb,
+    get_withdrawal_cota_by_cota_ids, get_withdrawal_cota_by_lock_hash_with_conn,
+    get_withdrawal_cota_by_script_id, WithdrawDb, WithdrawNFTDb,
 };
 use crate::models::DBResult;
 use crate::utils::error::Error;
@@ -33,11 +29,10 @@ pub fn get_hold_cota(lock_script: Vec<u8>) -> DBResult<HoldDb> {
     get_hold_cota_by_lock_hash(lock_hash, None)
 }
 
-pub fn get_withdrawal_cota(lock_script: Vec<u8>) -> DBResult<WithdrawDb> {
+pub fn get_withdrawal_cota(lock_script: Vec<u8>) -> DBResult<WithdrawNFTDb> {
     let conn = &establish_connection();
     let script_id = get_script_id_by_lock_script(conn, &lock_script)?;
-    let withdrawals = get_withdrawal_cota_by_script_id(conn, script_id, lock_script)?;
-    Ok(withdrawals)
+    get_withdrawal_cota_by_script_id(conn, script_id)
 }
 
 pub fn get_mint_cota(lock_script: Vec<u8>) -> DBResult<WithdrawDb> {
@@ -45,7 +40,5 @@ pub fn get_mint_cota(lock_script: Vec<u8>) -> DBResult<WithdrawDb> {
     let lock_hash = blake2b_256(&lock_script);
     let defines = get_define_cota_by_lock_hash_with_conn(conn, lock_hash)?;
     let cota_ids: Vec<[u8; 20]> = defines.into_iter().map(|define| define.cota_id).collect();
-    let script_id = get_script_id_by_lock_script(conn, &lock_script)?;
-    let withdrawals = get_withdrawal_cota_by_script_id(conn, script_id, lock_script)?;
-    Ok(withdrawals)
+    get_withdrawal_cota_by_cota_ids(conn, lock_hash, cota_ids)
 }
