@@ -108,3 +108,19 @@ http://127.0.0.1:3030
 ```shell
 {"jsonrpc":"2.0","result":{"nfts":[{"characteristic":"0xa505050505050505050505050505050505050505","configure":"0x00","cota_id":"0xb22585a8053af3fed0fd39127f5b1487ce08b756","index":"0x00000000","receiver":"0x490000001000000030000000310000009bd7e06f3ecf4be0f2fcd2188b23f1b9fcc88e5d4b65a8637b17723bbda3cce80114000000dc70f33de86fdf381b4fc5bf092bb23d02774801","state":"0x00"},{"characteristic":"0xa505050505050505050505050505050505050505","configure":"0x00","cota_id":"0xb22585a8053af3fed0fd39127f5b1487ce08b756","index":"0x00000001","receiver":"0x490000001000000030000000310000009bd7e06f3ecf4be0f2fcd2188b23f1b9fcc88e5d4b65a8637b17723bbda3cce80114000000dc70f33de86fdf381b4fc5bf092bb23d02774801","state":"0x00"}],"page_size":2,"total":616},"id":2}
 ```
+
+- is_claimed
+
+```shell
+ echo '{
+    "id": 2,
+    "jsonrpc": "2.0",
+    "method": "is_claimed",
+    "params": {"lock_hash":"0x3162711f5048d416c62c4ee5483a9c289dbe607fb00790b14ad7dc7edf1c21d9","cota_id":"0x2dd97617e685c0cd44b87cba7e8756ea67a721cd","token_index":"0x00000000"}
+}' \
+| tr -d '\n' \
+| curl -H 'content-type: application/json' -d @- \
+http://127.0.0.1:3030
+
+{"jsonrpc":"2.0","result":{"claimed":true},"id":2}
+```
