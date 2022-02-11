@@ -21,7 +21,7 @@ fn parse_hold_value(hold: HoldDb) -> Value {
         Value::String(format!("0x{}", hex::encode(&hold.cota_id))),
     );
     map.insert(
-        "index".to_string(),
+        "token_index".to_string(),
         Value::String(format!("0x{}", hex::encode(&hold.token_index))),
     );
     map.insert(

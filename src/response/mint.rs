@@ -25,7 +25,7 @@ fn parse_mint_value(withdrawal: WithdrawDb) -> Value {
         Value::String(format!("0x{}", hex::encode(&withdrawal.cota_id))),
     );
     map.insert(
-        "index".to_string(),
+        "token_index".to_string(),
         Value::String(format!("0x{}", hex::encode(&withdrawal.token_index))),
     );
     map.insert(
