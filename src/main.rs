@@ -15,32 +15,21 @@ pub mod schema;
 mod smt;
 mod utils;
 
-const DEFINE_RPC: &'static str = "generate_define_cota_smt";
-const MINT_RPC: &'static str = "generate_mint_cota_smt";
-const WITHDRAWAL_RPC: &'static str = "generate_withdrawal_cota_smt";
-const CLAIM_RPC: &'static str = "generate_claim_cota_smt";
-const UPDATE_RPC: &'static str = "generate_update_cota_smt";
-const TRANSFER_RPC: &'static str = "generate_transfer_cota_smt";
-const FETCH_HOLD_RPC: &'static str = "get_hold_cota_nft";
-const FETCH_WITHDRAWAL_RPC: &'static str = "get_withdrawal_cota_nft";
-const FETCH_MINT_RPC: &'static str = "get_mint_cota_nft";
-const IS_CLAIMED_RPC: &'static str = "is_claimed";
-
 fn main() {
     env_logger::Builder::from_default_env()
         .format_timestamp(Some(env_logger::fmt::TimestampPrecision::Millis))
         .init();
     let mut io = IoHandler::default();
-    io.add_method(DEFINE_RPC, define_rpc);
-    io.add_method(MINT_RPC, mint_rpc);
-    io.add_method(WITHDRAWAL_RPC, withdrawal_rpc);
-    io.add_method(CLAIM_RPC, claim_rpc);
-    io.add_method(UPDATE_RPC, update_rpc);
-    io.add_method(TRANSFER_RPC, transfer_rpc);
-    io.add_method(FETCH_HOLD_RPC, fetch_hold_rpc);
-    io.add_method(FETCH_WITHDRAWAL_RPC, fetch_withdrawal_rpc);
-    io.add_method(FETCH_MINT_RPC, fetch_mint_rpc);
-    io.add_method(IS_CLAIMED_RPC, is_claimed_rpc);
+    io.add_method("generate_define_cota_smt", define_rpc);
+    io.add_method("generate_mint_cota_smt", mint_rpc);
+    io.add_method("generate_withdrawal_cota_smt", withdrawal_rpc);
+    io.add_method("generate_claim_cota_smt", claim_rpc);
+    io.add_method("generate_update_cota_smt", update_rpc);
+    io.add_method("generate_transfer_cota_smt", transfer_rpc);
+    io.add_method("get_hold_cota_nft", fetch_hold_rpc);
+    io.add_method("get_withdrawal_cota_nft", fetch_withdrawal_rpc);
+    io.add_method("get_mint_cota_nft", fetch_mint_rpc);
+    io.add_method("is_claimed", is_claimed_rpc);
 
     let server = ServerBuilder::new(io)
         .threads(3)
