@@ -1,14 +1,17 @@
-use crate::models::common::{get_hold_cota, get_mint_cota, get_withdrawal_cota};
-use crate::request::claim::ClaimReq;
+use crate::models::common::{
+    check_cota_claimed, get_hold_cota, get_mint_cota, get_withdrawal_cota,
+};
+use crate::request::claim::{ClaimReq, IsClaimedReq};
 use crate::request::define::DefineReq;
 use crate::request::fetch::FetchReq;
 use crate::request::mint::MintReq;
 use crate::request::transfer::TransferReq;
 use crate::request::update::UpdateReq;
 use crate::request::withdrawal::WithdrawalReq;
-use crate::response::parser::{
-    parse_hold_response, parse_mint_response, parse_withdrawal_response,
-};
+use crate::response::claim::parse_claimed_response;
+use crate::response::hold::parse_hold_response;
+use crate::response::mint::parse_mint_response;
+use crate::response::withdrawal::parse_withdrawal_response;
 use crate::smt::claim::generate_claim_smt;
 use crate::smt::define::generate_define_smt;
 use crate::smt::mint::generate_mint_smt;
@@ -95,5 +98,17 @@ pub async fn fetch_mint_rpc(params: Params) -> Result<Value, Error> {
     let (withdrawals, total) =
         get_mint_cota(lock_script, page, page_size).map_err(|err| err.into())?;
     let response = parse_mint_response(withdrawals, total, page_size);
+    Ok(Value::Object(response))
+}
+
+pub async fn is_claimed_rpc(params: Params) -> Result<Value, Error> {
+    let map: Map<String, Value> = Params::parse(params)?;
+    let IsClaimedReq {
+        lock_hash,
+        cota_id,
+        token_index,
+    } = IsClaimedReq::from_map(&map).map_err(|err| err.into())?;
+    let claimed = check_cota_claimed(lock_hash, cota_id, token_index).map_err(|err| err.into())?;
+    let response = parse_claimed_response(claimed);
     Ok(Value::Object(response))
 }
