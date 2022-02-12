@@ -14,7 +14,14 @@ RUN apt-get install cmake clang llvm gcc -y
 
 RUN cargo build --release
 
-FROM alpine:latest
+FROM debian:bookworm-20211011-slim
+
+# use aliyun source
+RUN sed -i "s@http://deb.debian.org@http://mirrors.aliyun.com@g" /etc/apt/sources.list
+RUN apt-get clean
+
+RUN apt-get update && apt-get install -y libmariadb-dev
+
 COPY --from=builder /app/target/release/cota-aggregator /app/cota-aggregator
 RUN chmod +x /app/cota-aggregator
 
