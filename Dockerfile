@@ -1,15 +1,17 @@
-FROM clux/muslrust:stable as builder
+FROM rust:1.58 as builder
 
 WORKDIR /app
 
 COPY . .
 COPY debian/config .cargo/config.toml
 
-RUN rustup target add x86_64-unknown-linux-musl
+RUN apt-get update
+RUN apt-get install cmake clang llvm gcc -y
+
 RUN cargo build --release
 
 FROM alpine:latest
-COPY --from=builder /app/target/x86_64-unknown-linux-musl/release/cota-aggregator /app/cota-aggregator
+COPY --from=builder /app/target/release/cota-aggregator /app/cota-aggregator
 RUN chmod +x /app/cota-aggregator
 
 WORKDIR /app
