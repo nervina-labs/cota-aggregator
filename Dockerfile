@@ -5,6 +5,10 @@ WORKDIR /app
 COPY . .
 COPY debian/config .cargo/config.toml
 
+# use aliyun source
+RUN sed -i "s@http://deb.debian.org@http://mirrors.aliyun.com@g" /etc/apt/sources.list
+RUN apt-get clean
+
 RUN apt-get update
 RUN apt-get install cmake clang llvm gcc -y
 
