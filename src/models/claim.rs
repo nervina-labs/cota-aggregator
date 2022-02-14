@@ -1,4 +1,5 @@
 use super::helper::parse_lock_hash;
+use crate::models::block::get_syncer_tip_block_number_with_conn;
 use crate::models::helper::SqlConnection;
 use crate::models::DBResult;
 use crate::schema::claimed_cota_nft_kv_pairs::dsl::claimed_cota_nft_kv_pairs;
@@ -27,7 +28,7 @@ pub fn get_claim_cota_by_lock_hash_with_conn(
     lock_hash_: [u8; 32],
 ) -> DBResult<ClaimDb> {
     let (lock_hash_hex, lock_hash_crc_) = parse_lock_hash(lock_hash_);
-    claimed_cota_nft_kv_pairs
+    let claims: Vec<ClaimDb> = claimed_cota_nft_kv_pairs
         .select((cota_id, token_index, out_point))
         .filter(lock_hash_crc.eq(lock_hash_crc_))
         .filter(lock_hash.eq(lock_hash_hex))
@@ -38,7 +39,9 @@ pub fn get_claim_cota_by_lock_hash_with_conn(
                 Err(Error::DatabaseQueryError(e.to_string()))
             },
             |claims| Ok(parse_claimed_cota_nft(claims)),
-        )
+        )?;
+    let block_height = get_syncer_tip_block_number_with_conn(conn)?;
+    Ok((claims, block_height))
 }
 
 fn parse_claimed_cota_nft(claims: Vec<ClaimCotaNft>) -> Vec<ClaimDb> {

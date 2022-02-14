@@ -1,4 +1,5 @@
 use super::helper::{establish_connection, parse_lock_hash};
+use crate::models::block::get_syncer_tip_block_number_with_conn;
 use crate::models::helper::SqlConnection;
 use crate::models::DBResult;
 use crate::schema::define_cota_nft_kv_pairs::dsl::*;
@@ -29,7 +30,7 @@ pub fn get_define_cota_by_lock_hash_with_conn(
     lock_hash_: [u8; 32],
 ) -> DBResult<DefineDb> {
     let (lock_hash_hex, lock_hash_crc_) = parse_lock_hash(lock_hash_);
-    define_cota_nft_kv_pairs
+    let defines = define_cota_nft_kv_pairs
         .select((cota_id, total, issued, configure))
         .filter(lock_hash_crc.eq(lock_hash_crc_))
         .filter(lock_hash.eq(lock_hash_hex))
@@ -40,7 +41,9 @@ pub fn get_define_cota_by_lock_hash_with_conn(
                 Err(Error::DatabaseQueryError(e.to_string()))
             },
             |defines| Ok(parse_define_cota_nft(defines)),
-        )
+        )?;
+    let block_height = get_syncer_tip_block_number_with_conn(conn)?;
+    Ok((defines, block_height))
 }
 
 pub fn get_define_cota_by_lock_hash(lock_hash_: [u8; 32]) -> DBResult<DefineDb> {

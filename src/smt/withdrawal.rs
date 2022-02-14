@@ -9,11 +9,9 @@ use cota_smt::common::*;
 use cota_smt::molecule::prelude::*;
 use cota_smt::smt::{Blake2bHasher, H256};
 use cota_smt::transfer::WithdrawalCotaNFTEntriesBuilder;
-use jsonrpc_http_server::jsonrpc_core::serde_json::Map;
-use jsonrpc_http_server::jsonrpc_core::Value;
 use log::info;
 
-pub fn generate_withdrawal_smt(withdrawal_req: WithdrawalReq) -> Result<Map<String, Value>, Error> {
+pub fn generate_withdrawal_smt(withdrawal_req: WithdrawalReq) -> Result<(String, String), Error> {
     let mut smt = generate_history_smt(withdrawal_req.lock_hash)?;
     let withdrawals = withdrawal_req.withdrawals;
     if withdrawals.is_empty() {
@@ -26,7 +24,7 @@ pub fn generate_withdrawal_smt(withdrawal_req: WithdrawalReq) -> Result<Map<Stri
             .collect(),
     );
     let db_holds =
-        get_hold_cota_by_lock_hash(withdrawal_req.lock_hash, cota_id_and_token_index_pairs)?;
+        get_hold_cota_by_lock_hash(withdrawal_req.lock_hash, cota_id_and_token_index_pairs)?.0;
     if db_holds.is_empty() || db_holds.len() != withdrawals.len() {
         return Err(Error::CotaIdAndTokenIndexHasNotHeld);
     }
@@ -116,15 +114,9 @@ pub fn generate_withdrawal_smt(withdrawal_req: WithdrawalReq) -> Result<Map<Stri
         .action(action_bytes)
         .build();
 
-    let withdrawal_entries_hex = hex::encode(withdrawal_entries.as_slice());
+    let withdrawal_entry = hex::encode(withdrawal_entries.as_slice());
 
-    info!("withdrawal_smt_entry: {:?}", withdrawal_entries_hex);
+    info!("withdrawal_smt_entry: {:?}", withdrawal_entry);
 
-    let mut result: Map<String, Value> = Map::new();
-    result.insert("smt_root_hash".to_string(), Value::String(root_hash_hex));
-    result.insert(
-        "withdrawal_smt_entry".to_string(),
-        Value::String(withdrawal_entries_hex),
-    );
-    Ok(result)
+    Ok((root_hash_hex, withdrawal_entry))
 }

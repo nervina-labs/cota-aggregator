@@ -9,11 +9,9 @@ use cota_smt::common::*;
 use cota_smt::molecule::prelude::*;
 use cota_smt::smt::{blake2b_256, Blake2bHasher, H256};
 use cota_smt::transfer::ClaimCotaNFTEntriesBuilder;
-use jsonrpc_http_server::jsonrpc_core::serde_json::Map;
-use jsonrpc_http_server::jsonrpc_core::Value;
 use log::info;
 
-pub fn generate_claim_smt(claim_req: ClaimReq) -> Result<Map<String, Value>, Error> {
+pub fn generate_claim_smt(claim_req: ClaimReq) -> Result<(String, String), Error> {
     let claims = claim_req.clone().claims;
     let claims_len = claims.len();
     if claims_len == 0 {
@@ -28,7 +26,8 @@ pub fn generate_claim_smt(claim_req: ClaimReq) -> Result<Map<String, Value>, Err
     let sender_withdrawals = get_withdrawal_cota_by_lock_hash(
         claim_req.withdrawal_lock_hash,
         cota_id_and_token_index_pairs,
-    )?;
+    )?
+    .0;
     if sender_withdrawals.is_empty() || sender_withdrawals.len() != claims_len {
         return Err(Error::CotaIdAndTokenIndexHasNotWithdrawn);
     }
@@ -153,18 +152,9 @@ pub fn generate_claim_smt(claim_req: ClaimReq) -> Result<Map<String, Value>, Err
         .action(action_bytes)
         .build();
 
-    let claim_entries_hex = hex::encode(claim_entries.as_slice());
+    let claim_entry = hex::encode(claim_entries.as_slice());
 
-    info!("claim_smt_entry: {:?}", claim_entries_hex);
+    info!("claim_smt_entry: {:?}", claim_entry);
 
-    let mut result = Map::new();
-    result.insert(
-        "smt_root_hash".to_string(),
-        Value::String(claim_root_hash_hex),
-    );
-    result.insert(
-        "claim_smt_entry".to_string(),
-        Value::String(claim_entries_hex),
-    );
-    Ok(result)
+    Ok((claim_root_hash_hex, claim_entry))
 }

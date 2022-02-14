@@ -1,6 +1,7 @@
 use super::helper::{
     establish_connection, parse_cota_id_and_token_index_pairs, parse_lock_hash, SqlConnection,
 };
+use crate::models::block::get_syncer_tip_block_number_with_conn;
 use crate::models::scripts::get_script_map_by_ids;
 use crate::models::{DBResult, DBTotalResult};
 use crate::schema::withdraw_cota_nft_kv_pairs::dsl::withdraw_cota_nft_kv_pairs;
@@ -132,8 +133,8 @@ pub fn get_withdrawal_cota_by_cota_ids(
             error!("Query withdraw error: {}", e.to_string());
             Error::DatabaseQueryError(e.to_string())
         })?;
-    let withdrawals = parse_withdraw_db(conn, withdraw_cota_nfts)?;
-    Ok((withdrawals, total))
+    let (withdrawals, block_height) = parse_withdraw_db(conn, withdraw_cota_nfts)?;
+    Ok((withdrawals, total, block_height))
 }
 
 pub fn get_withdrawal_cota_by_script_id(
@@ -171,15 +172,17 @@ pub fn get_withdrawal_cota_by_script_id(
             Error::DatabaseQueryError(e.to_string())
         })?;
     let withdrawals = parse_withdraw_cota_nft(withdraw_cota_nfts);
-    Ok((withdrawals, total))
+    let block_height = get_syncer_tip_block_number_with_conn(conn)?;
+    Ok((withdrawals, total, block_height))
 }
 
 fn parse_withdraw_db(
     conn: &SqlConnection,
     withdrawals: Vec<WithdrawCotaNft>,
 ) -> DBResult<WithdrawDb> {
+    let block_height = get_syncer_tip_block_number_with_conn(conn)?;
     if withdrawals.is_empty() {
-        return Ok(vec![]);
+        return Ok((vec![], block_height));
     }
     let receiver_lock_script_ids: Vec<i64> = withdrawals
         .iter()
@@ -202,7 +205,7 @@ fn parse_withdraw_db(
             out_point:            parse_bytes_n::<24>(withdrawal.out_point).unwrap(),
         })
     }
-    Ok(withdraw_db_vec)
+    Ok((withdraw_db_vec, block_height))
 }
 
 fn parse_withdraw_cota_nft(withdrawals: Vec<WithdrawCotaNft>) -> Vec<WithdrawNFTDb> {

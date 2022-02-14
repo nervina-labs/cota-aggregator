@@ -7,11 +7,13 @@ pub fn parse_mint_response(
     withdrawals: Vec<WithdrawDb>,
     total: i64,
     page_size: i64,
+    block_number: u64,
 ) -> Map<String, Value> {
     let nfts: Vec<Value> = withdrawals.into_iter().map(parse_mint_value).collect();
     let mut map = Map::new();
     map.insert_i64("total", total);
     map.insert_i64("page_size", page_size);
+    map.insert_u64("block_number", block_number);
     map.insert_array("nfts", nfts);
     map
 }
@@ -25,4 +27,15 @@ fn parse_mint_value(withdrawal: WithdrawDb) -> Value {
     map.insert_hex("characteristic", &withdrawal.characteristic);
     map.insert_hex("receiver", &withdrawal.receiver_lock_script);
     Value::Object(map)
+}
+
+pub fn parse_mint_smt(
+    (root_hash, smt_entry): (String, String),
+    block_number: u64,
+) -> Map<String, Value> {
+    let mut map = Map::new();
+    map.insert_str("smt_root_hash", root_hash);
+    map.insert_str("mint_smt_entry", smt_entry);
+    map.insert_u64("block_number", block_number);
+    map
 }

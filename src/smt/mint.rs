@@ -9,11 +9,9 @@ use cota_smt::common::*;
 use cota_smt::mint::MintCotaNFTEntriesBuilder;
 use cota_smt::molecule::prelude::*;
 use cota_smt::smt::{Blake2bHasher, H256};
-use jsonrpc_http_server::jsonrpc_core::serde_json::Map;
-use jsonrpc_http_server::jsonrpc_core::Value;
 use log::info;
 
-pub fn generate_mint_smt(mint_req: MintReq) -> Result<Map<String, Value>, Error> {
+pub fn generate_mint_smt(mint_req: MintReq) -> Result<(String, String), Error> {
     let withdrawals = mint_req.withdrawals;
     let withdrawals_len = withdrawals.len();
     if withdrawals_len == 0 {
@@ -137,15 +135,9 @@ pub fn generate_mint_smt(mint_req: MintReq) -> Result<Map<String, Value>, Error>
         .action(action_bytes)
         .build();
 
-    let mint_entries_hex = hex::encode(mint_entries.as_slice());
+    let mint_entry = hex::encode(mint_entries.as_slice());
 
-    info!("mint_smt_entry: {:?}", mint_entries_hex);
+    info!("mint_smt_entry: {:?}", mint_entry);
 
-    let mut result = Map::new();
-    result.insert("smt_root_hash".to_string(), Value::String(root_hash_hex));
-    result.insert(
-        "mint_smt_entry".to_string(),
-        Value::String(mint_entries_hex),
-    );
-    Ok(result)
+    Ok((root_hash_hex, mint_entry))
 }
