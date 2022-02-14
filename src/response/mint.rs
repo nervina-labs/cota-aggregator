@@ -25,7 +25,7 @@ fn parse_mint_value(withdrawal: WithdrawDb) -> Value {
     map.insert_hex("state", &[withdrawal.state]);
     map.insert_hex("configure", &[withdrawal.configure]);
     map.insert_hex("characteristic", &withdrawal.characteristic);
-    map.insert_hex("receiver", &withdrawal.receiver_lock_script);
+    map.insert_hex("receiver_lock", &withdrawal.receiver_lock_script);
     Value::Object(map)
 }
 

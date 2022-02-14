@@ -37,3 +37,20 @@ impl WithdrawalReq {
         })
     }
 }
+
+#[derive(Clone, Eq, PartialEq)]
+pub struct SenderLockReq {
+    pub lock_script: Vec<u8>,
+    pub cota_id:     [u8; 20],
+    pub token_index: [u8; 4],
+}
+
+impl SenderLockReq {
+    pub fn from_map(map: &Map<String, Value>) -> Result<Self, Error> {
+        Ok(SenderLockReq {
+            lock_script: map.get_hex_vec_filed("lock_script")?,
+            cota_id:     map.get_hex_bytes_filed::<20>("cota_id")?,
+            token_index: map.get_hex_bytes_filed::<4>("token_index")?,
+        })
+    }
+}

@@ -6,8 +6,9 @@ use crate::models::hold::{
 };
 use crate::models::scripts::get_script_id_by_lock_script;
 use crate::models::withdrawal::{
-    get_withdrawal_cota_by_cota_ids, get_withdrawal_cota_by_lock_hash_with_conn,
-    get_withdrawal_cota_by_script_id, WithdrawDb, WithdrawNFTDb,
+    get_sender_lock_by_script_id, get_withdrawal_cota_by_cota_ids,
+    get_withdrawal_cota_by_lock_hash_with_conn, get_withdrawal_cota_by_script_id, WithdrawDb,
+    WithdrawNFTDb,
 };
 use crate::models::DBTotalResult;
 use crate::utils::error::Error;
@@ -57,4 +58,14 @@ pub fn check_cota_claimed(
         get_hold_cota_by_lock_hash_with_conn(conn, lock_hash, Some(vec![(cota_id, index)]))?;
     let claimed = !holds.is_empty();
     Ok((claimed, block_number))
+}
+
+pub fn get_sender_lock_hash_by_cota_nft(
+    lock_script: Vec<u8>,
+    cota_id: [u8; 20],
+    token_index: [u8; 4],
+) -> Result<String, Error> {
+    let conn = &establish_connection();
+    let lock_script_id = get_script_id_by_lock_script(conn, &lock_script)?;
+    get_sender_lock_by_script_id(conn, lock_script_id, cota_id, token_index)
 }

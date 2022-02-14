@@ -1,6 +1,7 @@
 use crate::models::block::get_syncer_tip_block_number;
 use crate::models::common::{
-    check_cota_claimed, get_hold_cota, get_mint_cota, get_withdrawal_cota,
+    check_cota_claimed, get_hold_cota, get_mint_cota, get_sender_lock_hash_by_cota_nft,
+    get_withdrawal_cota,
 };
 use crate::request::claim::{ClaimReq, IsClaimedReq};
 use crate::request::define::DefineReq;
@@ -8,14 +9,16 @@ use crate::request::fetch::FetchReq;
 use crate::request::mint::MintReq;
 use crate::request::transfer::TransferReq;
 use crate::request::update::UpdateReq;
-use crate::request::withdrawal::WithdrawalReq;
+use crate::request::withdrawal::{SenderLockReq, WithdrawalReq};
 use crate::response::claim::{parse_claimed_response, parse_claimed_smt};
 use crate::response::define::parse_define_smt;
 use crate::response::hold::parse_hold_response;
 use crate::response::mint::{parse_mint_response, parse_mint_smt};
 use crate::response::transfer::parse_transfer_smt;
 use crate::response::update::parse_update_smt;
-use crate::response::withdrawal::{parse_withdrawal_response, parse_withdrawal_smt};
+use crate::response::withdrawal::{
+    parse_sender_response, parse_withdrawal_response, parse_withdrawal_smt,
+};
 use crate::smt::claim::generate_claim_smt;
 use crate::smt::define::generate_define_smt;
 use crate::smt::mint::generate_mint_smt;
@@ -122,6 +125,19 @@ pub async fn is_claimed_rpc(params: Params) -> Result<Value, Error> {
     let (claimed, block_number) =
         check_cota_claimed(lock_hash, cota_id, token_index).map_err(|err| err.into())?;
     let response = parse_claimed_response(claimed, block_number);
+    Ok(Value::Object(response))
+}
+
+pub async fn get_sender_lock_hash(params: Params) -> Result<Value, Error> {
+    let map: Map<String, Value> = Params::parse(params)?;
+    let SenderLockReq {
+        lock_script,
+        cota_id,
+        token_index,
+    } = SenderLockReq::from_map(&map).map_err(|err| err.into())?;
+    let sender_lock_hash = get_sender_lock_hash_by_cota_nft(lock_script, cota_id, token_index)
+        .map_err(|err| err.into())?;
+    let response = parse_sender_response(sender_lock_hash, get_block_number()?);
     Ok(Value::Object(response))
 }
 

@@ -124,3 +124,19 @@ http://127.0.0.1:3030
 
 {"jsonrpc":"2.0","result":{"block_number":4397583,"claimed":true},"id":2}
 ```
+
+- get_cota_nft_sneder
+
+```shell
+echo '{
+    "id": 2,
+    "jsonrpc": "2.0",
+    "method": "get_cota_nft_sender",
+    "params": {"lock_script": "0x490000001000000030000000310000009bd7e06f3ecf4be0f2fcd2188b23f1b9fcc88e5d4b65a8637b17723bbda3cce80114000000dc70f33de86fdf381b4fc5bf092bb23d02774801", "cota_id":"0xb22585a8053af3fed0fd39127f5b1487ce08b756", "token_index":"0x00000000"}
+}' \
+| tr -d '\n' \
+| curl -H 'content-type: application/json' -d @- \
+http://127.0.0.1:3030
+
+{"jsonrpc":"2.0","result":{"block_number":4397997,"sender_lock_hash":"0x8a8f45a094cbe050d1a612924901b11edc1bce28c0fd8d96cdc8779889f28aa8"},"id":2}
+```

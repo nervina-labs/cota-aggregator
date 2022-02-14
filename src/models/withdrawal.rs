@@ -176,6 +176,27 @@ pub fn get_withdrawal_cota_by_script_id(
     Ok((withdrawals, total, block_height))
 }
 
+pub fn get_sender_lock_by_script_id(
+    conn: &SqlConnection,
+    script_id: i64,
+    cota_id_: [u8; 20],
+    token_index_: [u8; 4],
+) -> Result<String, Error> {
+    let cota_id_hex = hex::encode(cota_id_);
+    let token_index_u32 = u32::from_be_bytes(token_index_);
+    withdraw_cota_nft_kv_pairs
+        .select(lock_hash)
+        .filter(receiver_lock_script_id.eq(script_id))
+        .filter(cota_id.eq(cota_id_hex))
+        .filter(token_index.eq(token_index_u32))
+        .order(updated_at.desc())
+        .first::<String>(conn)
+        .map_err(|e| {
+            error!("Query withdraw error: {}", e.to_string());
+            Error::DatabaseQueryError(e.to_string())
+        })
+}
+
 fn parse_withdraw_db(
     conn: &SqlConnection,
     withdrawals: Vec<WithdrawCotaNft>,
