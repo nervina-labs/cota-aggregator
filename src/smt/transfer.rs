@@ -10,11 +10,9 @@ use cota_smt::common::*;
 use cota_smt::molecule::prelude::*;
 use cota_smt::smt::{blake2b_256, Blake2bHasher, H256};
 use cota_smt::transfer::TransferCotaNFTEntriesBuilder;
-use jsonrpc_http_server::jsonrpc_core::serde_json::Map;
-use jsonrpc_http_server::jsonrpc_core::Value;
 use log::info;
 
-pub fn generate_transfer_smt(transfer_req: TransferReq) -> Result<Map<String, Value>, Error> {
+pub fn generate_transfer_smt(transfer_req: TransferReq) -> Result<(String, String), Error> {
     let transfers = transfer_req.clone().transfers;
     let transfers_len = transfers.len();
     if transfers_len == 0 {
@@ -29,7 +27,8 @@ pub fn generate_transfer_smt(transfer_req: TransferReq) -> Result<Map<String, Va
     let sender_withdrawals = get_withdrawal_cota_by_lock_hash(
         transfer_req.withdrawal_lock_hash,
         cota_id_and_token_index_pairs,
-    )?;
+    )?
+    .0;
     if sender_withdrawals.is_empty() || sender_withdrawals.len() != transfers_len {
         return Err(Error::CotaIdAndTokenIndexHasNotWithdrawn);
     }
@@ -106,9 +105,9 @@ pub fn generate_transfer_smt(transfer_req: TransferReq) -> Result<Map<String, Va
     let root_hash = transfer_smt.root().clone();
     let mut root_hash_bytes = [0u8; 32];
     root_hash_bytes.copy_from_slice(root_hash.as_slice());
-    let withdraw_root_hash_hex = hex::encode(root_hash_bytes);
+    let transfer_root_hash_hex = hex::encode(root_hash_bytes);
 
-    info!("transfer_smt_root_hash: {:?}", withdraw_root_hash_hex);
+    info!("transfer_smt_root_hash: {:?}", transfer_root_hash_hex);
 
     let transfer_merkle_proof = transfer_smt
         .merkle_proof(transfer_update_leaves.iter().map(|leave| leave.0).collect())
@@ -171,19 +170,9 @@ pub fn generate_transfer_smt(transfer_req: TransferReq) -> Result<Map<String, Va
         .action(action_bytes)
         .build();
 
-    let transfer_entries_hex = hex::encode(transfer_entries.as_slice());
+    let transfer_entry = hex::encode(transfer_entries.as_slice());
 
-    info!("transfer_smt_entry: {:?}", transfer_entries_hex);
+    info!("transfer_smt_entry: {:?}", transfer_entry);
 
-    let mut result = Map::new();
-    result.insert(
-        "smt_root_hash".to_string(),
-        Value::String(withdraw_root_hash_hex),
-    );
-    result.insert(
-        "transfer_smt_entry".to_string(),
-        Value::String(transfer_entries_hex),
-    );
-
-    Ok(result)
+    Ok((transfer_root_hash_hex, transfer_entry))
 }

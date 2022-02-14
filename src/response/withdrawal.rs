@@ -7,6 +7,7 @@ pub fn parse_withdrawal_response(
     withdrawals: Vec<WithdrawNFTDb>,
     total: i64,
     page_size: i64,
+    block_number: u64,
 ) -> Map<String, Value> {
     let nfts: Vec<Value> = withdrawals
         .into_iter()
@@ -15,6 +16,7 @@ pub fn parse_withdrawal_response(
     let mut map = Map::new();
     map.insert_i64("total", total);
     map.insert_i64("page_size", page_size);
+    map.insert_u64("block_number", block_number);
     map.insert_array("nfts", nfts);
     map
 }
@@ -27,4 +29,22 @@ fn parse_withdrawal_value(withdrawal: WithdrawNFTDb) -> Value {
     map.insert_hex("configure", &[withdrawal.configure]);
     map.insert_hex("characteristic", &withdrawal.characteristic);
     Value::Object(map)
+}
+
+pub fn parse_withdrawal_smt(
+    (root_hash, smt_entry): (String, String),
+    block_number: u64,
+) -> Map<String, Value> {
+    let mut map = Map::new();
+    map.insert_str("smt_root_hash", root_hash);
+    map.insert_str("withdrawal_smt_entry", smt_entry);
+    map.insert_u64("block_number", block_number);
+    map
+}
+
+pub fn parse_sender_response(sender_lock_hash: String, block_number: u64) -> Map<String, Value> {
+    let mut map = Map::new();
+    map.insert_str("sender_lock_hash", format!("0x{}", sender_lock_hash));
+    map.insert_u64("block_number", block_number);
+    map
 }

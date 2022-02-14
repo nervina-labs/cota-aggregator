@@ -3,11 +3,17 @@ use crate::response::helper::Inserter;
 use jsonrpc_http_server::jsonrpc_core::serde_json::Map;
 use jsonrpc_http_server::jsonrpc_core::Value;
 
-pub fn parse_hold_response(holds: Vec<HoldDb>, total: i64, page_size: i64) -> Map<String, Value> {
+pub fn parse_hold_response(
+    holds: Vec<HoldDb>,
+    total: i64,
+    page_size: i64,
+    block_number: u64,
+) -> Map<String, Value> {
     let nfts: Vec<Value> = holds.into_iter().map(parse_hold_value).collect();
     let mut map = Map::new();
     map.insert_i64("total", total);
     map.insert_i64("page_size", page_size);
+    map.insert_u64("block_number", block_number);
     map.insert_array("nfts", nfts);
     map
 }

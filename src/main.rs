@@ -30,6 +30,7 @@ fn main() {
     io.add_method("get_withdrawal_cota_nft", fetch_withdrawal_rpc);
     io.add_method("get_mint_cota_nft", fetch_mint_rpc);
     io.add_method("is_claimed", is_claimed_rpc);
+    io.add_method("get_cota_nft_sender", get_sender_lock_hash);
 
     let server = ServerBuilder::new(io)
         .threads(3)
