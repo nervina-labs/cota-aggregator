@@ -58,16 +58,20 @@ pub fn get_script_id_by_lock_script(
     let lock = LockScript::from_slice(lock_script).unwrap();
     let lock_code_hash = hex::encode(lock.code_hash().as_slice().to_vec());
     let lock_args = hex::encode(lock.args().raw_data().to_vec());
-    scripts
+    let script_ids: Vec<i64> = scripts
         .select(id)
         .filter(code_hash.eq(lock_code_hash))
         .filter(hash_type.eq(lock.hash_type().as_slice()[0]))
         .filter(args.eq(lock_args))
-        .first::<i64>(conn)
+        .load::<i64>(conn)
         .map_err(|e| {
             error!("Query script error: {}", e.to_string());
             Error::DatabaseQueryError(e.to_string())
-        })
+        })?;
+    script_ids.get(0).map_or_else(
+        || Err(Error::DatabaseQueryEmpty("script".to_string())),
+        |id_| Ok(*id_),
+    )
 }
 
 fn parse_script(scripts_: Vec<Script>) -> Vec<ScriptDb> {
