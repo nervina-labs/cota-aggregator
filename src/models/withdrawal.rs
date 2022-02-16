@@ -12,7 +12,7 @@ use diesel::*;
 use log::error;
 use serde::{Deserialize, Serialize};
 
-#[derive(Serialize, Deserialize, Queryable, Debug)]
+#[derive(Serialize, Deserialize, Queryable, Debug, Clone)]
 pub struct WithdrawCotaNft {
     pub cota_id:                 String,
     pub token_index:             u32,
@@ -52,23 +52,26 @@ pub fn get_withdrawal_cota_by_lock_hash_with_conn(
     let withdraw_cota_nfts: Vec<WithdrawCotaNft> = match cota_id_and_token_index_pairs {
         Some(pairs) => {
             let pair_vec = parse_cota_id_and_token_index_pairs(pairs);
-            let mut withdraw_vec = vec![];
+            let mut withdraw_nfts: Vec<WithdrawCotaNft> = vec![];
             for (cota_id_str, token_index_u32) in pair_vec.into_iter() {
-                let withdrawal = withdraw_cota_nft_kv_pairs
+                let withdrawals: Vec<WithdrawCotaNft> = withdraw_cota_nft_kv_pairs
                     .select(get_selection())
                     .filter(lock_hash_crc.eq(lock_hash_crc_))
                     .filter(lock_hash.eq(lock_hash_hex.clone()))
                     .filter(cota_id.eq(cota_id_str))
                     .filter(token_index.eq(token_index_u32))
                     .order(updated_at.desc())
-                    .first::<WithdrawCotaNft>(conn)
+                    .load::<WithdrawCotaNft>(conn)
                     .map_err(|e| {
                         error!("Query withdraw error: {}", e.to_string());
                         Error::DatabaseQueryError(e.to_string())
                     })?;
-                withdraw_vec.push(withdrawal);
+                if !withdrawals.is_empty() {
+                    let withdrawal = withdraw_nfts.get(0).unwrap().clone();
+                    withdraw_nfts.push(withdrawal);
+                }
             }
-            withdraw_vec
+            withdraw_nfts
         }
         None => withdraw_cota_nft_kv_pairs
             .select(get_selection())

@@ -39,22 +39,24 @@ pub fn get_hold_cota_by_lock_hash_with_conn(
             let pair_vec = parse_cota_id_and_token_index_pairs(pairs);
             let mut hold_vec: Vec<HoldDb> = vec![];
             for (cota_id_str, token_index_u32) in pair_vec.into_iter() {
-                let hold = hold_cota_nft_kv_pairs
+                let holds_: Vec<HoldDb> = hold_cota_nft_kv_pairs
                     .select(get_selection())
                     .filter(lock_hash_crc.eq(lock_hash_crc_))
                     .filter(lock_hash.eq(lock_hash_hex.clone()))
                     .filter(cota_id.eq(cota_id_str))
                     .filter(token_index.eq(token_index_u32))
                     .order(updated_at.desc())
-                    .first::<HoldCotaNft>(conn)
+                    .load::<HoldCotaNft>(conn)
                     .map_or_else(
                         |e| {
                             error!("Query hold error: {}", e.to_string());
                             Err(Error::DatabaseQueryError(e.to_string()))
                         },
-                        |hold| Ok(parse_hold_cota_nft(hold)),
+                        |holds| Ok(parse_hold_cota_nfts(holds)),
                     )?;
-                hold_vec.push(hold);
+                if !holds_.is_empty() {
+                    hold_vec.push(holds_[0]);
+                }
             }
             hold_vec
         }
