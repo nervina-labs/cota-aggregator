@@ -31,7 +31,7 @@ pub fn get_define_cota_by_lock_hash_with_conn(
 ) -> DBResult<DefineDb> {
     let (lock_hash_hex, lock_hash_crc_) = parse_lock_hash(lock_hash_);
     let defines = define_cota_nft_kv_pairs
-        .select((cota_id, total, issued, configure))
+        .select(get_selection())
         .filter(lock_hash_crc.eq(lock_hash_crc_))
         .filter(lock_hash.eq(lock_hash_hex))
         .load::<DefineCotaNft>(conn)
@@ -58,7 +58,7 @@ pub fn get_define_cota_by_lock_hash_and_cota_id(
     let (lock_hash_hex, lock_hash_crc_) = parse_lock_hash(lock_hash_);
     let cota_id_hex = hex::encode(cota_id_);
     let defines: Vec<DefineDb> = define_cota_nft_kv_pairs
-        .select((cota_id, total, issued, configure))
+        .select(get_selection())
         .filter(lock_hash_crc.eq(lock_hash_crc_))
         .filter(lock_hash.eq(lock_hash_hex))
         .filter(cota_id.eq(cota_id_hex))
@@ -83,4 +83,8 @@ fn parse_define_cota_nft(defines: Vec<DefineCotaNft>) -> Vec<DefineDb> {
             configure: define.configure,
         })
         .collect()
+}
+
+fn get_selection() -> (cota_id, total, issued, configure) {
+    (cota_id, total, issued, configure)
 }

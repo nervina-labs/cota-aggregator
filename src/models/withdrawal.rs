@@ -49,32 +49,37 @@ pub fn get_withdrawal_cota_by_lock_hash_with_conn(
     cota_id_and_token_index_pairs: Option<Vec<([u8; 20], [u8; 4])>>,
 ) -> DBResult<WithdrawDb> {
     let (lock_hash_hex, lock_hash_crc_) = parse_lock_hash(lock_hash_);
-    let select = withdraw_cota_nft_kv_pairs
-        .select((
-            cota_id,
-            token_index,
-            out_point,
-            state,
-            configure,
-            characteristic,
-            receiver_lock_script_id,
-        ))
-        .filter(lock_hash_crc.eq(lock_hash_crc_))
-        .filter(lock_hash.eq(lock_hash_hex));
-    let result = match cota_id_and_token_index_pairs {
+    let withdraw_cota_nfts: Vec<WithdrawCotaNft> = match cota_id_and_token_index_pairs {
         Some(pairs) => {
-            let (cota_id_array, token_index_array) = parse_cota_id_and_token_index_pairs(pairs);
-            select
-                .filter(cota_id.eq_any(cota_id_array))
-                .filter(token_index.eq_any(token_index_array))
-                .load::<WithdrawCotaNft>(conn)
+            let pair_vec = parse_cota_id_and_token_index_pairs(pairs);
+            let mut withdraw_vec = vec![];
+            for (cota_id_str, token_index_u32) in pair_vec.into_iter() {
+                let withdrawal = withdraw_cota_nft_kv_pairs
+                    .select(get_selection())
+                    .filter(lock_hash_crc.eq(lock_hash_crc_))
+                    .filter(lock_hash.eq(lock_hash_hex.clone()))
+                    .filter(cota_id.eq(cota_id_str))
+                    .filter(token_index.eq(token_index_u32))
+                    .order(updated_at.desc())
+                    .first::<WithdrawCotaNft>(conn)
+                    .map_err(|e| {
+                        error!("Query withdraw error: {}", e.to_string());
+                        Error::DatabaseQueryError(e.to_string())
+                    })?;
+                withdraw_vec.push(withdrawal);
+            }
+            withdraw_vec
         }
-        None => select.load::<WithdrawCotaNft>(conn),
+        None => withdraw_cota_nft_kv_pairs
+            .select(get_selection())
+            .filter(lock_hash_crc.eq(lock_hash_crc_))
+            .filter(lock_hash.eq(lock_hash_hex))
+            .load::<WithdrawCotaNft>(conn)
+            .map_err(|e| {
+                error!("Query withdraw error: {}", e.to_string());
+                Error::DatabaseQueryError(e.to_string())
+            })?,
     };
-    let withdraw_cota_nfts: Vec<WithdrawCotaNft> = result.map_err(|e| {
-        error!("Query withdraw error: {}", e.to_string());
-        Error::DatabaseQueryError(e.to_string())
-    })?;
     parse_withdraw_db(conn, withdraw_cota_nfts)
 }
 
@@ -113,15 +118,7 @@ pub fn get_withdrawal_cota_by_cota_ids(
             Error::DatabaseQueryError(e.to_string())
         })?;
     let withdraw_cota_nfts: Vec<WithdrawCotaNft> = withdraw_cota_nft_kv_pairs
-        .select((
-            cota_id,
-            token_index,
-            out_point,
-            state,
-            configure,
-            characteristic,
-            receiver_lock_script_id,
-        ))
+        .select(get_selection())
         .filter(lock_hash_crc.eq(lock_hash_crc_))
         .filter(lock_hash.eq(lock_hash_hex))
         .filter(cota_id.eq_any(cota_ids_))
@@ -153,15 +150,7 @@ pub fn get_withdrawal_cota_by_script_id(
         })?;
 
     let withdraw_cota_nfts: Vec<WithdrawCotaNft> = withdraw_cota_nft_kv_pairs
-        .select((
-            cota_id,
-            token_index,
-            out_point,
-            state,
-            configure,
-            characteristic,
-            receiver_lock_script_id,
-        ))
+        .select(get_selection())
         .filter(receiver_lock_script_id.eq(script_id))
         .order(updated_at.desc())
         .limit(page_size)
@@ -244,4 +233,24 @@ fn parse_withdraw_cota_nft(withdrawals: Vec<WithdrawCotaNft>) -> Vec<WithdrawNFT
         })
         .collect();
     withdraw_db_vec
+}
+
+fn get_selection() -> (
+    cota_id,
+    token_index,
+    out_point,
+    state,
+    configure,
+    characteristic,
+    receiver_lock_script_id,
+) {
+    (
+        cota_id,
+        token_index,
+        out_point,
+        state,
+        configure,
+        characteristic,
+        receiver_lock_script_id,
+    )
 }

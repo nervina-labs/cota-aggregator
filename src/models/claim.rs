@@ -29,7 +29,7 @@ pub fn get_claim_cota_by_lock_hash_with_conn(
 ) -> DBResult<ClaimDb> {
     let (lock_hash_hex, lock_hash_crc_) = parse_lock_hash(lock_hash_);
     let claims: Vec<ClaimDb> = claimed_cota_nft_kv_pairs
-        .select((cota_id, token_index, out_point))
+        .select(get_selection())
         .filter(lock_hash_crc.eq(lock_hash_crc_))
         .filter(lock_hash.eq(lock_hash_hex))
         .load::<ClaimCotaNft>(conn)
@@ -53,4 +53,8 @@ fn parse_claimed_cota_nft(claims: Vec<ClaimCotaNft>) -> Vec<ClaimDb> {
             out_point:   parse_bytes_n::<24>(claim.out_point).unwrap(),
         })
         .collect()
+}
+
+fn get_selection() -> (cota_id, token_index, out_point) {
+    (cota_id, token_index, out_point)
 }

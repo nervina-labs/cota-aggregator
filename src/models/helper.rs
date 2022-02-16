@@ -32,15 +32,11 @@ pub fn parse_lock_hash(lock_hash: [u8; 32]) -> (String, u32) {
     )
 }
 
-pub fn parse_cota_id_and_token_index_pairs(
-    pairs: Vec<([u8; 20], [u8; 4])>,
-) -> (Vec<String>, Vec<u32>) {
-    let cota_id_hexes: Vec<String> = pairs.iter().map(|pair| hex::encode(pair.0)).collect();
-    let token_index_hexes: Vec<u32> = pairs
-        .iter()
-        .map(|pair| u32::from_be_bytes(pair.1))
-        .collect();
-    (cota_id_hexes, token_index_hexes)
+pub fn parse_cota_id_and_token_index_pairs(pairs: Vec<([u8; 20], [u8; 4])>) -> Vec<(String, u32)> {
+    pairs
+        .into_iter()
+        .map(|pair| (hex::encode(pair.0), u32::from_be_bytes(pair.1)))
+        .collect()
 }
 
 #[cfg(test)]
