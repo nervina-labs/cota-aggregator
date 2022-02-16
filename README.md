@@ -125,7 +125,7 @@ http://127.0.0.1:3030
 {"jsonrpc":"2.0","result":{"block_number":4397583,"claimed":true},"id":2}
 ```
 
-- get_cota_nft_sneder
+- get_cota_nft_sender
 
 ```shell
 echo '{
