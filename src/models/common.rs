@@ -69,9 +69,9 @@ pub fn get_sender_lock_hash_by_cota_nft(
     token_index: [u8; 4],
 ) -> Result<Option<String>, Error> {
     let conn = &establish_connection();
-    let lock_script_id = get_script_id_by_lock_script(conn, &lock_script)?;
-    if lock_script_id.is_none() {
+    let lock_script_id_opt = get_script_id_by_lock_script(conn, &lock_script)?;
+    if lock_script_id_opt.is_none() {
         return Ok(None);
     }
-    get_sender_lock_by_script_id(conn, lock_script_id.unwrap(), cota_id, token_index)
+    get_sender_lock_by_script_id(conn, lock_script_id_opt.unwrap(), cota_id, token_index)
 }
