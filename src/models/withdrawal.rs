@@ -67,7 +67,7 @@ pub fn get_withdrawal_cota_by_lock_hash_with_conn(
                         Error::DatabaseQueryError(e.to_string())
                     })?;
                 if !withdrawals.is_empty() {
-                    let withdrawal = withdraw_nfts.get(0).unwrap().clone();
+                    let withdrawal = withdrawals.get(0).unwrap().clone();
                     withdraw_nfts.push(withdrawal);
                 }
             }
