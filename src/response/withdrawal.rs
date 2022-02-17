@@ -42,9 +42,15 @@ pub fn parse_withdrawal_smt(
     map
 }
 
-pub fn parse_sender_response(sender_lock_hash: String, block_number: u64) -> Map<String, Value> {
+pub fn parse_sender_response(
+    sender_lock_hash: Option<String>,
+    block_number: u64,
+) -> Map<String, Value> {
     let mut map = Map::new();
-    map.insert_str("sender_lock_hash", format!("0x{}", sender_lock_hash));
+    match sender_lock_hash {
+        Some(lock_hash) => map.insert_str("sender_lock_hash", format!("0x{}", lock_hash)),
+        None => map.insert_null("sender_lock_hash"),
+    };
     map.insert_u64("block_number", block_number);
     map
 }

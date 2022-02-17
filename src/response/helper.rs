@@ -7,6 +7,7 @@ pub trait Inserter {
     fn insert_u64(&mut self, k: &str, v: u64) -> Option<Value>;
     fn insert_str(&mut self, k: &str, v: String) -> Option<Value>;
     fn insert_array(&mut self, k: &str, v: Vec<Value>) -> Option<Value>;
+    fn insert_null(&mut self, k: &str) -> Option<Value>;
 }
 
 impl Inserter for Map<String, Value> {
@@ -31,5 +32,9 @@ impl Inserter for Map<String, Value> {
 
     fn insert_array(&mut self, k: &str, v: Vec<Value>) -> Option<Value> {
         self.insert(k.to_string(), Value::Array(v))
+    }
+
+    fn insert_null(&mut self, k: &str) -> Option<Value> {
+        self.insert(k.to_string(), Value::Null)
     }
 }

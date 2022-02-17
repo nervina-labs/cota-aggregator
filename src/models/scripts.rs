@@ -54,7 +54,7 @@ pub fn get_script_map_by_ids(
 pub fn get_script_id_by_lock_script(
     conn: &SqlConnection,
     lock_script: &[u8],
-) -> Result<i64, Error> {
+) -> Result<Option<i64>, Error> {
     let lock = LockScript::from_slice(lock_script).unwrap();
     let lock_code_hash = hex::encode(lock.code_hash().as_slice().to_vec());
     let lock_args = hex::encode(lock.args().raw_data().to_vec());
@@ -68,10 +68,7 @@ pub fn get_script_id_by_lock_script(
             error!("Query script error: {}", e.to_string());
             Error::DatabaseQueryError(e.to_string())
         })?;
-    script_ids.get(0).map_or_else(
-        || Err(Error::DatabaseQueryEmpty("script".to_string())),
-        |id_| Ok(*id_),
-    )
+    Ok(script_ids.get(0).map(|script_id| *script_id))
 }
 
 fn parse_script(scripts_: Vec<Script>) -> Vec<ScriptDb> {
