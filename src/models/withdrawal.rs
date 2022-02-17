@@ -173,10 +173,10 @@ pub fn get_sender_lock_by_script_id(
     script_id: i64,
     cota_id_: [u8; 20],
     token_index_: [u8; 4],
-) -> Result<String, Error> {
+) -> Result<Option<String>, Error> {
     let cota_id_hex = hex::encode(cota_id_);
     let token_index_u32 = u32::from_be_bytes(token_index_);
-    let script_ids: Vec<String> = withdraw_cota_nft_kv_pairs
+    let lock_hashes: Vec<String> = withdraw_cota_nft_kv_pairs
         .select(lock_hash)
         .filter(receiver_lock_script_id.eq(script_id))
         .filter(cota_id.eq(cota_id_hex))
@@ -187,10 +187,8 @@ pub fn get_sender_lock_by_script_id(
             error!("Query withdraw error: {}", e.to_string());
             Error::DatabaseQueryError(e.to_string())
         })?;
-    script_ids.get(0).map_or_else(
-        || Err(Error::DatabaseQueryEmpty("script".to_string())),
-        |id_| Ok(id_.clone()),
-    )
+    let lock_hash_opt: Option<String> = lock_hashes.get(0).map(|hash| (*hash).clone());
+    Ok(lock_hash_opt)
 }
 
 fn parse_withdraw_db(

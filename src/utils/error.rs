@@ -13,7 +13,7 @@ pub enum Error {
     RequestParamHexInvalid(String),
 
     #[fail(
-        display = "Request parameter {} length, got {:x}, expected: {:x}",
+        display = "Request parameter {} length, got {}, expected: {}",
         msg, got, expected
     )]
     RequestParamHexLenError {
@@ -36,9 +36,6 @@ pub enum Error {
 
     #[fail(display = "Database '{}' query error", _0)]
     DatabaseQueryError(String),
-
-    #[fail(display = "Query '{}' empty", _0)]
-    DatabaseQueryEmpty(String),
 
     #[fail(display = "Other error: {}", _0)]
     Other(String),
@@ -65,7 +62,7 @@ impl Error {
                 msg
             ),
             Self::RequestParamHexLenError { msg, got, expected } => format!(
-                "Request parameter '{}' length, got {:x}, expected: {:x}",
+                "Request parameter '{}' length, got {}, expected: {}",
                 msg, got, expected
             ),
             Self::RequestParamTypeError(msg) => format!("Request parameter '{}' type error", msg),
@@ -76,7 +73,6 @@ impl Error {
             Self::CotaIdAndTokenIndexHasNotHeld => {
                 "The cota_id and token_index has not held".into()
             }
-            Self::DatabaseQueryEmpty(msg) => format!("Query '{}' empty", msg),
             Self::DatabaseQueryError(_) => "Internal error".into(),
             Self::Other(_) => "Internal error".into(),
         }

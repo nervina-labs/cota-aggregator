@@ -36,8 +36,11 @@ pub fn get_withdrawal_cota(
     page_size: i64,
 ) -> DBTotalResult<WithdrawNFTDb> {
     let conn = &establish_connection();
-    let script_id = get_script_id_by_lock_script(conn, &lock_script)?;
-    get_withdrawal_cota_by_script_id(conn, script_id, page, page_size)
+    let script_id_opt = get_script_id_by_lock_script(conn, &lock_script)?;
+    match script_id_opt {
+        Some(script_id) => get_withdrawal_cota_by_script_id(conn, script_id, page, page_size),
+        None => Ok((vec![], 0, 0)),
+    }
 }
 
 pub fn get_mint_cota(lock_script: Vec<u8>, page: i64, page_size: i64) -> DBTotalResult<WithdrawDb> {
@@ -64,8 +67,11 @@ pub fn get_sender_lock_hash_by_cota_nft(
     lock_script: Vec<u8>,
     cota_id: [u8; 20],
     token_index: [u8; 4],
-) -> Result<String, Error> {
+) -> Result<Option<String>, Error> {
     let conn = &establish_connection();
-    let lock_script_id = get_script_id_by_lock_script(conn, &lock_script)?;
-    get_sender_lock_by_script_id(conn, lock_script_id, cota_id, token_index)
+    let lock_script_id_opt = get_script_id_by_lock_script(conn, &lock_script)?;
+    if lock_script_id_opt.is_none() {
+        return Ok(None);
+    }
+    get_sender_lock_by_script_id(conn, lock_script_id_opt.unwrap(), cota_id, token_index)
 }
