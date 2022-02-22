@@ -9,7 +9,7 @@ use cota_smt::common::*;
 use cota_smt::molecule::prelude::*;
 use cota_smt::smt::{blake2b_256, Blake2bHasher, H256};
 use cota_smt::transfer::ClaimCotaNFTEntriesBuilder;
-use log::info;
+use log::{error, info};
 
 pub fn generate_claim_smt(claim_req: ClaimReq) -> Result<(String, String), Error> {
     let claims = claim_req.clone().claims;
@@ -83,10 +83,16 @@ pub fn generate_claim_smt(claim_req: ClaimReq) -> Result<(String, String), Error
                 .map(|leave| leave.0)
                 .collect(),
         )
-        .unwrap();
+        .map_err(|e| {
+            error!("Withdraw SMT proof error: {:?}", e.to_string());
+            Error::SMTProofError("Withdraw".to_string())
+        })?;
     let withdraw_merkle_proof_compiled = withdraw_merkle_proof
         .compile(withdrawal_update_leaves.clone())
-        .unwrap();
+        .map_err(|e| {
+            error!("Withdraw SMT proof error: {:?}", e.to_string());
+            Error::SMTProofError("Withdraw".to_string())
+        })?;
     withdraw_merkle_proof_compiled
         .verify::<Blake2bHasher>(&withdrawal_root_hash, withdrawal_update_leaves.clone())
         .expect("withdraw smt proof verify failed");
@@ -113,10 +119,16 @@ pub fn generate_claim_smt(claim_req: ClaimReq) -> Result<(String, String), Error
 
     let claim_merkle_proof = claim_smt
         .merkle_proof(claim_update_leaves.iter().map(|leave| leave.0).collect())
-        .unwrap();
+        .map_err(|e| {
+            error!("Claim SMT proof error: {:?}", e.to_string());
+            Error::SMTProofError("Claim".to_string())
+        })?;
     let claim_merkle_proof_compiled = claim_merkle_proof
         .compile(claim_update_leaves.clone())
-        .unwrap();
+        .map_err(|e| {
+            error!("Claim SMT proof error: {:?}", e.to_string());
+            Error::SMTProofError("Claim".to_string())
+        })?;
     claim_merkle_proof_compiled
         .verify::<Blake2bHasher>(&claim_root_hash, claim_update_leaves.clone())
         .expect("claim smt proof verify failed");

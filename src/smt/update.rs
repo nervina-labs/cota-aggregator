@@ -6,7 +6,7 @@ use cota_smt::common::*;
 use cota_smt::molecule::prelude::*;
 use cota_smt::smt::{Blake2bHasher, H256};
 use cota_smt::update::UpdateCotaNFTEntriesBuilder;
-use log::info;
+use log::{error, info};
 
 pub fn generate_update_smt(update_req: UpdateReq) -> Result<(String, String), Error> {
     let mut smt = generate_history_smt(update_req.lock_hash)?;
@@ -38,8 +38,7 @@ pub fn generate_update_smt(update_req: UpdateReq) -> Result<(String, String), Er
             generate_hold_value(hold_db.configure, nft.state, nft.characteristic);
         hold_values.push(hold_value);
         update_leaves.push((key, value));
-        smt.update(key, value)
-            .expect("define SMT update leave error");
+        smt.update(key, value).expect("hold SMT update leave error");
     }
 
     let root_hash = smt.root().clone();
@@ -51,8 +50,17 @@ pub fn generate_update_smt(update_req: UpdateReq) -> Result<(String, String), Er
 
     let update_merkle_proof = smt
         .merkle_proof(update_leaves.iter().map(|leave| leave.0).collect())
-        .unwrap();
-    let update_merkle_proof_compiled = update_merkle_proof.compile(update_leaves.clone()).unwrap();
+        .map_err(|e| {
+            error!("Update SMT proof error: {:?}", e.to_string());
+            Error::SMTProofError("Update".to_string())
+        })?;
+    let update_merkle_proof_compiled =
+        update_merkle_proof
+            .compile(update_leaves.clone())
+            .map_err(|e| {
+                error!("Update SMT proof error: {:?}", e.to_string());
+                Error::SMTProofError("Update".to_string())
+            })?;
     update_merkle_proof_compiled
         .verify::<Blake2bHasher>(&root_hash, update_leaves.clone())
         .expect("update smt proof verify failed");

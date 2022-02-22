@@ -7,7 +7,7 @@ use cota_smt::common::*;
 use cota_smt::define::DefineCotaNFTEntriesBuilder;
 use cota_smt::molecule::prelude::*;
 use cota_smt::smt::{Blake2bHasher, H256};
-use log::info;
+use log::{error, info};
 
 pub fn generate_define_smt(define_req: DefineReq) -> Result<(String, String), Error> {
     let mut smt = generate_history_smt(define_req.lock_hash)?;
@@ -52,8 +52,17 @@ pub fn generate_define_smt(define_req: DefineReq) -> Result<(String, String), Er
 
     let define_merkle_proof = smt
         .merkle_proof(update_leaves.iter().map(|leave| leave.0).collect())
-        .unwrap();
-    let define_merkle_proof_compiled = define_merkle_proof.compile(update_leaves.clone()).unwrap();
+        .map_err(|e| {
+            error!("Define SMT proof error: {:?}", e.to_string());
+            Error::SMTProofError("Mint".to_string())
+        })?;
+    let define_merkle_proof_compiled =
+        define_merkle_proof
+            .compile(update_leaves.clone())
+            .map_err(|e| {
+                error!("Define SMT proof error: {:?}", e.to_string());
+                Error::SMTProofError("Define".to_string())
+            })?;
     define_merkle_proof_compiled
         .verify::<Blake2bHasher>(&root_hash, update_leaves.clone())
         .expect("define smt proof verify failed");

@@ -9,7 +9,7 @@ use cota_smt::common::*;
 use cota_smt::molecule::prelude::*;
 use cota_smt::smt::{Blake2bHasher, H256};
 use cota_smt::transfer::WithdrawalCotaNFTEntriesBuilder;
-use log::info;
+use log::{error, info};
 
 pub fn generate_withdrawal_smt(withdrawal_req: WithdrawalReq) -> Result<(String, String), Error> {
     let mut smt = generate_history_smt(withdrawal_req.lock_hash)?;
@@ -68,10 +68,16 @@ pub fn generate_withdrawal_smt(withdrawal_req: WithdrawalReq) -> Result<(String,
 
     let withdrawal_merkle_proof = smt
         .merkle_proof(update_leaves.iter().map(|leave| leave.0).collect())
-        .unwrap();
+        .map_err(|e| {
+            error!("Withdraw SMT proof error: {:?}", e.to_string());
+            Error::SMTProofError("Withdraw".to_string())
+        })?;
     let withdrawal_merkle_proof_compiled = withdrawal_merkle_proof
         .compile(update_leaves.clone())
-        .unwrap();
+        .map_err(|e| {
+        error!("Withdraw SMT proof error: {:?}", e.to_string());
+        Error::SMTProofError("Withdraw".to_string())
+    })?;
     withdrawal_merkle_proof_compiled
         .verify::<Blake2bHasher>(&root_hash, update_leaves.clone())
         .expect("withdraw smt proof verify failed");

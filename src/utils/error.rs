@@ -37,6 +37,9 @@ pub enum Error {
     #[fail(display = "Database '{}' query error", _0)]
     DatabaseQueryError(String),
 
+    #[fail(display = "'{}' SMT proof error", _0)]
+    SMTProofError(String),
+
     #[fail(display = "Other error: {}", _0)]
     Other(String),
 }
@@ -74,6 +77,7 @@ impl Error {
                 "The cota_id and token_index has not held".into()
             }
             Self::DatabaseQueryError(_) => "Internal error".into(),
+            Self::SMTProofError(msg) => format!("'{}' SMT proof error", msg),
             Self::Other(_) => "Internal error".into(),
         }
     }

@@ -10,7 +10,7 @@ use cota_smt::common::*;
 use cota_smt::molecule::prelude::*;
 use cota_smt::smt::{blake2b_256, Blake2bHasher, H256};
 use cota_smt::transfer::TransferCotaNFTEntriesBuilder;
-use log::info;
+use log::{error, info};
 
 pub fn generate_transfer_smt(transfer_req: TransferReq) -> Result<(String, String), Error> {
     let transfers = transfer_req.clone().transfers;
@@ -90,7 +90,7 @@ pub fn generate_transfer_smt(transfer_req: TransferReq) -> Result<(String, Strin
         transfer_update_leaves.push((key, value));
         transfer_smt
             .update(key, value)
-            .expect("withdraw SMT update leave error");
+            .expect("transfer SMT update leave error");
 
         let (claimed_key, key) = generate_claim_key(cota_id, token_index, out_point);
         claimed_keys.push(claimed_key);
@@ -99,7 +99,7 @@ pub fn generate_transfer_smt(transfer_req: TransferReq) -> Result<(String, Strin
         transfer_update_leaves.push((key, value));
         transfer_smt
             .update(key, value)
-            .expect("claim SMT update leave error");
+            .expect("transfer SMT update leave error");
     }
 
     let root_hash = transfer_smt.root().clone();
@@ -111,13 +111,19 @@ pub fn generate_transfer_smt(transfer_req: TransferReq) -> Result<(String, Strin
 
     let transfer_merkle_proof = transfer_smt
         .merkle_proof(transfer_update_leaves.iter().map(|leave| leave.0).collect())
-        .unwrap();
+        .map_err(|e| {
+            error!("Transfer SMT proof error: {:?}", e.to_string());
+            Error::SMTProofError("Transfer".to_string())
+        })?;
     let transfer_merkle_proof_compiled = transfer_merkle_proof
         .compile(transfer_update_leaves.clone())
-        .unwrap();
+        .map_err(|e| {
+            error!("Transfer SMT proof error: {:?}", e.to_string());
+            Error::SMTProofError("Transfer".to_string())
+        })?;
     transfer_merkle_proof_compiled
         .verify::<Blake2bHasher>(&root_hash, transfer_update_leaves.clone())
-        .expect("withdraw smt proof verify failed");
+        .expect("transfer smt proof verify failed");
 
     let transfer_merkel_proof_vec: Vec<u8> = transfer_merkle_proof_compiled.into();
     let transfer_merkel_proof_bytes = BytesBuilder::default()
@@ -132,10 +138,16 @@ pub fn generate_transfer_smt(transfer_req: TransferReq) -> Result<(String, Strin
                 .map(|leave| leave.0)
                 .collect(),
         )
-        .unwrap();
+        .map_err(|e| {
+            error!("Transfer SMT proof error: {:?}", e.to_string());
+            Error::SMTProofError("Transfer".to_string())
+        })?;
     let withdrawal_merkle_proof_compiled = withdrawal_merkle_proof
         .compile(withdrawal_update_leaves.clone())
-        .unwrap();
+        .map_err(|e| {
+            error!("Transfer SMT proof error: {:?}", e.to_string());
+            Error::SMTProofError("Transfer".to_string())
+        })?;
     withdrawal_merkle_proof_compiled
         .verify::<Blake2bHasher>(&withdrawal_root_hash, withdrawal_update_leaves.clone())
         .expect("withdraw smt proof verify failed");

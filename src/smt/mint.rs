@@ -9,7 +9,7 @@ use cota_smt::common::*;
 use cota_smt::mint::MintCotaNFTEntriesBuilder;
 use cota_smt::molecule::prelude::*;
 use cota_smt::smt::{Blake2bHasher, H256};
-use log::info;
+use log::{error, info};
 
 pub fn generate_mint_smt(mint_req: MintReq) -> Result<(String, String), Error> {
     let withdrawals = mint_req.withdrawals;
@@ -90,8 +90,17 @@ pub fn generate_mint_smt(mint_req: MintReq) -> Result<(String, String), Error> {
 
     let mint_merkle_proof = smt
         .merkle_proof(update_leaves.iter().map(|leave| leave.0).collect())
-        .unwrap();
-    let mint_merkle_proof_compiled = mint_merkle_proof.compile(update_leaves.clone()).unwrap();
+        .map_err(|e| {
+            error!("Mint SMT proof error: {:?}", e.to_string());
+            Error::SMTProofError("Mint".to_string())
+        })?;
+    let mint_merkle_proof_compiled =
+        mint_merkle_proof
+            .compile(update_leaves.clone())
+            .map_err(|e| {
+                error!("Mint SMT proof error: {:?}", e.to_string());
+                Error::SMTProofError("Mint".to_string())
+            })?;
     mint_merkle_proof_compiled
         .verify::<Blake2bHasher>(&root_hash, update_leaves.clone())
         .expect("mint smt proof verify failed");
