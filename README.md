@@ -2,6 +2,12 @@
 
 The aggregator service of [CoTA](https://talk.nervos.org/t/rfc-cota-a-compact-token-aggregator-standard-for-extremely-low-cost-nfts-and-fts/6338)
 
+## Prerequisites
+
+- [CoTA Syncer](https://github.com/nervina-labs/cota-nft-entries-syncer): The server to index CoTA data from CKB
+
+> The aggregator and syncer share the same mysql database, and the aggregator use CoTA data from the database to provide RPC service
+
 ## Quick Start
 
 ### Manual
