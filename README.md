@@ -2,6 +2,8 @@
 
 The aggregator service of [CoTA](https://talk.nervos.org/t/rfc-cota-a-compact-token-aggregator-standard-for-extremely-low-cost-nfts-and-fts/6338)
 
+[CoTA Docs](https://developer.mibao.net/docs/develop/cota/overview)
+
 ## Prerequisites
 
 - [CoTA Syncer](https://github.com/nervina-labs/cota-nft-entries-syncer): The server to index CoTA data from CKB
