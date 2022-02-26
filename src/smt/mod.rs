@@ -1,4 +1,5 @@
 pub(crate) mod claim;
+pub(crate) mod claim_update;
 mod common;
 mod constants;
 pub(crate) mod define;

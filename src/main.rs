@@ -26,6 +26,7 @@ fn main() {
     io.add_method("generate_claim_cota_smt", claim_rpc);
     io.add_method("generate_update_cota_smt", update_rpc);
     io.add_method("generate_transfer_cota_smt", transfer_rpc);
+    io.add_method("generate_claim_update_cota_smt", claim_update_rpc);
     io.add_method("get_hold_cota_nft", fetch_hold_rpc);
     io.add_method("get_withdrawal_cota_nft", fetch_withdrawal_rpc);
     io.add_method("get_mint_cota_nft", fetch_mint_rpc);

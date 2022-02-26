@@ -3,14 +3,14 @@ use crate::models::common::{
     check_cota_claimed, get_hold_cota, get_mint_cota, get_sender_lock_hash_by_cota_nft,
     get_withdrawal_cota,
 };
-use crate::request::claim::{ClaimReq, IsClaimedReq};
+use crate::request::claim::{ClaimReq, ClaimUpdateReq, IsClaimedReq};
 use crate::request::define::DefineReq;
 use crate::request::fetch::FetchReq;
 use crate::request::mint::MintReq;
 use crate::request::transfer::TransferReq;
 use crate::request::update::UpdateReq;
 use crate::request::withdrawal::{SenderLockReq, WithdrawalReq};
-use crate::response::claim::{parse_claimed_response, parse_claimed_smt};
+use crate::response::claim::{parse_claimed_response, parse_claimed_smt, parse_claimed_update_smt};
 use crate::response::define::parse_define_smt;
 use crate::response::hold::parse_hold_response;
 use crate::response::mint::{parse_mint_response, parse_mint_smt};
@@ -20,6 +20,7 @@ use crate::response::withdrawal::{
     parse_sender_response, parse_withdrawal_response, parse_withdrawal_smt,
 };
 use crate::smt::claim::generate_claim_smt;
+use crate::smt::claim_update::generate_claim_update_smt;
 use crate::smt::define::generate_define_smt;
 use crate::smt::mint::generate_mint_smt;
 use crate::smt::transfer::generate_transfer_smt;
@@ -73,6 +74,14 @@ pub async fn transfer_rpc(params: Params) -> Result<Value, Error> {
     let transfer_req = TransferReq::from_map(&map).map_err(|err| err.into())?;
     let transfer_smt = generate_transfer_smt(transfer_req).map_err(|err| err.into())?;
     let response = parse_transfer_smt(transfer_smt, get_block_number()?);
+    Ok(Value::Object(response))
+}
+
+pub async fn claim_update_rpc(params: Params) -> Result<Value, Error> {
+    let map: Map<String, Value> = Params::parse(params)?;
+    let claim_update_req = ClaimUpdateReq::from_map(&map).map_err(|err| err.into())?;
+    let claim_update_smt = generate_claim_update_smt(claim_update_req).map_err(|err| err.into())?;
+    let response = parse_claimed_update_smt(claim_update_smt, get_block_number()?);
     Ok(Value::Object(response))
 }
 
