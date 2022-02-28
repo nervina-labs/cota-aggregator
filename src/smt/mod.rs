@@ -5,5 +5,6 @@ mod constants;
 pub(crate) mod define;
 pub(crate) mod mint;
 pub(crate) mod transfer;
+pub(crate) mod transfer_update;
 pub(crate) mod update;
 pub(crate) mod withdrawal;
