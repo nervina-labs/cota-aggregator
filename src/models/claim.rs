@@ -1,6 +1,6 @@
 use super::helper::parse_lock_hash;
 use crate::models::block::get_syncer_tip_block_number_with_conn;
-use crate::models::helper::SqlConnection;
+use crate::models::helper::{SqlConnection, PAGE_SIZE};
 use crate::models::DBResult;
 use crate::schema::claimed_cota_nft_kv_pairs::dsl::claimed_cota_nft_kv_pairs;
 use crate::schema::claimed_cota_nft_kv_pairs::*;
@@ -28,18 +28,30 @@ pub fn get_claim_cota_by_lock_hash_with_conn(
     lock_hash_: [u8; 32],
 ) -> DBResult<ClaimDb> {
     let (lock_hash_hex, lock_hash_crc_) = parse_lock_hash(lock_hash_);
-    let claims: Vec<ClaimDb> = claimed_cota_nft_kv_pairs
-        .select(get_selection())
-        .filter(lock_hash_crc.eq(lock_hash_crc_))
-        .filter(lock_hash.eq(lock_hash_hex))
-        .load::<ClaimCotaNft>(conn)
-        .map_or_else(
-            |e| {
-                error!("Query claim error: {}", e.to_string());
-                Err(Error::DatabaseQueryError(e.to_string()))
-            },
-            |claims| Ok(parse_claimed_cota_nft(claims)),
-        )?;
+    let mut page: i64 = 0;
+    let mut claims: Vec<ClaimDb> = Vec::new();
+    loop {
+        let claims_page: Vec<ClaimDb> = claimed_cota_nft_kv_pairs
+            .select(get_selection())
+            .filter(lock_hash_crc.eq(lock_hash_crc_))
+            .filter(lock_hash.eq(lock_hash_hex.clone()))
+            .limit(PAGE_SIZE)
+            .offset(PAGE_SIZE * page)
+            .load::<ClaimCotaNft>(conn)
+            .map_or_else(
+                |e| {
+                    error!("Query claim error: {}", e.to_string());
+                    Err(Error::DatabaseQueryError(e.to_string()))
+                },
+                |claims| Ok(parse_claimed_cota_nft(claims)),
+            )?;
+        let length = claims_page.len();
+        claims.extend(claims_page);
+        if length < (PAGE_SIZE as usize) {
+            break;
+        }
+        page += 1;
+    }
     let block_height = get_syncer_tip_block_number_with_conn(conn)?;
     Ok((claims, block_height))
 }

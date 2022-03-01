@@ -2,6 +2,7 @@ use super::helper::{
     establish_connection, parse_cota_id_and_token_index_pairs, parse_lock_hash, SqlConnection,
 };
 use crate::models::block::get_syncer_tip_block_number_with_conn;
+use crate::models::helper::PAGE_SIZE;
 use crate::models::scripts::get_script_map_by_ids;
 use crate::models::{DBResult, DBTotalResult};
 use crate::schema::withdraw_cota_nft_kv_pairs::dsl::withdraw_cota_nft_kv_pairs;
@@ -49,10 +50,10 @@ pub fn get_withdrawal_cota_by_lock_hash_with_conn(
     cota_id_and_token_index_pairs: Option<Vec<([u8; 20], [u8; 4])>>,
 ) -> DBResult<WithdrawDb> {
     let (lock_hash_hex, lock_hash_crc_) = parse_lock_hash(lock_hash_);
+    let mut withdraw_nfts: Vec<WithdrawCotaNft> = vec![];
     let withdraw_cota_nfts: Vec<WithdrawCotaNft> = match cota_id_and_token_index_pairs {
         Some(pairs) => {
             let pair_vec = parse_cota_id_and_token_index_pairs(pairs);
-            let mut withdraw_nfts: Vec<WithdrawCotaNft> = vec![];
             for (cota_id_str, token_index_u32) in pair_vec.into_iter() {
                 let withdrawals: Vec<WithdrawCotaNft> = withdraw_cota_nft_kv_pairs
                     .select(get_selection())
@@ -73,15 +74,29 @@ pub fn get_withdrawal_cota_by_lock_hash_with_conn(
             }
             withdraw_nfts
         }
-        None => withdraw_cota_nft_kv_pairs
-            .select(get_selection())
-            .filter(lock_hash_crc.eq(lock_hash_crc_))
-            .filter(lock_hash.eq(lock_hash_hex))
-            .load::<WithdrawCotaNft>(conn)
-            .map_err(|e| {
-                error!("Query withdraw error: {}", e.to_string());
-                Error::DatabaseQueryError(e.to_string())
-            })?,
+        None => {
+            let mut page: i64 = 0;
+            loop {
+                let withdrawals_page: Vec<WithdrawCotaNft> = withdraw_cota_nft_kv_pairs
+                    .select(get_selection())
+                    .filter(lock_hash_crc.eq(lock_hash_crc_))
+                    .filter(lock_hash.eq(lock_hash_hex.clone()))
+                    .limit(PAGE_SIZE)
+                    .offset(PAGE_SIZE * page)
+                    .load::<WithdrawCotaNft>(conn)
+                    .map_err(|e| {
+                        error!("Query withdraw error: {}", e.to_string());
+                        Error::DatabaseQueryError(e.to_string())
+                    })?;
+                let length = withdrawals_page.len();
+                withdraw_nfts.extend(withdrawals_page);
+                if length < (PAGE_SIZE as usize) {
+                    break;
+                }
+                page += 1;
+            }
+            withdraw_nfts
+        }
     };
     parse_withdraw_db(conn, withdraw_cota_nfts)
 }
