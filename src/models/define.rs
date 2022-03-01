@@ -1,6 +1,6 @@
 use super::helper::{establish_connection, parse_lock_hash};
 use crate::models::block::get_syncer_tip_block_number_with_conn;
-use crate::models::helper::SqlConnection;
+use crate::models::helper::{SqlConnection, PAGE_SIZE};
 use crate::models::DBResult;
 use crate::schema::define_cota_nft_kv_pairs::dsl::*;
 use crate::utils::error::Error;
@@ -30,18 +30,30 @@ pub fn get_define_cota_by_lock_hash_with_conn(
     lock_hash_: [u8; 32],
 ) -> DBResult<DefineDb> {
     let (lock_hash_hex, lock_hash_crc_) = parse_lock_hash(lock_hash_);
-    let defines = define_cota_nft_kv_pairs
-        .select(get_selection())
-        .filter(lock_hash_crc.eq(lock_hash_crc_))
-        .filter(lock_hash.eq(lock_hash_hex))
-        .load::<DefineCotaNft>(conn)
-        .map_or_else(
-            |e| {
-                error!("Query define error: {}", e.to_string());
-                Err(Error::DatabaseQueryError(e.to_string()))
-            },
-            |defines| Ok(parse_define_cota_nft(defines)),
-        )?;
+    let mut page: i64 = 0;
+    let mut defines: Vec<DefineDb> = Vec::new();
+    loop {
+        let defines_page = define_cota_nft_kv_pairs
+            .select(get_selection())
+            .filter(lock_hash_crc.eq(lock_hash_crc_))
+            .filter(lock_hash.eq(lock_hash_hex.clone()))
+            .limit(PAGE_SIZE)
+            .offset(PAGE_SIZE * page)
+            .load::<DefineCotaNft>(conn)
+            .map_or_else(
+                |e| {
+                    error!("Query define error: {}", e.to_string());
+                    Err(Error::DatabaseQueryError(e.to_string()))
+                },
+                |defines| Ok(parse_define_cota_nft(defines)),
+            )?;
+        let length = defines_page.len();
+        defines.extend(defines_page);
+        if length < (PAGE_SIZE as usize) {
+            break;
+        }
+        page += 1;
+    }
     let block_height = get_syncer_tip_block_number_with_conn(conn)?;
     Ok((defines, block_height))
 }

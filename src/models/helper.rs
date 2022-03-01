@@ -7,6 +7,8 @@ use std::env;
 
 pub type SqlConnection = PooledConnection<ConnectionManager<MysqlConnection>>;
 
+pub const PAGE_SIZE: i64 = 1000;
+
 pub fn establish_connection() -> SqlConnection {
     dotenv().ok();
 
