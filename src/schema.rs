@@ -38,9 +38,9 @@ table! {
         audio -> Varchar,
         video -> Varchar,
         model -> Varchar,
-        schema -> Json,
-        properties -> Json,
-        localization -> Json,
+        schema -> Varchar,
+        properties -> Varchar,
+        localization -> Varchar,
         created_at -> Datetime,
         updated_at -> Datetime,
     }
@@ -87,7 +87,7 @@ table! {
         name -> Varchar,
         avatar -> Varchar,
         description -> Varchar,
-        localization -> Json,
+        localization -> Varchar,
         created_at -> Datetime,
         updated_at -> Datetime,
     }
