@@ -87,7 +87,7 @@ pub fn get_script_id_by_lock_script(
             Error::DatabaseQueryError(e.to_string())
         })?;
     diff_time(start_time, "SQL get_script_id_by_lock_script");
-    Ok(script_ids.get(0).map(|script_id| *script_id))
+    Ok(script_ids.get(0).cloned())
 }
 
 fn parse_script(scripts_: Vec<Script>) -> Vec<ScriptDb> {

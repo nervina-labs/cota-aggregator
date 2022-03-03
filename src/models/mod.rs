@@ -6,6 +6,7 @@ pub(crate) mod common;
 pub(crate) mod define;
 mod helper;
 pub(crate) mod hold;
+pub(crate) mod issuer;
 pub(crate) mod scripts;
 pub(crate) mod withdrawal;
 
