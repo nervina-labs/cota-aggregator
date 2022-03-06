@@ -1,0 +1,26 @@
+name: CI
+
+on: [push, pull_request]
+
+jobs:
+  Build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v1
+      - name: Install Rust components
+        run: rustup component add rustfmt && rustup component add clippy
+      - uses: actions/checkout@v2
+      - uses: actions-rs/toolchain@v1
+        with:
+          profile: minimal
+          toolchain: nightly-2022-01-19
+          override: true
+
+      - name: Check Rust format
+        run: cargo fmt -- --check
+
+      - name: Build aggregator
+        run: cargo build
+
+      - name: Test aggregator
+        run: cargo test --all
