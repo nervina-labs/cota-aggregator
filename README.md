@@ -18,6 +18,12 @@ The aggregator service of [CoTA](https://talk.nervos.org/t/rfc-cota-a-compact-to
 - Build with release profile: `make build-release`
 - Run with release profile: `make run-release`
 
+### Release
+
+```shell
+RUST_LOG=info DATABASE_URL=mysql://root:passport@localhost:3306/db_name ./target/release/cota-aggregator
+```
+
 ### docker
 
 ```shell
