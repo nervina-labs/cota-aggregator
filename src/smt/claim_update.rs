@@ -2,7 +2,8 @@ use crate::models::withdrawal::{get_withdrawal_cota_by_lock_hash, WithdrawDb};
 use crate::request::claim::ClaimUpdateReq;
 use crate::smt::common::{
     generate_claim_key, generate_claim_value, generate_history_smt, generate_hold_key,
-    generate_hold_value, generate_withdrawal_key, generate_withdrawal_value,
+    generate_hold_value, generate_withdrawal_key, generate_withdrawal_key_v1,
+    generate_withdrawal_value, generate_withdrawal_value_v1,
 };
 use crate::utils::error::Error;
 use cota_smt::common::*;
@@ -14,6 +15,8 @@ use log::error;
 pub fn generate_claim_update_smt(
     claim_update_req: ClaimUpdateReq,
 ) -> Result<(String, String), Error> {
+    // TODO: Mock version
+    let version = 1u8;
     let nfts = claim_update_req.clone().nfts;
     let nfts_len = nfts.len();
     if nfts_len == 0 {
@@ -54,14 +57,29 @@ pub fn generate_claim_update_smt(
             out_point,
             ..
         } = withdrawal;
-        let (_, key) = generate_withdrawal_key(cota_id, token_index);
-        let (_, value) = generate_withdrawal_value(
-            configure,
-            state,
-            characteristic,
-            claim_update_req.clone().lock_script,
-            out_point,
-        );
+        let key = if version == 0 {
+            generate_withdrawal_key(cota_id, token_index).1
+        } else {
+            generate_withdrawal_key_v1(cota_id, token_index, out_point).1
+        };
+        let value = if version == 0 {
+            generate_withdrawal_value(
+                configure,
+                state,
+                characteristic,
+                claim_update_req.clone().lock_script,
+                out_point,
+            )
+            .1
+        } else {
+            generate_withdrawal_value_v1(
+                configure,
+                state,
+                characteristic,
+                claim_update_req.clone().lock_script,
+            )
+            .1
+        };
         withdrawal_update_leaves.push((key, value));
         let nft_info = CotaNFTInfoBuilder::default()
             .characteristic(Characteristic::from_slice(&characteristic).unwrap())
@@ -114,7 +132,7 @@ pub fn generate_claim_update_smt(
         .build();
 
     for key in key_vec {
-        let (claim_value, value) = generate_claim_value();
+        let (claim_value, value) = generate_claim_value(version);
         claim_values.push(claim_value);
         claim_smt
             .update(key, value)

@@ -164,10 +164,14 @@ pub fn generate_claim_key(
     (claimed_key, key)
 }
 
-pub fn generate_claim_value() -> (Byte32, H256) {
-    let claim_value = Byte32Builder::default()
-        .set([Byte::from(255u8); 32])
-        .build();
+pub fn generate_claim_value(version: u8) -> (Byte32, H256) {
+    let mut claim_value_vec = vec![255u8; 31];
+    if version == 0 {
+        claim_value_vec.insert(0, 0u8);
+    } else {
+        claim_value_vec.insert(0, 1u8);
+    }
+    let claim_value = Byte32::from_slice(&claim_value_vec).unwrap();
     let value = H256::from([255u8; 32]);
     (claim_value, value)
 }
@@ -214,11 +218,7 @@ pub fn generate_history_smt(lock_hash: [u8; 32]) -> Result<SMT, Error> {
         let (_, value) = generate_hold_value(configure, state, characteristic);
         smt.update(key, value).expect("SMT update leave error");
     }
-    diff_time(start_time, "Push hold history leaves to smt");
-
-    let start_time = Local::now().timestamp_millis();
-    info!("Withdraw history leaves: {}", withdrawals.len());
-    for withdrawal_db in withdrawals {
+    for (withdrawal_db, claim_db) in withdrawals.into_iter().zip(claims) {
         let WithdrawDb {
             cota_id,
             token_index,
@@ -237,19 +237,15 @@ pub fn generate_history_smt(lock_hash: [u8; 32]) -> Result<SMT, Error> {
             out_point,
         );
         smt.update(key, value).expect("SMT update leave error");
-    }
-    diff_time(start_time, "Push withdraw history leaves to smt");
-
-    let start_time = Local::now().timestamp_millis();
-    info!("Claim history leaves: {}", claims.len());
-    for claim_db in claims {
+        // TODO: Mock version
+        let version = 1u8;
         let ClaimDb {
             cota_id,
             token_index,
             out_point,
         } = claim_db;
         let (_, key) = generate_claim_key(cota_id, token_index, out_point);
-        let (_, value) = generate_claim_value();
+        let (_, value) = generate_claim_value(version);
         smt.update(key, value).expect("SMT update leave error");
     }
     diff_time(start_time, "Push claim history leaves to smt");
