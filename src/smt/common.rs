@@ -85,6 +85,25 @@ pub fn generate_withdrawal_key(cota_id: [u8; 20], token_index: [u8; 4]) -> (Cota
     (withdrawal_key, key)
 }
 
+pub fn generate_withdrawal_key_v1(
+    cota_id: [u8; 20],
+    token_index: [u8; 4],
+    out_point: [u8; 24],
+) -> (WithdrawalCotaNFTKeyV1, H256) {
+    let nft_id = CotaNFTIdBuilder::default()
+        .cota_id(CotaId::from_slice(&cota_id).unwrap())
+        .smt_type(Uint16::from_slice(&WITHDRAWAL_NFT_SMT_TYPE).unwrap())
+        .index(Uint32::from_slice(&token_index).unwrap())
+        .build();
+    let withdrawal_key = WithdrawalCotaNFTKeyV1Builder::default()
+        .nft_id(nft_id)
+        .out_point(OutPointSlice::from_slice(&out_point).unwrap())
+        .build();
+    let key = H256::from(blake2b_256(withdrawal_key.as_slice()));
+
+    (withdrawal_key, key)
+}
+
 pub fn generate_withdrawal_value(
     configure: u8,
     state: u8,
@@ -101,6 +120,26 @@ pub fn generate_withdrawal_value(
     let withdrawal_value = WithdrawalCotaNFTValueBuilder::default()
         .nft_info(cota_info)
         .out_point(OutPointSlice::from_slice(&out_point).unwrap())
+        .to_lock(BytesBuilder::default().set(to_lock_bytes).build())
+        .build();
+    let value = H256::from(blake2b_256(withdrawal_value.as_slice()));
+    (withdrawal_value, value)
+}
+
+pub fn generate_withdrawal_value_v1(
+    configure: u8,
+    state: u8,
+    characteristic: [u8; 20],
+    to_lock_script: Vec<u8>,
+) -> (WithdrawalCotaNFTValueV1, H256) {
+    let cota_info = CotaNFTInfoBuilder::default()
+        .configure(Byte::from(configure))
+        .state(Byte::from(state))
+        .characteristic(Characteristic::from_slice(&characteristic).unwrap())
+        .build();
+    let to_lock_bytes: Vec<Byte> = to_lock_script.iter().map(|v| Byte::from(*v)).collect();
+    let withdrawal_value = WithdrawalCotaNFTValueV1Builder::default()
+        .nft_info(cota_info)
         .to_lock(BytesBuilder::default().set(to_lock_bytes).build())
         .build();
     let value = H256::from(blake2b_256(withdrawal_value.as_slice()));

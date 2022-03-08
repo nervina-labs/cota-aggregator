@@ -49,7 +49,7 @@ pub fn generate_transfer_update_smt(
 
     let mut claimed_keys: Vec<ClaimCotaNFTKey> = Vec::new();
     let mut claimed_values: Vec<Byte32> = Vec::new();
-    let mut claimed_infos: Vec<CotaNFTInfo> = Vec::new();
+    let mut claimed_infos: Vec<ClaimCotaNFTInfo> = Vec::new();
     let mut withdrawal_keys: Vec<CotaNFTId> = Vec::new();
     let mut withdrawal_values: Vec<WithdrawalCotaNFTValue> = Vec::new();
     let mut transfer_update_leaves: Vec<(H256, H256)> = Vec::with_capacity(transfers_len * 2);
@@ -67,10 +67,14 @@ pub fn generate_transfer_update_smt(
             out_point,
             ..
         } = withdrawal_db;
-        let claimed_info = CotaNFTInfoBuilder::default()
+        let nft_info = CotaNFTInfoBuilder::default()
             .characteristic(Characteristic::from_slice(&characteristic).unwrap())
             .configure(Byte::from(configure))
             .state(Byte::from(state))
+            .build();
+        let claimed_info = ClaimCotaNFTInfoBuilder::default()
+            .nft_info(nft_info)
+            .version(Byte::from(1u8))
             .build();
         claimed_infos.push(claimed_info);
 
