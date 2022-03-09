@@ -119,7 +119,7 @@ pub fn check_hold_cota_by_lock_hash(
         .get_result::<i64>(conn)
         .map_err(|e| {
             error!("Check hold cota count error: {:?}", e.to_string());
-            Error::SMTProofError("Hold".to_string())
+            Error::DatabaseQueryError("Hold".to_string())
         })?;
     let is_exist = count > 0;
     let block_height = get_syncer_tip_block_number_with_conn(conn)?;
