@@ -102,6 +102,30 @@ pub fn get_hold_cota_by_lock_hash(
     )
 }
 
+pub fn check_hold_cota_by_lock_hash(
+    lock_hash_: [u8; 32],
+    cota_id_and_token_index_pair: ([u8; 20], [u8; 4]),
+) -> Result<(bool, u64), Error> {
+    let conn = &establish_connection();
+    let (lock_hash_hex, lock_hash_crc_) = parse_lock_hash(lock_hash_);
+    let cota_id_str = hex::encode(cota_id_and_token_index_pair.0);
+    let token_index_u32 = u32::from_be_bytes(cota_id_and_token_index_pair.1);
+    let count = hold_cota_nft_kv_pairs
+        .filter(cota_id.eq(cota_id_str))
+        .filter(token_index.eq(token_index_u32))
+        .filter(lock_hash_crc.eq(lock_hash_crc_))
+        .filter(lock_hash.eq(lock_hash_hex.clone()))
+        .count()
+        .get_result::<i64>(conn)
+        .map_err(|e| {
+            error!("Check hold cota count error: {:?}", e.to_string());
+            Error::DatabaseQueryError("Hold".to_string())
+        })?;
+    let is_exist = count > 0;
+    let block_height = get_syncer_tip_block_number_with_conn(conn)?;
+    Ok((is_exist, block_height))
+}
+
 pub fn get_hold_cota_by_lock_hash_and_page(
     lock_hash_: [u8; 32],
     page: i64,

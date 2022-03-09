@@ -2,7 +2,8 @@ use crate::models::claim::{get_claim_cota_by_lock_hash_with_conn, ClaimDb};
 use crate::models::define::{get_define_cota_by_lock_hash_with_conn, DefineDb};
 use crate::models::helper::establish_connection;
 use crate::models::hold::{
-    get_hold_cota_by_lock_hash_and_page, get_hold_cota_by_lock_hash_with_conn, HoldDb,
+    check_hold_cota_by_lock_hash, get_hold_cota_by_lock_hash_and_page,
+    get_hold_cota_by_lock_hash_with_conn, HoldDb,
 };
 use crate::models::scripts::get_script_id_by_lock_script;
 use crate::models::withdrawal::{
@@ -56,11 +57,7 @@ pub fn check_cota_claimed(
     cota_id: [u8; 20],
     index: [u8; 4],
 ) -> Result<(bool, u64), Error> {
-    let conn = &establish_connection();
-    let (holds, block_number) =
-        get_hold_cota_by_lock_hash_with_conn(conn, lock_hash, Some(vec![(cota_id, index)]))?;
-    let claimed = !holds.is_empty();
-    Ok((claimed, block_number))
+    check_hold_cota_by_lock_hash(lock_hash, (cota_id, index))
 }
 
 pub fn get_sender_lock_hash_by_cota_nft(
