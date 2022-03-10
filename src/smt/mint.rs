@@ -5,11 +5,13 @@ use crate::smt::common::{
     generate_define_key, generate_define_value, generate_withdrawal_key, generate_withdrawal_value,
 };
 use crate::utils::error::Error;
+use crate::utils::helper::diff_time;
+use chrono::prelude::*;
 use cota_smt::common::*;
 use cota_smt::mint::MintCotaNFTEntriesBuilder;
 use cota_smt::molecule::prelude::*;
 use cota_smt::smt::H256;
-use log::{error, info};
+use log::error;
 
 pub fn generate_mint_smt(mint_req: MintReq) -> Result<(String, String), Error> {
     let withdrawals = mint_req.withdrawals;
@@ -59,6 +61,7 @@ pub fn generate_mint_smt(mint_req: MintReq) -> Result<(String, String), Error> {
         action_vec.extend(&withdrawals.first().unwrap().to_lock_script);
     }
 
+    let start_time = Local::now().timestamp_millis();
     for MintWithdrawal {
         token_index,
         state,
@@ -81,14 +84,14 @@ pub fn generate_mint_smt(mint_req: MintReq) -> Result<(String, String), Error> {
         update_leaves.push((key, value));
         smt.update(key, value).expect("mint SMT update leave error");
     }
+    diff_time(start_time, "Generate mint smt object with leaves");
+
     let root_hash = smt.root().clone();
     let mut root_hash_bytes = [0u8; 32];
     root_hash_bytes.copy_from_slice(root_hash.as_slice());
     let root_hash_hex = hex::encode(root_hash_bytes);
 
-    info!("mint_smt_root_hash: {:?}", root_hash_hex);
-
-    info!("Start calculating mint smt proof");
+    let start_time = Local::now().timestamp_millis();
     let mint_merkle_proof = smt
         .merkle_proof(update_leaves.iter().map(|leave| leave.0).collect())
         .map_err(|e| {
@@ -102,7 +105,7 @@ pub fn generate_mint_smt(mint_req: MintReq) -> Result<(String, String), Error> {
                 error!("Mint SMT proof error: {:?}", e.to_string());
                 Error::SMTProofError("Mint".to_string())
             })?;
-    info!("Finish calculating mint smt proof");
+    diff_time(start_time, "Generate mint smt proof");
 
     let merkel_proof_vec: Vec<u8> = mint_merkle_proof_compiled.into();
     let merkel_proof_bytes = BytesBuilder::default()
@@ -144,8 +147,6 @@ pub fn generate_mint_smt(mint_req: MintReq) -> Result<(String, String), Error> {
         .build();
 
     let mint_entry = hex::encode(mint_entries.as_slice());
-
-    info!("mint_smt_entry: {:?}", mint_entry);
 
     Ok((root_hash_hex, mint_entry))
 }

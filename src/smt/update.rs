@@ -6,7 +6,7 @@ use cota_smt::common::*;
 use cota_smt::molecule::prelude::*;
 use cota_smt::smt::H256;
 use cota_smt::update::UpdateCotaNFTEntriesBuilder;
-use log::{error, info};
+use log::error;
 
 pub fn generate_update_smt(update_req: UpdateReq) -> Result<(String, String), Error> {
     let mut smt = generate_history_smt(update_req.lock_hash)?;
@@ -46,9 +46,6 @@ pub fn generate_update_smt(update_req: UpdateReq) -> Result<(String, String), Er
     root_hash_bytes.copy_from_slice(root_hash.as_slice());
     let root_hash_hex = hex::encode(root_hash_bytes);
 
-    info!("update_smt_root_hash: {:?}", root_hash_hex);
-
-    info!("Start calculating update smt proof");
     let update_merkle_proof = smt
         .merkle_proof(update_leaves.iter().map(|leave| leave.0).collect())
         .map_err(|e| {
@@ -62,7 +59,6 @@ pub fn generate_update_smt(update_req: UpdateReq) -> Result<(String, String), Er
                 error!("Update SMT proof error: {:?}", e.to_string());
                 Error::SMTProofError("Update".to_string())
             })?;
-    info!("Finish calculating update smt proof");
 
     let merkel_proof_vec: Vec<u8> = update_merkle_proof_compiled.into();
     let merkel_proof_bytes = BytesBuilder::default()
@@ -92,8 +88,6 @@ pub fn generate_update_smt(update_req: UpdateReq) -> Result<(String, String), Er
         .build();
 
     let update_entry = hex::encode(update_entries.as_slice());
-
-    info!("update_smt_entry: {:?}", update_entry);
 
     Ok((root_hash_hex, update_entry))
 }

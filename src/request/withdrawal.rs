@@ -4,7 +4,7 @@ use crate::utils::error::Error;
 use jsonrpc_http_server::jsonrpc_core::serde_json::Map;
 use jsonrpc_http_server::jsonrpc_core::Value;
 
-#[derive(Clone, Eq, PartialEq)]
+#[derive(Clone, Eq, PartialEq, Debug)]
 pub struct TransferWithdrawal {
     pub cota_id:        [u8; 20],
     pub token_index:    [u8; 4],

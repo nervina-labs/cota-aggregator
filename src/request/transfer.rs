@@ -5,7 +5,7 @@ use crate::utils::error::Error;
 use jsonrpc_http_server::jsonrpc_core::serde_json::Map;
 use jsonrpc_http_server::jsonrpc_core::Value;
 
-#[derive(Clone, Eq, PartialEq)]
+#[derive(Clone, Eq, PartialEq, Debug)]
 pub struct TransferReq {
     pub lock_script:          Vec<u8>,
     pub withdrawal_lock_hash: [u8; 32],

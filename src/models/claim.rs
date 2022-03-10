@@ -5,7 +5,8 @@ use crate::models::DBResult;
 use crate::schema::claimed_cota_nft_kv_pairs::dsl::claimed_cota_nft_kv_pairs;
 use crate::schema::claimed_cota_nft_kv_pairs::*;
 use crate::utils::error::Error;
-use crate::utils::helper::parse_bytes_n;
+use crate::utils::helper::{diff_time, parse_bytes_n};
+use chrono::prelude::*;
 use diesel::*;
 use log::error;
 
@@ -27,6 +28,7 @@ pub fn get_claim_cota_by_lock_hash_with_conn(
     conn: &SqlConnection,
     lock_hash_: [u8; 32],
 ) -> DBResult<ClaimDb> {
+    let start_time = Local::now().timestamp_millis();
     let (lock_hash_hex, lock_hash_crc_) = parse_lock_hash(lock_hash_);
     let mut page: i64 = 0;
     let mut claims: Vec<ClaimDb> = Vec::new();
@@ -53,6 +55,7 @@ pub fn get_claim_cota_by_lock_hash_with_conn(
         page += 1;
     }
     let block_height = get_syncer_tip_block_number_with_conn(conn)?;
+    diff_time(start_time, "SQL get_claim_cota_by_lock_hash");
     Ok((claims, block_height))
 }
 
