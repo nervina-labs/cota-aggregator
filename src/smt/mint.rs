@@ -84,7 +84,7 @@ pub fn generate_mint_smt(mint_req: MintReq) -> Result<(String, String), Error> {
         update_leaves.push((key, value));
         smt.update(key, value).expect("mint SMT update leave error");
     }
-    diff_time(start_time, "Generate mint smt object with leaves");
+    diff_time(start_time, "Generate mint smt object with update leaves");
 
     let root_hash = smt.root().clone();
     let mut root_hash_bytes = [0u8; 32];
