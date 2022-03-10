@@ -8,7 +8,7 @@ use crate::smt::common::{
 use crate::utils::error::Error;
 use cota_smt::common::*;
 use cota_smt::molecule::prelude::*;
-use cota_smt::smt::{blake2b_256, Blake2bHasher, H256};
+use cota_smt::smt::{blake2b_256, H256};
 use cota_smt::transfer::TransferCotaNFTEntriesBuilder;
 use log::{error, info};
 
@@ -109,6 +109,7 @@ pub fn generate_transfer_smt(transfer_req: TransferReq) -> Result<(String, Strin
 
     info!("transfer_smt_root_hash: {:?}", transfer_root_hash_hex);
 
+    info!("Start calculating transfer smt proof");
     let transfer_merkle_proof = transfer_smt
         .merkle_proof(transfer_update_leaves.iter().map(|leave| leave.0).collect())
         .map_err(|e| {
@@ -121,16 +122,14 @@ pub fn generate_transfer_smt(transfer_req: TransferReq) -> Result<(String, Strin
             error!("Transfer SMT proof error: {:?}", e.to_string());
             Error::SMTProofError("Transfer".to_string())
         })?;
-    transfer_merkle_proof_compiled
-        .verify::<Blake2bHasher>(&root_hash, transfer_update_leaves.clone())
-        .expect("transfer smt proof verify failed");
+    info!("Finish calculating transfer smt proof");
 
     let transfer_merkel_proof_vec: Vec<u8> = transfer_merkle_proof_compiled.into();
     let transfer_merkel_proof_bytes = BytesBuilder::default()
         .extend(transfer_merkel_proof_vec.iter().map(|v| Byte::from(*v)))
         .build();
 
-    let withdrawal_root_hash = withdrawal_smt.root().clone();
+    info!("Start calculating withdraw smt proof");
     let withdrawal_merkle_proof = withdrawal_smt
         .merkle_proof(
             withdrawal_update_leaves
@@ -148,9 +147,8 @@ pub fn generate_transfer_smt(transfer_req: TransferReq) -> Result<(String, Strin
             error!("Transfer SMT proof error: {:?}", e.to_string());
             Error::SMTProofError("Transfer".to_string())
         })?;
-    withdrawal_merkle_proof_compiled
-        .verify::<Blake2bHasher>(&withdrawal_root_hash, withdrawal_update_leaves.clone())
-        .expect("withdraw smt proof verify failed");
+    info!("Finish calculating withdraw smt proof");
+
     let withdrawal_merkel_proof_vec: Vec<u8> = withdrawal_merkle_proof_compiled.into();
     let withdrawal_merkel_proof_bytes = BytesBuilder::default()
         .extend(withdrawal_merkel_proof_vec.iter().map(|v| Byte::from(*v)))

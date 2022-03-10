@@ -1,4 +1,5 @@
 use super::helper::SqlConnection;
+use crate::models::helper::generate_crc;
 use crate::schema::scripts::dsl::scripts;
 use crate::schema::scripts::*;
 use crate::schema::scripts::{args, code_hash, hash_type};
@@ -56,13 +57,21 @@ pub fn get_script_id_by_lock_script(
     lock_script: &[u8],
 ) -> Result<Option<i64>, Error> {
     let lock = LockScript::from_slice(lock_script).unwrap();
+
     let lock_code_hash = hex::encode(lock.code_hash().as_slice().to_vec());
+    let lock_code_hash_crc = generate_crc(lock_code_hash.as_bytes());
+
     let lock_args = hex::encode(lock.args().raw_data().to_vec());
+    let lock_args_crc = generate_crc(lock_args.as_bytes());
+
     let script_ids: Vec<i64> = scripts
         .select(id)
-        .filter(code_hash.eq(lock_code_hash))
+        .filter(code_hash_crc.eq(lock_code_hash_crc))
         .filter(hash_type.eq(lock.hash_type().as_slice()[0]))
+        .filter(args_crc.eq(lock_args_crc))
+        .filter(code_hash.eq(lock_code_hash))
         .filter(args.eq(lock_args))
+        .limit(1)
         .load::<i64>(conn)
         .map_err(|e| {
             error!("Query script error: {}", e.to_string());
