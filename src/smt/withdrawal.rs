@@ -7,7 +7,7 @@ use crate::smt::common::{
 use crate::utils::error::Error;
 use cota_smt::common::*;
 use cota_smt::molecule::prelude::*;
-use cota_smt::smt::{Blake2bHasher, H256};
+use cota_smt::smt::H256;
 use cota_smt::transfer::WithdrawalCotaNFTEntriesBuilder;
 use log::{error, info};
 
@@ -66,6 +66,7 @@ pub fn generate_withdrawal_smt(withdrawal_req: WithdrawalReq) -> Result<(String,
 
     info!("withdraw_smt_root_hash: {:?}", root_hash_hex);
 
+    info!("Start calculating withdraw smt proof");
     let withdrawal_merkle_proof = smt
         .merkle_proof(update_leaves.iter().map(|leave| leave.0).collect())
         .map_err(|e| {
@@ -78,9 +79,7 @@ pub fn generate_withdrawal_smt(withdrawal_req: WithdrawalReq) -> Result<(String,
         error!("Withdraw SMT proof error: {:?}", e.to_string());
         Error::SMTProofError("Withdraw".to_string())
     })?;
-    withdrawal_merkle_proof_compiled
-        .verify::<Blake2bHasher>(&root_hash, update_leaves.clone())
-        .expect("withdraw smt proof verify failed");
+    info!("Finish calculating withdraw smt proof");
 
     let merkel_proof_vec: Vec<u8> = withdrawal_merkle_proof_compiled.into();
     let merkel_proof_bytes = BytesBuilder::default()

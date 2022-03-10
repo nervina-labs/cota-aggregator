@@ -6,7 +6,7 @@ use crate::utils::error::Error;
 use cota_smt::common::*;
 use cota_smt::define::DefineCotaNFTEntriesBuilder;
 use cota_smt::molecule::prelude::*;
-use cota_smt::smt::{Blake2bHasher, H256};
+use cota_smt::smt::H256;
 use log::{error, info};
 
 pub fn generate_define_smt(define_req: DefineReq) -> Result<(String, String), Error> {
@@ -50,6 +50,7 @@ pub fn generate_define_smt(define_req: DefineReq) -> Result<(String, String), Er
 
     info!("define_smt_root_hash: {:?}", root_hash_hex);
 
+    info!("Start calculating define smt proof");
     let define_merkle_proof = smt
         .merkle_proof(update_leaves.iter().map(|leave| leave.0).collect())
         .map_err(|e| {
@@ -63,9 +64,7 @@ pub fn generate_define_smt(define_req: DefineReq) -> Result<(String, String), Er
                 error!("Define SMT proof error: {:?}", e.to_string());
                 Error::SMTProofError("Define".to_string())
             })?;
-    define_merkle_proof_compiled
-        .verify::<Blake2bHasher>(&root_hash, update_leaves.clone())
-        .expect("define smt proof verify failed");
+    info!("Finish calculating define smt proof");
 
     let merkel_proof_vec: Vec<u8> = define_merkle_proof_compiled.into();
     let merkel_proof_bytes = BytesBuilder::default()

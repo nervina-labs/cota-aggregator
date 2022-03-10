@@ -8,7 +8,7 @@ use crate::utils::error::Error;
 use cota_smt::common::*;
 use cota_smt::mint::MintCotaNFTEntriesBuilder;
 use cota_smt::molecule::prelude::*;
-use cota_smt::smt::{Blake2bHasher, H256};
+use cota_smt::smt::H256;
 use log::{error, info};
 
 pub fn generate_mint_smt(mint_req: MintReq) -> Result<(String, String), Error> {
@@ -88,6 +88,7 @@ pub fn generate_mint_smt(mint_req: MintReq) -> Result<(String, String), Error> {
 
     info!("mint_smt_root_hash: {:?}", root_hash_hex);
 
+    info!("Start calculating mint smt proof");
     let mint_merkle_proof = smt
         .merkle_proof(update_leaves.iter().map(|leave| leave.0).collect())
         .map_err(|e| {
@@ -101,9 +102,7 @@ pub fn generate_mint_smt(mint_req: MintReq) -> Result<(String, String), Error> {
                 error!("Mint SMT proof error: {:?}", e.to_string());
                 Error::SMTProofError("Mint".to_string())
             })?;
-    mint_merkle_proof_compiled
-        .verify::<Blake2bHasher>(&root_hash, update_leaves.clone())
-        .expect("mint smt proof verify failed");
+    info!("Finish calculating mint smt proof");
 
     let merkel_proof_vec: Vec<u8> = mint_merkle_proof_compiled.into();
     let merkel_proof_bytes = BytesBuilder::default()

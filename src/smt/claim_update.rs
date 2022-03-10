@@ -7,7 +7,7 @@ use crate::smt::common::{
 use crate::utils::error::Error;
 use cota_smt::common::*;
 use cota_smt::molecule::prelude::*;
-use cota_smt::smt::{blake2b_256, Blake2bHasher, H256};
+use cota_smt::smt::{blake2b_256, H256};
 use cota_smt::transfer_update::ClaimUpdateCotaNFTEntriesBuilder;
 use log::{error, info};
 
@@ -86,7 +86,7 @@ pub fn generate_claim_update_smt(
         claim_keys.push(claim_key);
         key_vec.push(key);
     }
-    let withdrawal_root_hash = withdrawal_smt.root().clone();
+    info!("Start calculating withdraw smt proof");
     let withdraw_merkle_proof = withdrawal_smt
         .merkle_proof(
             withdrawal_update_leaves
@@ -104,9 +104,7 @@ pub fn generate_claim_update_smt(
             error!("Withdraw SMT proof error: {:?}", e.to_string());
             Error::SMTProofError("Withdraw".to_string())
         })?;
-    withdraw_merkle_proof_compiled
-        .verify::<Blake2bHasher>(&withdrawal_root_hash, withdrawal_update_leaves.clone())
-        .expect("withdraw smt proof verify failed");
+    info!("Finish calculating withdraw smt proof");
 
     let merkel_proof_vec: Vec<u8> = withdraw_merkle_proof_compiled.into();
     let withdrawal_proof = BytesBuilder::default()
@@ -131,6 +129,7 @@ pub fn generate_claim_update_smt(
         claim_update_root_hash_hex
     );
 
+    info!("Start calculating claim_update smt proof");
     let claim_update_merkle_proof = claim_smt
         .merkle_proof(claim_update_leaves.iter().map(|leave| leave.0).collect())
         .map_err(|e| {
@@ -143,9 +142,7 @@ pub fn generate_claim_update_smt(
             error!("Claim update SMT proof error: {:?}", e.to_string());
             Error::SMTProofError("ClaimUpdate".to_string())
         })?;
-    claim_update_merkle_proof_compiled
-        .verify::<Blake2bHasher>(&claim_update_root_hash, claim_update_leaves.clone())
-        .expect("claim update smt proof verify failed");
+    info!("Finish calculating claim_update smt proof");
 
     let merkel_proof_vec: Vec<u8> = claim_update_merkle_proof_compiled.into();
     let claim_proof = BytesBuilder::default()

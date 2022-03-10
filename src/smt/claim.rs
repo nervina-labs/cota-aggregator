@@ -7,7 +7,7 @@ use crate::smt::common::{
 use crate::utils::error::Error;
 use cota_smt::common::*;
 use cota_smt::molecule::prelude::*;
-use cota_smt::smt::{blake2b_256, Blake2bHasher, H256};
+use cota_smt::smt::{blake2b_256, H256};
 use cota_smt::transfer::ClaimCotaNFTEntriesBuilder;
 use log::{error, info};
 
@@ -75,7 +75,7 @@ pub fn generate_claim_smt(claim_req: ClaimReq) -> Result<(String, String), Error
         claim_keys.push(claim_key);
         key_vec.push(key);
     }
-    let withdrawal_root_hash = withdrawal_smt.root().clone();
+    info!("Start calculating withdraw smt proof");
     let withdraw_merkle_proof = withdrawal_smt
         .merkle_proof(
             withdrawal_update_leaves
@@ -93,9 +93,7 @@ pub fn generate_claim_smt(claim_req: ClaimReq) -> Result<(String, String), Error
             error!("Withdraw SMT proof error: {:?}", e.to_string());
             Error::SMTProofError("Withdraw".to_string())
         })?;
-    withdraw_merkle_proof_compiled
-        .verify::<Blake2bHasher>(&withdrawal_root_hash, withdrawal_update_leaves.clone())
-        .expect("withdraw smt proof verify failed");
+    info!("Finish calculating withdraw smt proof");
 
     let merkel_proof_vec: Vec<u8> = withdraw_merkle_proof_compiled.into();
     let withdrawal_proof = BytesBuilder::default()
@@ -117,6 +115,7 @@ pub fn generate_claim_smt(claim_req: ClaimReq) -> Result<(String, String), Error
 
     info!("claim_smt_root_hash: {:?}", claim_root_hash_hex);
 
+    info!("Start calculating claim smt proof");
     let claim_merkle_proof = claim_smt
         .merkle_proof(claim_update_leaves.iter().map(|leave| leave.0).collect())
         .map_err(|e| {
@@ -129,9 +128,7 @@ pub fn generate_claim_smt(claim_req: ClaimReq) -> Result<(String, String), Error
             error!("Claim SMT proof error: {:?}", e.to_string());
             Error::SMTProofError("Claim".to_string())
         })?;
-    claim_merkle_proof_compiled
-        .verify::<Blake2bHasher>(&claim_root_hash, claim_update_leaves.clone())
-        .expect("claim smt proof verify failed");
+    info!("Finish calculating claim smt proof");
 
     let merkel_proof_vec: Vec<u8> = claim_merkle_proof_compiled.into();
     let claim_proof = BytesBuilder::default()

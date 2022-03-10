@@ -11,6 +11,7 @@ use cota_smt::common::{Uint16, Uint32, *};
 use cota_smt::molecule::prelude::*;
 use cota_smt::smt::SMT;
 use cota_smt::smt::{blake2b_256, H256};
+use log::info;
 
 pub fn generate_define_key(cota_id: [u8; 20]) -> (DefineCotaNFTId, H256) {
     let cota_id = CotaId::from_slice(&cota_id).unwrap();
@@ -137,6 +138,7 @@ pub fn generate_empty_value() -> (Byte32, H256) {
 }
 
 pub fn generate_history_smt(lock_hash: [u8; 32]) -> Result<SMT, Error> {
+    info!("Start loading smt leaves from database");
     let mut smt: SMT = SMT::default();
     let (defines, holds, withdrawals, claims) = get_all_cota_by_lock_hash(lock_hash)?;
     for define_db in defines {
@@ -193,5 +195,6 @@ pub fn generate_history_smt(lock_hash: [u8; 32]) -> Result<SMT, Error> {
         let (_, value) = generate_claim_value();
         smt.update(key, value).expect("SMT update leave error");
     }
+    info!("Finish loading smt leaves from database");
     Ok(smt)
 }
