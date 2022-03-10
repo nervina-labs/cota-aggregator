@@ -35,7 +35,7 @@ fn main() {
     io.add_method("get_cota_nft_sender", get_sender_lock_hash);
 
     let server = ServerBuilder::new(io)
-        .threads(3)
+        .threads(50)
         .start_http(&"0.0.0.0:3030".parse().unwrap())
         .unwrap();
 
