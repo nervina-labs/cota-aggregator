@@ -104,7 +104,10 @@ pub fn generate_transfer_smt(transfer_req: TransferReq) -> Result<(String, Strin
             .update(key, value)
             .expect("transfer SMT update leave error");
     }
-    diff_time(start_time, "Generate transfer smt object with update leaves");
+    diff_time(
+        start_time,
+        "Generate transfer smt object with update leaves",
+    );
 
     let root_hash = transfer_smt.root().clone();
     let mut root_hash_bytes = [0u8; 32];
