@@ -3,9 +3,11 @@ extern crate diesel;
 extern crate dotenv;
 
 use crate::api::*;
+use jsonrpc_http_server::jsonrpc_core::serde_json::from_str;
 use jsonrpc_http_server::jsonrpc_core::IoHandler;
 use jsonrpc_http_server::ServerBuilder;
 use log::info;
+use std::env;
 
 pub mod api;
 mod models;
@@ -34,8 +36,13 @@ fn main() {
     io.add_method("is_claimed", is_claimed_rpc);
     io.add_method("get_cota_nft_sender", get_sender_lock_hash);
 
+    let threads: usize = match env::var("THREADS") {
+        Ok(thread) => from_str::<usize>(&thread).unwrap(),
+        Err(_e) => 3,
+    };
+
     let server = ServerBuilder::new(io)
-        .threads(50)
+        .threads(threads)
         .start_http(&"0.0.0.0:3030".parse().unwrap())
         .unwrap();
 
