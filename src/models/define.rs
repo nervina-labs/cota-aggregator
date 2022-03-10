@@ -74,6 +74,7 @@ pub fn get_define_cota_by_lock_hash_and_cota_id(
         .filter(lock_hash_crc.eq(lock_hash_crc_))
         .filter(lock_hash.eq(lock_hash_hex))
         .filter(cota_id.eq(cota_id_hex))
+        .limit(1)
         .load::<DefineCotaNft>(conn)
         .map_or_else(
             |e| {

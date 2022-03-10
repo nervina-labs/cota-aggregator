@@ -2,7 +2,7 @@ use super::helper::{
     establish_connection, parse_cota_id_and_token_index_pairs, parse_lock_hash, SqlConnection,
 };
 use crate::models::block::get_syncer_tip_block_number_with_conn;
-use crate::models::helper::PAGE_SIZE;
+use crate::models::helper::{generate_crc, PAGE_SIZE};
 use crate::models::scripts::get_script_map_by_ids;
 use crate::models::{DBResult, DBTotalResult};
 use crate::schema::withdraw_cota_nft_kv_pairs::dsl::withdraw_cota_nft_kv_pairs;
@@ -191,12 +191,15 @@ pub fn get_sender_lock_by_script_id(
 ) -> Result<Option<String>, Error> {
     let cota_id_hex = hex::encode(cota_id_);
     let token_index_u32 = u32::from_be_bytes(token_index_);
+    let cota_id_crc_u32 = generate_crc(cota_id_hex.as_bytes());
     let lock_hashes: Vec<String> = withdraw_cota_nft_kv_pairs
         .select(lock_hash)
-        .filter(receiver_lock_script_id.eq(script_id))
-        .filter(cota_id.eq(cota_id_hex))
+        .filter(cota_id_crc.eq(cota_id_crc_u32))
         .filter(token_index.eq(token_index_u32))
+        .filter(cota_id.eq(cota_id_hex))
+        .filter(receiver_lock_script_id.eq(script_id))
         .order(updated_at.desc())
+        .limit(1)
         .load::<String>(conn)
         .map_err(|e| {
             error!("Query withdraw error: {}", e.to_string());
