@@ -145,6 +145,7 @@ pub fn generate_history_smt(lock_hash: [u8; 32]) -> Result<SMT, Error> {
     diff_time(start_time, "Load history smt leaves from database");
 
     let start_time = Local::now().timestamp_millis();
+    let mut leaves: Vec<(H256, H256)> = Vec::new();
     for define_db in defines {
         let DefineDb {
             cota_id,
@@ -155,7 +156,7 @@ pub fn generate_history_smt(lock_hash: [u8; 32]) -> Result<SMT, Error> {
         let (_, key) = generate_define_key(cota_id);
         let (_, value) =
             generate_define_value(total.to_be_bytes(), issued.to_be_bytes(), configure);
-        smt.update(key, value).expect("SMT update leave error");
+        leaves.push((key, value));
     }
     for hold_db in holds {
         let HoldDb {
@@ -167,7 +168,7 @@ pub fn generate_history_smt(lock_hash: [u8; 32]) -> Result<SMT, Error> {
         } = hold_db;
         let (_, key) = generate_hold_key(cota_id, token_index);
         let (_, value) = generate_hold_value(configure, state, characteristic);
-        smt.update(key, value).expect("SMT update leave error");
+        leaves.push((key, value));
     }
     for withdrawal_db in withdrawals {
         let WithdrawDb {
@@ -187,7 +188,7 @@ pub fn generate_history_smt(lock_hash: [u8; 32]) -> Result<SMT, Error> {
             receiver_lock_script,
             out_point,
         );
-        smt.update(key, value).expect("SMT update leave error");
+        leaves.push((key, value));
     }
     for claim_db in claims {
         let ClaimDb {
@@ -197,8 +198,9 @@ pub fn generate_history_smt(lock_hash: [u8; 32]) -> Result<SMT, Error> {
         } = claim_db;
         let (_, key) = generate_claim_key(cota_id, token_index, out_point);
         let (_, value) = generate_claim_value();
-        smt.update(key, value).expect("SMT update leave error");
+        leaves.push((key, value));
     }
+    smt.update_all(leaves).expect("SMT update leave error");
     diff_time(start_time, "Push history leaves to smt");
     Ok(smt)
 }
