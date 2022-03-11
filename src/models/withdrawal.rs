@@ -8,7 +8,8 @@ use crate::models::{DBResult, DBTotalResult};
 use crate::schema::withdraw_cota_nft_kv_pairs::dsl::withdraw_cota_nft_kv_pairs;
 use crate::schema::withdraw_cota_nft_kv_pairs::*;
 use crate::utils::error::Error;
-use crate::utils::helper::parse_bytes_n;
+use crate::utils::helper::{diff_time, parse_bytes_n};
+use chrono::prelude::*;
 use diesel::*;
 use log::error;
 use serde::{Deserialize, Serialize};
@@ -49,6 +50,7 @@ pub fn get_withdrawal_cota_by_lock_hash_with_conn(
     lock_hash_: [u8; 32],
     cota_id_and_token_index_pairs: Option<Vec<([u8; 20], [u8; 4])>>,
 ) -> DBResult<WithdrawDb> {
+    let start_time = Local::now().timestamp_millis();
     let (lock_hash_hex, lock_hash_crc_) = parse_lock_hash(lock_hash_);
     let mut withdraw_nfts: Vec<WithdrawCotaNft> = vec![];
     let withdraw_cota_nfts: Vec<WithdrawCotaNft> = match cota_id_and_token_index_pairs {
@@ -98,6 +100,7 @@ pub fn get_withdrawal_cota_by_lock_hash_with_conn(
             withdraw_nfts
         }
     };
+    diff_time(start_time, "SQL get_withdrawal_cota_by_lock_hash");
     parse_withdraw_db(conn, withdraw_cota_nfts)
 }
 
@@ -119,6 +122,7 @@ pub fn get_withdrawal_cota_by_cota_ids(
     page: i64,
     page_size: i64,
 ) -> DBTotalResult<WithdrawDb> {
+    let start_time = Local::now().timestamp_millis();
     let (lock_hash_hex, lock_hash_crc_) = parse_lock_hash(lock_hash_);
     let cota_ids_: Vec<String> = cota_ids
         .into_iter()
@@ -149,6 +153,7 @@ pub fn get_withdrawal_cota_by_cota_ids(
             Error::DatabaseQueryError(e.to_string())
         })?;
     let (withdrawals, block_height) = parse_withdraw_db(conn, withdraw_cota_nfts)?;
+    diff_time(start_time, "SQL get_withdrawal_cota_by_cota_ids");
     Ok((withdrawals, total, block_height))
 }
 
@@ -158,6 +163,7 @@ pub fn get_withdrawal_cota_by_script_id(
     page: i64,
     page_size: i64,
 ) -> DBTotalResult<WithdrawNFTDb> {
+    let start_time = Local::now().timestamp_millis();
     let total: i64 = withdraw_cota_nft_kv_pairs
         .filter(receiver_lock_script_id.eq(script_id))
         .count()
@@ -180,6 +186,7 @@ pub fn get_withdrawal_cota_by_script_id(
         })?;
     let withdrawals = parse_withdraw_cota_nft(withdraw_cota_nfts);
     let block_height = get_syncer_tip_block_number_with_conn(conn)?;
+    diff_time(start_time, "SQL get_withdrawal_cota_by_script_id");
     Ok((withdrawals, total, block_height))
 }
 
@@ -189,6 +196,7 @@ pub fn get_sender_lock_by_script_id(
     cota_id_: [u8; 20],
     token_index_: [u8; 4],
 ) -> Result<Option<String>, Error> {
+    let start_time = Local::now().timestamp_millis();
     let cota_id_hex = hex::encode(cota_id_);
     let token_index_u32 = u32::from_be_bytes(token_index_);
     let cota_id_crc_u32 = generate_crc(cota_id_hex.as_bytes());
@@ -205,6 +213,7 @@ pub fn get_sender_lock_by_script_id(
             error!("Query withdraw error: {}", e.to_string());
             Error::DatabaseQueryError(e.to_string())
         })?;
+    diff_time(start_time, "SQL get_sender_lock_by_script_id");
     let lock_hash_opt: Option<String> = lock_hashes.get(0).map(|hash| (*hash).clone());
     Ok(lock_hash_opt)
 }

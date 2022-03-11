@@ -9,7 +9,7 @@ use cota_smt::common::*;
 use cota_smt::molecule::prelude::*;
 use cota_smt::smt::{blake2b_256, H256};
 use cota_smt::transfer_update::TransferUpdateCotaNFTEntriesBuilder;
-use log::{error, info};
+use log::error;
 
 pub fn generate_transfer_update_smt(
     transfer_update_req: TransferUpdateReq,
@@ -119,12 +119,6 @@ pub fn generate_transfer_update_smt(
     root_hash_bytes.copy_from_slice(root_hash.as_slice());
     let transfer_update_root_hash_hex = hex::encode(root_hash_bytes);
 
-    info!(
-        "transfer_update_root_hash: {:?}",
-        transfer_update_root_hash_hex
-    );
-
-    info!("Start calculating transfer_update smt proof");
     let transfer_update_merkle_proof = transfer_update_smt
         .merkle_proof(transfer_update_leaves.iter().map(|leave| leave.0).collect())
         .map_err(|e| {
@@ -137,7 +131,6 @@ pub fn generate_transfer_update_smt(
             error!("Transfer SMT proof error: {:?}", e.to_string());
             Error::SMTProofError("Transfer update".to_string())
         })?;
-    info!("Finish calculating transfer_update smt proof");
 
     let transfer_update_merkel_proof_vec: Vec<u8> = transfer_update_merkle_proof_compiled.into();
     let transfer_update_merkel_proof_bytes = BytesBuilder::default()
@@ -148,7 +141,6 @@ pub fn generate_transfer_update_smt(
         )
         .build();
 
-    info!("Start calculating withdraw smt proof");
     let withdrawal_merkle_proof = withdrawal_smt
         .merkle_proof(
             withdrawal_update_leaves
@@ -166,7 +158,6 @@ pub fn generate_transfer_update_smt(
             error!("Transfer update SMT proof error: {:?}", e.to_string());
             Error::SMTProofError("Transfer update".to_string())
         })?;
-    info!("Finish calculating withdraw smt proof");
 
     let withdrawal_merkel_proof_vec: Vec<u8> = withdrawal_merkle_proof_compiled.into();
     let withdrawal_merkel_proof_bytes = BytesBuilder::default()
@@ -200,8 +191,6 @@ pub fn generate_transfer_update_smt(
         .build();
 
     let transfer_update_entry = hex::encode(transfer_update_entries.as_slice());
-
-    info!("transfer_update_smt_entry: {:?}", transfer_update_entry);
 
     Ok((transfer_update_root_hash_hex, transfer_update_entry))
 }

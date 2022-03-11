@@ -1,5 +1,7 @@
 use super::error::Error;
+use chrono::prelude::*;
 use hex;
+use log::info;
 use std::convert::TryInto;
 
 pub fn remove_0x(str: &str) -> &str {
@@ -32,6 +34,11 @@ pub fn parse_bytes_n<const N: usize>(value: String) -> Result<[u8; N], Error> {
 pub fn parse_bytes(value: String) -> Result<Vec<u8>, Error> {
     let v = remove_0x(&value);
     hex::decode(v).map_err(|_| Error::RequestParamHexInvalid(value))
+}
+
+pub fn diff_time(start_time: i64, message: &str) {
+    let diff_time = (Local::now().timestamp_millis() - start_time) as f64 / 1000f64;
+    info!("{}: {}s", message, diff_time);
 }
 
 #[cfg(test)]

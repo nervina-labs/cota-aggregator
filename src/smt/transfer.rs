@@ -6,11 +6,13 @@ use crate::smt::common::{
     generate_withdrawal_value,
 };
 use crate::utils::error::Error;
+use crate::utils::helper::diff_time;
+use chrono::prelude::*;
 use cota_smt::common::*;
 use cota_smt::molecule::prelude::*;
 use cota_smt::smt::{blake2b_256, H256};
 use cota_smt::transfer::TransferCotaNFTEntriesBuilder;
-use log::{error, info};
+use log::error;
 
 pub fn generate_transfer_smt(transfer_req: TransferReq) -> Result<(String, String), Error> {
     let transfers = transfer_req.clone().transfers;
@@ -53,6 +55,7 @@ pub fn generate_transfer_smt(transfer_req: TransferReq) -> Result<(String, Strin
     let mut withdrawal_update_leaves: Vec<(H256, H256)> = Vec::with_capacity(transfers_len);
     let mut transfer_smt = generate_history_smt(blake2b_256(&transfer_req.lock_script))?;
     let mut withdrawal_smt = generate_history_smt(transfer_req.withdrawal_lock_hash)?;
+    let start_time = Local::now().timestamp_millis();
     for (withdrawal_db, transfer) in sender_withdrawals.into_iter().zip(transfers.clone()) {
         let WithdrawDb {
             cota_id,
@@ -101,15 +104,17 @@ pub fn generate_transfer_smt(transfer_req: TransferReq) -> Result<(String, Strin
             .update(key, value)
             .expect("transfer SMT update leave error");
     }
+    diff_time(
+        start_time,
+        "Generate transfer smt object with update leaves",
+    );
 
     let root_hash = transfer_smt.root().clone();
     let mut root_hash_bytes = [0u8; 32];
     root_hash_bytes.copy_from_slice(root_hash.as_slice());
     let transfer_root_hash_hex = hex::encode(root_hash_bytes);
 
-    info!("transfer_smt_root_hash: {:?}", transfer_root_hash_hex);
-
-    info!("Start calculating transfer smt proof");
+    let start_time = Local::now().timestamp_millis();
     let transfer_merkle_proof = transfer_smt
         .merkle_proof(transfer_update_leaves.iter().map(|leave| leave.0).collect())
         .map_err(|e| {
@@ -122,14 +127,14 @@ pub fn generate_transfer_smt(transfer_req: TransferReq) -> Result<(String, Strin
             error!("Transfer SMT proof error: {:?}", e.to_string());
             Error::SMTProofError("Transfer".to_string())
         })?;
-    info!("Finish calculating transfer smt proof");
+    diff_time(start_time, "Generate transfer smt proof");
 
     let transfer_merkel_proof_vec: Vec<u8> = transfer_merkle_proof_compiled.into();
     let transfer_merkel_proof_bytes = BytesBuilder::default()
         .extend(transfer_merkel_proof_vec.iter().map(|v| Byte::from(*v)))
         .build();
 
-    info!("Start calculating withdraw smt proof");
+    let start_time = Local::now().timestamp_millis();
     let withdrawal_merkle_proof = withdrawal_smt
         .merkle_proof(
             withdrawal_update_leaves
@@ -147,7 +152,7 @@ pub fn generate_transfer_smt(transfer_req: TransferReq) -> Result<(String, Strin
             error!("Transfer SMT proof error: {:?}", e.to_string());
             Error::SMTProofError("Transfer".to_string())
         })?;
-    info!("Finish calculating withdraw smt proof");
+    diff_time(start_time, "Generate withdraw smt proof");
 
     let withdrawal_merkel_proof_vec: Vec<u8> = withdrawal_merkle_proof_compiled.into();
     let withdrawal_merkel_proof_bytes = BytesBuilder::default()
@@ -181,8 +186,6 @@ pub fn generate_transfer_smt(transfer_req: TransferReq) -> Result<(String, Strin
         .build();
 
     let transfer_entry = hex::encode(transfer_entries.as_slice());
-
-    info!("transfer_smt_entry: {:?}", transfer_entry);
 
     Ok((transfer_root_hash_hex, transfer_entry))
 }

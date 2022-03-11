@@ -7,11 +7,12 @@ use crate::smt::constants::{
     CLAIM_NFT_SMT_TYPE, DEFINE_NFT_SMT_TYPE, HOLD_NFT_SMT_TYPE, WITHDRAWAL_NFT_SMT_TYPE,
 };
 use crate::utils::error::Error;
+use crate::utils::helper::diff_time;
+use chrono::prelude::*;
 use cota_smt::common::{Uint16, Uint32, *};
 use cota_smt::molecule::prelude::*;
 use cota_smt::smt::SMT;
 use cota_smt::smt::{blake2b_256, H256};
-use log::info;
 
 pub fn generate_define_key(cota_id: [u8; 20]) -> (DefineCotaNFTId, H256) {
     let cota_id = CotaId::from_slice(&cota_id).unwrap();
@@ -138,9 +139,12 @@ pub fn generate_empty_value() -> (Byte32, H256) {
 }
 
 pub fn generate_history_smt(lock_hash: [u8; 32]) -> Result<SMT, Error> {
-    info!("Start loading smt leaves from database");
+    let start_time = Local::now().timestamp_millis();
     let mut smt: SMT = SMT::default();
     let (defines, holds, withdrawals, claims) = get_all_cota_by_lock_hash(lock_hash)?;
+    diff_time(start_time, "Load history smt leaves from database");
+
+    let start_time = Local::now().timestamp_millis();
     for define_db in defines {
         let DefineDb {
             cota_id,
@@ -195,6 +199,6 @@ pub fn generate_history_smt(lock_hash: [u8; 32]) -> Result<SMT, Error> {
         let (_, value) = generate_claim_value();
         smt.update(key, value).expect("SMT update leave error");
     }
-    info!("Finish loading smt leaves from database");
+    diff_time(start_time, "Push history leaves to smt");
     Ok(smt)
 }

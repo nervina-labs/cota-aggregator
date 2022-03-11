@@ -9,7 +9,7 @@ use cota_smt::common::*;
 use cota_smt::molecule::prelude::*;
 use cota_smt::smt::{blake2b_256, H256};
 use cota_smt::transfer_update::ClaimUpdateCotaNFTEntriesBuilder;
-use log::{error, info};
+use log::error;
 
 pub fn generate_claim_update_smt(
     claim_update_req: ClaimUpdateReq,
@@ -86,7 +86,6 @@ pub fn generate_claim_update_smt(
         claim_keys.push(claim_key);
         key_vec.push(key);
     }
-    info!("Start calculating withdraw smt proof");
     let withdraw_merkle_proof = withdrawal_smt
         .merkle_proof(
             withdrawal_update_leaves
@@ -104,7 +103,6 @@ pub fn generate_claim_update_smt(
             error!("Withdraw SMT proof error: {:?}", e.to_string());
             Error::SMTProofError("Withdraw".to_string())
         })?;
-    info!("Finish calculating withdraw smt proof");
 
     let merkel_proof_vec: Vec<u8> = withdraw_merkle_proof_compiled.into();
     let withdrawal_proof = BytesBuilder::default()
@@ -124,12 +122,6 @@ pub fn generate_claim_update_smt(
     root_hash_bytes.copy_from_slice(claim_update_root_hash.as_slice());
     let claim_update_root_hash_hex = hex::encode(root_hash_bytes);
 
-    info!(
-        "claim_update_smt_root_hash: {:?}",
-        claim_update_root_hash_hex
-    );
-
-    info!("Start calculating claim_update smt proof");
     let claim_update_merkle_proof = claim_smt
         .merkle_proof(claim_update_leaves.iter().map(|leave| leave.0).collect())
         .map_err(|e| {
@@ -142,7 +134,6 @@ pub fn generate_claim_update_smt(
             error!("Claim update SMT proof error: {:?}", e.to_string());
             Error::SMTProofError("ClaimUpdate".to_string())
         })?;
-    info!("Finish calculating claim_update smt proof");
 
     let merkel_proof_vec: Vec<u8> = claim_update_merkle_proof_compiled.into();
     let claim_proof = BytesBuilder::default()
@@ -176,8 +167,6 @@ pub fn generate_claim_update_smt(
         .build();
 
     let claim_update_entry = hex::encode(claim_update_entries.as_slice());
-
-    info!("claim_update_smt_entry: {:?}", claim_update_entry);
 
     Ok((claim_update_root_hash_hex, claim_update_entry))
 }

@@ -9,7 +9,7 @@ use cota_smt::common::*;
 use cota_smt::molecule::prelude::*;
 use cota_smt::smt::H256;
 use cota_smt::transfer::WithdrawalCotaNFTEntriesBuilder;
-use log::{error, info};
+use log::error;
 
 pub fn generate_withdrawal_smt(withdrawal_req: WithdrawalReq) -> Result<(String, String), Error> {
     let mut smt = generate_history_smt(withdrawal_req.lock_hash)?;
@@ -64,9 +64,6 @@ pub fn generate_withdrawal_smt(withdrawal_req: WithdrawalReq) -> Result<(String,
     root_hash_bytes.copy_from_slice(root_hash.as_slice());
     let root_hash_hex = hex::encode(root_hash_bytes);
 
-    info!("withdraw_smt_root_hash: {:?}", root_hash_hex);
-
-    info!("Start calculating withdraw smt proof");
     let withdrawal_merkle_proof = smt
         .merkle_proof(update_leaves.iter().map(|leave| leave.0).collect())
         .map_err(|e| {
@@ -79,7 +76,6 @@ pub fn generate_withdrawal_smt(withdrawal_req: WithdrawalReq) -> Result<(String,
         error!("Withdraw SMT proof error: {:?}", e.to_string());
         Error::SMTProofError("Withdraw".to_string())
     })?;
-    info!("Finish calculating withdraw smt proof");
 
     let merkel_proof_vec: Vec<u8> = withdrawal_merkle_proof_compiled.into();
     let merkel_proof_bytes = BytesBuilder::default()
@@ -120,8 +116,6 @@ pub fn generate_withdrawal_smt(withdrawal_req: WithdrawalReq) -> Result<(String,
         .build();
 
     let withdrawal_entry = hex::encode(withdrawal_entries.as_slice());
-
-    info!("withdrawal_smt_entry: {:?}", withdrawal_entry);
 
     Ok((root_hash_hex, withdrawal_entry))
 }
