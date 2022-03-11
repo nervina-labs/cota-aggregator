@@ -38,8 +38,9 @@ pub fn generate_update_smt(update_req: UpdateReq) -> Result<(String, String), Er
             generate_hold_value(hold_db.configure, nft.state, nft.characteristic);
         hold_values.push(hold_value);
         update_leaves.push((key, value));
-        smt.update(key, value).expect("hold SMT update leave error");
     }
+    smt.update_all(update_leaves.clone())
+        .expect("SMT update leave error");
 
     let root_hash = smt.root().clone();
     let mut root_hash_bytes = [0u8; 32];

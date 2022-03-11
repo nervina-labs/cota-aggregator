@@ -142,9 +142,6 @@ pub fn generate_history_smt(lock_hash: [u8; 32]) -> Result<SMT, Error> {
     let start_time = Local::now().timestamp_millis();
     let mut smt: SMT = SMT::default();
     let (defines, holds, withdrawals, claims) = get_all_cota_by_lock_hash(lock_hash)?;
-    diff_time(start_time, "Load history smt leaves from database");
-
-    let start_time = Local::now().timestamp_millis();
     let mut leaves: Vec<(H256, H256)> = Vec::new();
     for define_db in defines {
         let DefineDb {
@@ -200,6 +197,9 @@ pub fn generate_history_smt(lock_hash: [u8; 32]) -> Result<SMT, Error> {
         let (_, value) = generate_claim_value();
         leaves.push((key, value));
     }
+    diff_time(start_time, "Load history smt leaves from database");
+
+    let start_time = Local::now().timestamp_millis();
     smt.update_all(leaves).expect("SMT update leave error");
     diff_time(start_time, "Push history leaves to smt");
     Ok(smt)

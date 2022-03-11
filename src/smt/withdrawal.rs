@@ -41,8 +41,6 @@ pub fn generate_withdrawal_smt(withdrawal_req: WithdrawalReq) -> Result<(String,
         hold_values.push(hold_value);
         let (_, value) = generate_empty_value();
         update_leaves.push((key, value));
-        smt.update(key, value)
-            .expect("withdraw SMT update leave error");
 
         let (withdrawal_key, key) = generate_withdrawal_key(hold_db.cota_id, hold_db.token_index);
         withdrawal_keys.push(withdrawal_key);
@@ -55,9 +53,9 @@ pub fn generate_withdrawal_smt(withdrawal_req: WithdrawalReq) -> Result<(String,
         );
         withdrawal_values.push(withdrawal_value);
         update_leaves.push((key, value));
-        smt.update(key, value)
-            .expect("withdraw SMT update leave error");
     }
+    smt.update_all(update_leaves.clone())
+        .expect("withdraw SMT update leave error");
 
     let root_hash = smt.root().clone();
     let mut root_hash_bytes = [0u8; 32];
