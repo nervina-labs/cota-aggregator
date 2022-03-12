@@ -57,12 +57,14 @@ pub fn get_withdrawal_cota_by_lock_hash_with_conn(
         Some(pairs) => {
             let pair_vec = parse_cota_id_and_token_index_pairs(pairs);
             for (cota_id_str, token_index_u32) in pair_vec.into_iter() {
+                let cota_id_crc_ = generate_crc(cota_id_str.as_bytes());
                 let withdrawals: Vec<WithdrawCotaNft> = withdraw_cota_nft_kv_pairs
                     .select(get_selection())
+                    .filter(cota_id_crc.eq(cota_id_crc_))
+                    .filter(token_index.eq(token_index_u32))
                     .filter(lock_hash_crc.eq(lock_hash_crc_))
                     .filter(lock_hash.eq(lock_hash_hex.clone()))
                     .filter(cota_id.eq(cota_id_str))
-                    .filter(token_index.eq(token_index_u32))
                     .order(updated_at.desc())
                     .load::<WithdrawCotaNft>(conn)
                     .map_err(|e| {
