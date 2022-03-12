@@ -50,7 +50,6 @@ pub fn generate_mint_smt(mint_req: MintReq) -> Result<(String, String), Error> {
     define_new_values.push(define_new_value);
 
     update_leaves.push((key, value));
-    smt.update(key, value).expect("mint SMT update leave error");
 
     let mut action_vec: Vec<u8> = Vec::new();
     if withdrawals_len == 1 {
@@ -82,8 +81,9 @@ pub fn generate_mint_smt(mint_req: MintReq) -> Result<(String, String), Error> {
         withdrawal_values.push(withdrawal_value);
 
         update_leaves.push((key, value));
-        smt.update(key, value).expect("mint SMT update leave error");
     }
+    smt.update_all(update_leaves.clone())
+        .expect("mint SMT update leave error");
     diff_time(start_time, "Generate mint smt object with update leaves");
 
     let root_hash = smt.root().clone();

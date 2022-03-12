@@ -77,9 +77,6 @@ pub fn generate_claim_update_smt(
         let (hold_value, value) = generate_hold_value(configure, nft.state, nft.characteristic);
         hold_keys.push(hold_key);
         hold_values.push(hold_value);
-        claim_smt
-            .update(key, value)
-            .expect("claim SMT update leave error");
         claim_update_leaves.push((key, value));
 
         let (claim_key, key) = generate_claim_key(cota_id, token_index, out_point);
@@ -112,11 +109,12 @@ pub fn generate_claim_update_smt(
     for key in key_vec {
         let (claim_value, value) = generate_claim_value();
         claim_values.push(claim_value);
-        claim_smt
-            .update(key, value)
-            .expect("claim SMT update leave error");
         claim_update_leaves.push((key, value))
     }
+    claim_smt
+        .update_all(claim_update_leaves.clone())
+        .expect("claim SMT update leave error");
+
     let claim_update_root_hash = claim_smt.root().clone();
     let mut root_hash_bytes = [0u8; 32];
     root_hash_bytes.copy_from_slice(claim_update_root_hash.as_slice());

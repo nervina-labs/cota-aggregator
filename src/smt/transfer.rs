@@ -54,7 +54,7 @@ pub fn generate_transfer_smt(transfer_req: TransferReq) -> Result<(String, Strin
     let mut transfer_update_leaves: Vec<(H256, H256)> = Vec::with_capacity(transfers_len * 2);
     let mut withdrawal_update_leaves: Vec<(H256, H256)> = Vec::with_capacity(transfers_len);
     let mut transfer_smt = generate_history_smt(blake2b_256(&transfer_req.lock_script))?;
-    let mut withdrawal_smt = generate_history_smt(transfer_req.withdrawal_lock_hash)?;
+    let withdrawal_smt = generate_history_smt(transfer_req.withdrawal_lock_hash)?;
     let start_time = Local::now().timestamp_millis();
     for (withdrawal_db, transfer) in sender_withdrawals.into_iter().zip(transfers.clone()) {
         let WithdrawDb {
@@ -73,13 +73,10 @@ pub fn generate_transfer_smt(transfer_req: TransferReq) -> Result<(String, Strin
             configure,
             state,
             characteristic,
-            to_lock_script.clone(),
+            transfer_req.lock_script.clone(),
             out_point,
         );
         withdrawal_update_leaves.push((key, value));
-        withdrawal_smt
-            .update(key, value)
-            .expect("withdraw SMT update leave error");
 
         let (withdrawal_value, value) = generate_withdrawal_value(
             configure,
@@ -91,19 +88,17 @@ pub fn generate_transfer_smt(transfer_req: TransferReq) -> Result<(String, Strin
         withdrawal_keys.push(withdrawal_key);
         withdrawal_values.push(withdrawal_value);
         transfer_update_leaves.push((key, value));
-        transfer_smt
-            .update(key, value)
-            .expect("transfer SMT update leave error");
 
         let (claimed_key, key) = generate_claim_key(cota_id, token_index, out_point);
         claimed_keys.push(claimed_key);
         let (claimed_value, value) = generate_claim_value();
         claimed_values.push(claimed_value);
         transfer_update_leaves.push((key, value));
-        transfer_smt
-            .update(key, value)
-            .expect("transfer SMT update leave error");
     }
+    transfer_smt
+        .update_all(transfer_update_leaves.clone())
+        .expect("transfer SMT update leave error");
+
     diff_time(
         start_time,
         "Generate transfer smt object with update leaves",
