@@ -56,7 +56,7 @@ pub fn generate_transfer_update_smt(
     let mut withdrawal_update_leaves: Vec<(H256, H256)> = Vec::with_capacity(transfers_len);
     let mut transfer_update_smt =
         generate_history_smt(blake2b_256(&transfer_update_req.lock_script))?;
-    let withdrawal_smt = generate_history_smt(transfer_update_req.withdrawal_lock_hash)?;
+    let mut withdrawal_smt = generate_history_smt(transfer_update_req.withdrawal_lock_hash)?;
     for (withdrawal_db, transfer) in sender_withdrawals.into_iter().zip(transfers.clone()) {
         let WithdrawDb {
             cota_id,
@@ -81,10 +81,13 @@ pub fn generate_transfer_update_smt(
             configure,
             state,
             characteristic,
-            transfer_update_req.lock_script.clone(),
+            to_lock_script.clone(),
             out_point,
         );
         withdrawal_update_leaves.push((key, value));
+        withdrawal_smt
+            .update(key, value)
+            .expect("withdraw SMT update leave error");
 
         let (withdrawal_value, value) = generate_withdrawal_value(
             configure,
@@ -96,6 +99,9 @@ pub fn generate_transfer_update_smt(
         withdrawal_keys.push(withdrawal_key);
         withdrawal_values.push(withdrawal_value);
         transfer_update_leaves.push((key, value));
+        transfer_update_smt
+            .update(key, value)
+            .expect("transfer update SMT update leave error");
 
         let (claimed_key, key) = generate_claim_key(cota_id, token_index, out_point);
         claimed_keys.push(claimed_key);
@@ -103,11 +109,10 @@ pub fn generate_transfer_update_smt(
         let (claimed_value, value) = generate_claim_value();
         claimed_values.push(claimed_value);
         transfer_update_leaves.push((key, value));
+        transfer_update_smt
+            .update(key, value)
+            .expect("transfer SMT update leave error");
     }
-
-    transfer_update_smt
-        .update_all(transfer_update_leaves.clone())
-        .expect("transfer update SMT update leave error");
 
     let root_hash = transfer_update_smt.root().clone();
     let mut root_hash_bytes = [0u8; 32];
