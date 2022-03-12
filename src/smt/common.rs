@@ -142,7 +142,9 @@ pub fn generate_history_smt(lock_hash: [u8; 32]) -> Result<SMT, Error> {
     let start_time = Local::now().timestamp_millis();
     let mut smt: SMT = SMT::default();
     let (defines, holds, withdrawals, claims) = get_all_cota_by_lock_hash(lock_hash)?;
-    let mut leaves: Vec<(H256, H256)> = Vec::new();
+    diff_time(start_time, "Load history smt leaves from database");
+
+    let start_time = Local::now().timestamp_millis();
     for define_db in defines {
         let DefineDb {
             cota_id,
@@ -153,7 +155,7 @@ pub fn generate_history_smt(lock_hash: [u8; 32]) -> Result<SMT, Error> {
         let (_, key) = generate_define_key(cota_id);
         let (_, value) =
             generate_define_value(total.to_be_bytes(), issued.to_be_bytes(), configure);
-        leaves.push((key, value));
+        smt.update(key, value).expect("SMT update leave error");
     }
     for hold_db in holds {
         let HoldDb {
@@ -165,7 +167,7 @@ pub fn generate_history_smt(lock_hash: [u8; 32]) -> Result<SMT, Error> {
         } = hold_db;
         let (_, key) = generate_hold_key(cota_id, token_index);
         let (_, value) = generate_hold_value(configure, state, characteristic);
-        leaves.push((key, value));
+        smt.update(key, value).expect("SMT update leave error");
     }
     for withdrawal_db in withdrawals {
         let WithdrawDb {
@@ -185,7 +187,7 @@ pub fn generate_history_smt(lock_hash: [u8; 32]) -> Result<SMT, Error> {
             receiver_lock_script,
             out_point,
         );
-        leaves.push((key, value));
+        smt.update(key, value).expect("SMT update leave error");
     }
     for claim_db in claims {
         let ClaimDb {
@@ -195,12 +197,8 @@ pub fn generate_history_smt(lock_hash: [u8; 32]) -> Result<SMT, Error> {
         } = claim_db;
         let (_, key) = generate_claim_key(cota_id, token_index, out_point);
         let (_, value) = generate_claim_value();
-        leaves.push((key, value));
+        smt.update(key, value).expect("SMT update leave error");
     }
-    diff_time(start_time, "Load history smt leaves from database");
-
-    let start_time = Local::now().timestamp_millis();
-    smt.update_all(leaves).expect("SMT update leave error");
     diff_time(start_time, "Push history leaves to smt");
     Ok(smt)
 }
