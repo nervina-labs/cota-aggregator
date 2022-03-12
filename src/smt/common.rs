@@ -13,6 +13,7 @@ use cota_smt::common::{Uint16, Uint32, *};
 use cota_smt::molecule::prelude::*;
 use cota_smt::smt::SMT;
 use cota_smt::smt::{blake2b_256, H256};
+use log::info;
 
 pub fn generate_define_key(cota_id: [u8; 20]) -> (DefineCotaNFTId, H256) {
     let cota_id = CotaId::from_slice(&cota_id).unwrap();
@@ -145,6 +146,7 @@ pub fn generate_history_smt(lock_hash: [u8; 32]) -> Result<SMT, Error> {
     diff_time(start_time, "Load history smt leaves from database");
 
     let start_time = Local::now().timestamp_millis();
+    info!("Define history leaves: {}", defines.len());
     for define_db in defines {
         let DefineDb {
             cota_id,
@@ -157,6 +159,10 @@ pub fn generate_history_smt(lock_hash: [u8; 32]) -> Result<SMT, Error> {
             generate_define_value(total.to_be_bytes(), issued.to_be_bytes(), configure);
         smt.update(key, value).expect("SMT update leave error");
     }
+    diff_time(start_time, "Push define history leaves to smt");
+
+    let start_time = Local::now().timestamp_millis();
+    info!("Hold history leaves: {}", holds.len());
     for hold_db in holds {
         let HoldDb {
             cota_id,
@@ -169,6 +175,10 @@ pub fn generate_history_smt(lock_hash: [u8; 32]) -> Result<SMT, Error> {
         let (_, value) = generate_hold_value(configure, state, characteristic);
         smt.update(key, value).expect("SMT update leave error");
     }
+    diff_time(start_time, "Push hold history leaves to smt");
+
+    let start_time = Local::now().timestamp_millis();
+    info!("Withdraw history leaves: {}", withdrawals.len());
     for withdrawal_db in withdrawals {
         let WithdrawDb {
             cota_id,
@@ -189,6 +199,10 @@ pub fn generate_history_smt(lock_hash: [u8; 32]) -> Result<SMT, Error> {
         );
         smt.update(key, value).expect("SMT update leave error");
     }
+    diff_time(start_time, "Push withdraw history leaves to smt");
+
+    let start_time = Local::now().timestamp_millis();
+    info!("Claim history leaves: {}", claims.len());
     for claim_db in claims {
         let ClaimDb {
             cota_id,
@@ -199,6 +213,6 @@ pub fn generate_history_smt(lock_hash: [u8; 32]) -> Result<SMT, Error> {
         let (_, value) = generate_claim_value();
         smt.update(key, value).expect("SMT update leave error");
     }
-    diff_time(start_time, "Push history leaves to smt");
+    diff_time(start_time, "Push claim history leaves to smt");
     Ok(smt)
 }
