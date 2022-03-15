@@ -6,15 +6,36 @@ use crate::models::withdrawal::WithdrawDb;
 use crate::smt::constants::{
     CLAIM_NFT_SMT_TYPE, DEFINE_NFT_SMT_TYPE, HOLD_NFT_SMT_TYPE, WITHDRAWAL_NFT_SMT_TYPE,
 };
+use crate::smt::db::cota_db::CotaRocksDB;
+use crate::smt::db::schema::{COLUMN_SMT_BRANCH, COLUMN_SMT_LEAF, COLUMN_SMT_ROOT};
+use crate::smt::store::smt_store::SMTStore;
 use crate::utils::error::Error;
 use crate::utils::helper::diff_time;
 use chrono::prelude::*;
 use cota_smt::common::{Uint16, Uint32, *};
 use cota_smt::molecule::prelude::*;
-use cota_smt::smt::SMT;
-use cota_smt::smt::{blake2b_256, H256};
+use cota_smt::smt::{blake2b_256, Blake2bHasher, H256};
 use log::info;
+use sparse_merkle_tree::SparseMerkleTree;
 use std::collections::HashMap;
+
+pub type CotaSMT<'a> = SparseMerkleTree<Blake2bHasher, H256, SMTStore<'a>>;
+
+pub fn generate_smt(db: &CotaRocksDB, lock_hash: [u8; 32]) -> Result<CotaSMT, Error> {
+    let smt_store = SMTStore::new(
+        lock_hash,
+        COLUMN_SMT_LEAF,
+        COLUMN_SMT_BRANCH,
+        COLUMN_SMT_ROOT,
+        db,
+    );
+    let root = smt_store
+        .get_root()
+        .map_err(|_e| Error::SMTError("Get root".to_string()))?
+        .unwrap_or_default();
+    let smt: CotaSMT = CotaSMT::new(root, smt_store);
+    Ok(smt)
+}
 
 pub fn generate_define_key(cota_id: [u8; 20]) -> (DefineCotaNFTId, H256) {
     let cota_id = CotaId::from_slice(&cota_id).unwrap();
@@ -183,9 +204,9 @@ pub fn generate_empty_value() -> (Byte32, H256) {
     (empty_value, value)
 }
 
-pub fn generate_history_smt(lock_hash: [u8; 32]) -> Result<SMT, Error> {
+pub fn generate_history_smt(db: &CotaRocksDB, lock_hash: [u8; 32]) -> Result<CotaSMT, Error> {
     let start_time = Local::now().timestamp_millis();
-    let mut smt: SMT = SMT::default();
+    let mut smt = generate_smt(db, lock_hash)?;
     let (defines, holds, withdrawals, claims) = get_all_cota_by_lock_hash(lock_hash)?;
     diff_time(start_time, "Load history smt leaves from database");
 

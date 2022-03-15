@@ -4,6 +4,7 @@ use crate::smt::common::{generate_define_key, generate_define_value};
 use crate::smt::common::{
     generate_history_smt, generate_withdrawal_key_v1, generate_withdrawal_value_v1,
 };
+use crate::smt::db::cota_db::CotaRocksDB;
 use crate::utils::error::Error;
 use crate::utils::helper::diff_time;
 use chrono::prelude::*;
@@ -29,7 +30,8 @@ pub fn generate_mint_smt(mint_req: MintReq) -> Result<(String, String), Error> {
     let mut define_new_values: Vec<DefineCotaNFTValue> = Vec::new();
     let mut withdrawal_keys: Vec<WithdrawalCotaNFTKeyV1> = Vec::new();
     let mut withdrawal_values: Vec<WithdrawalCotaNFTValueV1> = Vec::new();
-    let mut smt = generate_history_smt(mint_req.lock_hash)?;
+    let db = CotaRocksDB::new();
+    let mut smt = generate_history_smt(&db, mint_req.lock_hash)?;
     let mut update_leaves: Vec<(H256, H256)> = Vec::with_capacity(withdrawals_len + 1);
     let DefineDb {
         cota_id,

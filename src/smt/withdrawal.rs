@@ -4,6 +4,7 @@ use crate::smt::common::{
     generate_empty_value, generate_history_smt, generate_hold_key, generate_hold_value,
     generate_withdrawal_key_v1, generate_withdrawal_value_v1,
 };
+use crate::smt::db::cota_db::CotaRocksDB;
 use crate::utils::error::Error;
 use cota_smt::common::*;
 use cota_smt::molecule::prelude::*;
@@ -12,7 +13,8 @@ use cota_smt::transfer::WithdrawalCotaNFTV1EntriesBuilder;
 use log::error;
 
 pub fn generate_withdrawal_smt(withdrawal_req: WithdrawalReq) -> Result<(String, String), Error> {
-    let mut smt = generate_history_smt(withdrawal_req.lock_hash)?;
+    let db = CotaRocksDB::new();
+    let mut smt = generate_history_smt(&db, withdrawal_req.lock_hash)?;
     let withdrawals = withdrawal_req.withdrawals;
     if withdrawals.is_empty() {
         return Err(Error::RequestParamNotFound("withdrawals".to_string()));

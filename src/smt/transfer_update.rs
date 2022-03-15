@@ -4,6 +4,7 @@ use crate::smt::common::{
     generate_claim_key, generate_claim_value, generate_history_smt, generate_withdrawal_key,
     generate_withdrawal_key_v1, generate_withdrawal_value, generate_withdrawal_value_v1,
 };
+use crate::smt::db::cota_db::CotaRocksDB;
 use crate::utils::error::Error;
 use cota_smt::common::*;
 use cota_smt::molecule::prelude::*;
@@ -54,9 +55,10 @@ pub fn generate_transfer_update_smt(
     let mut withdrawal_values: Vec<WithdrawalCotaNFTValueV1> = Vec::new();
     let mut transfer_update_leaves: Vec<(H256, H256)> = Vec::with_capacity(transfers_len * 2);
     let mut withdrawal_update_leaves: Vec<(H256, H256)> = Vec::with_capacity(transfers_len);
+    let db = CotaRocksDB::new();
     let mut transfer_update_smt =
-        generate_history_smt(blake2b_256(&transfer_update_req.lock_script))?;
-    let withdrawal_smt = generate_history_smt(transfer_update_req.withdrawal_lock_hash)?;
+        generate_history_smt(&db, blake2b_256(&transfer_update_req.lock_script))?;
+    let withdrawal_smt = generate_history_smt(&db, transfer_update_req.withdrawal_lock_hash)?;
     for (withdrawal_db, transfer) in sender_withdrawals.into_iter().zip(transfers.clone()) {
         let WithdrawDb {
             cota_id,

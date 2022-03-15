@@ -1,6 +1,7 @@
 use crate::models::hold::get_hold_cota_by_lock_hash;
 use crate::request::update::UpdateReq;
 use crate::smt::common::{generate_history_smt, generate_hold_key, generate_hold_value};
+use crate::smt::db::cota_db::CotaRocksDB;
 use crate::utils::error::Error;
 use cota_smt::common::*;
 use cota_smt::molecule::prelude::*;
@@ -9,7 +10,8 @@ use cota_smt::update::UpdateCotaNFTEntriesBuilder;
 use log::error;
 
 pub fn generate_update_smt(update_req: UpdateReq) -> Result<(String, String), Error> {
-    let mut smt = generate_history_smt(update_req.lock_hash)?;
+    let db = CotaRocksDB::new();
+    let mut smt = generate_history_smt(&db, update_req.lock_hash)?;
     let nfts = update_req.nfts;
     if nfts.is_empty() {
         return Err(Error::RequestParamNotFound("nfts".to_string()));

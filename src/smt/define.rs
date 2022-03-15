@@ -2,6 +2,7 @@ use crate::models::define::{get_define_cota_by_lock_hash, DefineDb};
 use crate::request::define::DefineReq;
 use crate::smt::common::generate_history_smt;
 use crate::smt::common::{generate_define_key, generate_define_value};
+use crate::smt::db::cota_db::CotaRocksDB;
 use crate::utils::error::Error;
 use cota_smt::common::*;
 use cota_smt::define::DefineCotaNFTEntriesBuilder;
@@ -10,7 +11,8 @@ use cota_smt::smt::H256;
 use log::error;
 
 pub fn generate_define_smt(define_req: DefineReq) -> Result<(String, String), Error> {
-    let mut smt = generate_history_smt(define_req.lock_hash)?;
+    let db = CotaRocksDB::new();
+    let mut smt = generate_history_smt(&db, define_req.lock_hash)?;
     let db_defines = get_define_cota_by_lock_hash(define_req.lock_hash)?.0;
     if !db_defines.is_empty() {
         for DefineDb {
