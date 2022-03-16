@@ -7,10 +7,14 @@ use crate::smt::constants::{
     CLAIM_NFT_SMT_TYPE, DEFINE_NFT_SMT_TYPE, HOLD_NFT_SMT_TYPE, WITHDRAWAL_NFT_SMT_TYPE,
 };
 use crate::utils::error::Error;
+use crate::utils::helper::diff_time;
+use chrono::prelude::*;
 use cota_smt::common::{Uint16, Uint32, *};
 use cota_smt::molecule::prelude::*;
 use cota_smt::smt::SMT;
 use cota_smt::smt::{blake2b_256, H256};
+use log::info;
+use std::collections::HashMap;
 
 pub fn generate_define_key(cota_id: [u8; 20]) -> (DefineCotaNFTId, H256) {
     let cota_id = CotaId::from_slice(&cota_id).unwrap();
@@ -82,6 +86,25 @@ pub fn generate_withdrawal_key(cota_id: [u8; 20], token_index: [u8; 4]) -> (Cota
     (withdrawal_key, key)
 }
 
+pub fn generate_withdrawal_key_v1(
+    cota_id: [u8; 20],
+    token_index: [u8; 4],
+    out_point: [u8; 24],
+) -> (WithdrawalCotaNFTKeyV1, H256) {
+    let nft_id = CotaNFTIdBuilder::default()
+        .cota_id(CotaId::from_slice(&cota_id).unwrap())
+        .smt_type(Uint16::from_slice(&WITHDRAWAL_NFT_SMT_TYPE).unwrap())
+        .index(Uint32::from_slice(&token_index).unwrap())
+        .build();
+    let withdrawal_key = WithdrawalCotaNFTKeyV1Builder::default()
+        .nft_id(nft_id)
+        .out_point(OutPointSlice::from_slice(&out_point).unwrap())
+        .build();
+    let key = H256::from(blake2b_256(withdrawal_key.as_slice()));
+
+    (withdrawal_key, key)
+}
+
 pub fn generate_withdrawal_value(
     configure: u8,
     state: u8,
@@ -98,6 +121,26 @@ pub fn generate_withdrawal_value(
     let withdrawal_value = WithdrawalCotaNFTValueBuilder::default()
         .nft_info(cota_info)
         .out_point(OutPointSlice::from_slice(&out_point).unwrap())
+        .to_lock(BytesBuilder::default().set(to_lock_bytes).build())
+        .build();
+    let value = H256::from(blake2b_256(withdrawal_value.as_slice()));
+    (withdrawal_value, value)
+}
+
+pub fn generate_withdrawal_value_v1(
+    configure: u8,
+    state: u8,
+    characteristic: [u8; 20],
+    to_lock_script: Vec<u8>,
+) -> (WithdrawalCotaNFTValueV1, H256) {
+    let cota_info = CotaNFTInfoBuilder::default()
+        .configure(Byte::from(configure))
+        .state(Byte::from(state))
+        .characteristic(Characteristic::from_slice(&characteristic).unwrap())
+        .build();
+    let to_lock_bytes: Vec<Byte> = to_lock_script.iter().map(|v| Byte::from(*v)).collect();
+    let withdrawal_value = WithdrawalCotaNFTValueV1Builder::default()
+        .nft_info(cota_info)
         .to_lock(BytesBuilder::default().set(to_lock_bytes).build())
         .build();
     let value = H256::from(blake2b_256(withdrawal_value.as_slice()));
@@ -122,10 +165,14 @@ pub fn generate_claim_key(
     (claimed_key, key)
 }
 
-pub fn generate_claim_value() -> (Byte32, H256) {
-    let claim_value = Byte32Builder::default()
-        .set([Byte::from(255u8); 32])
-        .build();
+pub fn generate_claim_value(version: u8) -> (Byte32, H256) {
+    let mut claim_value_vec = vec![255u8; 31];
+    if version == 0 {
+        claim_value_vec.insert(0, 0u8);
+    } else {
+        claim_value_vec.insert(0, 1u8);
+    }
+    let claim_value = Byte32::from_slice(&claim_value_vec).unwrap();
     let value = H256::from([255u8; 32]);
     (claim_value, value)
 }
@@ -137,8 +184,13 @@ pub fn generate_empty_value() -> (Byte32, H256) {
 }
 
 pub fn generate_history_smt(lock_hash: [u8; 32]) -> Result<SMT, Error> {
+    let start_time = Local::now().timestamp_millis();
     let mut smt: SMT = SMT::default();
     let (defines, holds, withdrawals, claims) = get_all_cota_by_lock_hash(lock_hash)?;
+    diff_time(start_time, "Load history smt leaves from database");
+
+    let start_time = Local::now().timestamp_millis();
+    info!("Define history leaves: {}", defines.len());
     for define_db in defines {
         let DefineDb {
             cota_id,
@@ -151,6 +203,10 @@ pub fn generate_history_smt(lock_hash: [u8; 32]) -> Result<SMT, Error> {
             generate_define_value(total.to_be_bytes(), issued.to_be_bytes(), configure);
         smt.update(key, value).expect("SMT update leave error");
     }
+    diff_time(start_time, "Push define history leaves to smt");
+
+    let start_time = Local::now().timestamp_millis();
+    info!("Hold history leaves: {}", holds.len());
     for hold_db in holds {
         let HoldDb {
             cota_id,
@@ -163,6 +219,7 @@ pub fn generate_history_smt(lock_hash: [u8; 32]) -> Result<SMT, Error> {
         let (_, value) = generate_hold_value(configure, state, characteristic);
         smt.update(key, value).expect("SMT update leave error");
     }
+    let mut withdrawal_map: HashMap<Vec<u8>, u8> = HashMap::new();
     for withdrawal_db in withdrawals {
         let WithdrawDb {
             cota_id,
@@ -172,15 +229,33 @@ pub fn generate_history_smt(lock_hash: [u8; 32]) -> Result<SMT, Error> {
             characteristic,
             receiver_lock_script,
             out_point,
+            version,
         } = withdrawal_db;
-        let (_, key) = generate_withdrawal_key(cota_id, token_index);
-        let (_, value) = generate_withdrawal_value(
-            configure,
-            state,
-            characteristic,
-            receiver_lock_script,
-            out_point,
-        );
+        let (key, value) = if version == 0 {
+            (
+                generate_withdrawal_key(cota_id, token_index).1,
+                generate_withdrawal_value(
+                    configure,
+                    state,
+                    characteristic,
+                    receiver_lock_script,
+                    out_point,
+                )
+                .1,
+            )
+        } else {
+            (
+                generate_withdrawal_key_v1(cota_id, token_index, out_point).1,
+                generate_withdrawal_value_v1(
+                    configure,
+                    state,
+                    characteristic,
+                    receiver_lock_script,
+                )
+                .1,
+            )
+        };
+        withdrawal_map.insert(generate_cota_index(cota_id, token_index), version);
         smt.update(key, value).expect("SMT update leave error");
     }
     for claim_db in claims {
@@ -189,9 +264,21 @@ pub fn generate_history_smt(lock_hash: [u8; 32]) -> Result<SMT, Error> {
             token_index,
             out_point,
         } = claim_db;
+        let version = withdrawal_map
+            .get(&*generate_cota_index(cota_id, token_index))
+            .cloned()
+            .unwrap_or_default();
         let (_, key) = generate_claim_key(cota_id, token_index, out_point);
-        let (_, value) = generate_claim_value();
+        let (_, value) = generate_claim_value(version);
         smt.update(key, value).expect("SMT update leave error");
     }
+    diff_time(start_time, "Push claim history leaves to smt");
     Ok(smt)
+}
+
+fn generate_cota_index(cota_id: [u8; 20], token_index: [u8; 4]) -> Vec<u8> {
+    let mut cota_id_index = vec![];
+    cota_id_index.extend(&cota_id);
+    cota_id_index.extend(&token_index);
+    cota_id_index
 }

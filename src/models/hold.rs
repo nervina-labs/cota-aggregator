@@ -5,7 +5,8 @@ use crate::models::{DBResult, DBTotalResult};
 use crate::schema::hold_cota_nft_kv_pairs::dsl::hold_cota_nft_kv_pairs;
 use crate::schema::hold_cota_nft_kv_pairs::*;
 use crate::utils::error::Error;
-use crate::utils::helper::parse_bytes_n;
+use crate::utils::helper::{diff_time, parse_bytes_n};
+use chrono::prelude::*;
 use diesel::*;
 use log::error;
 use serde::{Deserialize, Serialize};
@@ -33,6 +34,7 @@ pub fn get_hold_cota_by_lock_hash_with_conn(
     lock_hash_: [u8; 32],
     cota_id_and_token_index_pairs: Option<Vec<([u8; 20], [u8; 4])>>,
 ) -> DBResult<HoldDb> {
+    let start_time = Local::now().timestamp_millis();
     let (lock_hash_hex, lock_hash_crc_) = parse_lock_hash(lock_hash_);
     let mut hold_vec: Vec<HoldDb> = vec![];
     let holds: Vec<HoldDb> = match cota_id_and_token_index_pairs {
@@ -88,6 +90,7 @@ pub fn get_hold_cota_by_lock_hash_with_conn(
         }
     };
     let block_height = get_syncer_tip_block_number_with_conn(conn)?;
+    diff_time(start_time, "SQL get_hold_cota_by_lock_hash");
     Ok((holds, block_height))
 }
 
@@ -102,11 +105,38 @@ pub fn get_hold_cota_by_lock_hash(
     )
 }
 
+pub fn check_hold_cota_by_lock_hash(
+    lock_hash_: [u8; 32],
+    cota_id_and_token_index_pair: ([u8; 20], [u8; 4]),
+) -> Result<(bool, u64), Error> {
+    let start_time = Local::now().timestamp_millis();
+    let conn = &establish_connection();
+    let (lock_hash_hex, lock_hash_crc_) = parse_lock_hash(lock_hash_);
+    let cota_id_str = hex::encode(cota_id_and_token_index_pair.0);
+    let token_index_u32 = u32::from_be_bytes(cota_id_and_token_index_pair.1);
+    let count = hold_cota_nft_kv_pairs
+        .filter(cota_id.eq(cota_id_str))
+        .filter(token_index.eq(token_index_u32))
+        .filter(lock_hash_crc.eq(lock_hash_crc_))
+        .filter(lock_hash.eq(lock_hash_hex.clone()))
+        .count()
+        .get_result::<i64>(conn)
+        .map_err(|e| {
+            error!("Check hold cota count error: {:?}", e.to_string());
+            Error::DatabaseQueryError("Hold".to_string())
+        })?;
+    let is_exist = count > 0;
+    let block_height = get_syncer_tip_block_number_with_conn(conn)?;
+    diff_time(start_time, "SQL check_hold_cota_by_lock_hash");
+    Ok((is_exist, block_height))
+}
+
 pub fn get_hold_cota_by_lock_hash_and_page(
     lock_hash_: [u8; 32],
     page: i64,
     page_size: i64,
 ) -> DBTotalResult<HoldDb> {
+    let start_time = Local::now().timestamp_millis();
     let conn = &establish_connection();
     let (lock_hash_hex, lock_hash_crc_) = parse_lock_hash(lock_hash_);
     let total: i64 = hold_cota_nft_kv_pairs
@@ -135,6 +165,7 @@ pub fn get_hold_cota_by_lock_hash_and_page(
             },
             |holds| Ok(parse_hold_cota_nfts(holds)),
         )?;
+    diff_time(start_time, "SQL get_hold_cota_by_lock_hash_and_page");
     Ok((holds, total, block_height))
 }
 

@@ -140,6 +140,7 @@ table! {
         receiver_lock_script_id -> Bigint,
         lock_hash -> Char,
         lock_hash_crc -> Unsigned<Integer>,
+        version -> Unsigned<Tinyint>,
         created_at -> Datetime,
         updated_at -> Datetime,
     }

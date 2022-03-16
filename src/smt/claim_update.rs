@@ -2,14 +2,15 @@ use crate::models::withdrawal::{get_withdrawal_cota_by_lock_hash, WithdrawDb};
 use crate::request::claim::ClaimUpdateReq;
 use crate::smt::common::{
     generate_claim_key, generate_claim_value, generate_history_smt, generate_hold_key,
-    generate_hold_value, generate_withdrawal_key, generate_withdrawal_value,
+    generate_hold_value, generate_withdrawal_key, generate_withdrawal_key_v1,
+    generate_withdrawal_value, generate_withdrawal_value_v1,
 };
 use crate::utils::error::Error;
 use cota_smt::common::*;
 use cota_smt::molecule::prelude::*;
-use cota_smt::smt::{blake2b_256, Blake2bHasher, H256};
+use cota_smt::smt::{blake2b_256, H256};
 use cota_smt::transfer_update::ClaimUpdateCotaNFTEntriesBuilder;
-use log::{error, info};
+use log::error;
 
 pub fn generate_claim_update_smt(
     claim_update_req: ClaimUpdateReq,
@@ -39,9 +40,9 @@ pub fn generate_claim_update_smt(
     let mut withdrawal_update_leaves: Vec<(H256, H256)> = Vec::with_capacity(nfts_len);
 
     let mut claim_keys: Vec<ClaimCotaNFTKey> = Vec::new();
-    let mut key_vec: Vec<H256> = Vec::new();
+    let mut key_vec: Vec<(H256, u8)> = Vec::new();
     let mut claim_values: Vec<Byte32> = Vec::new();
-    let mut claim_infos: Vec<CotaNFTInfo> = Vec::new();
+    let mut claim_infos: Vec<ClaimCotaNFTInfo> = Vec::new();
     let mut claim_smt = generate_history_smt(blake2b_256(&claim_update_req.lock_script))?;
     let mut claim_update_leaves: Vec<(H256, H256)> = Vec::with_capacity(nfts_len * 2);
     for (index, withdrawal) in sender_withdrawals.into_iter().enumerate() {
@@ -52,21 +53,42 @@ pub fn generate_claim_update_smt(
             state,
             configure,
             out_point,
+            version,
             ..
         } = withdrawal;
-        let (_, key) = generate_withdrawal_key(cota_id, token_index);
-        let (_, value) = generate_withdrawal_value(
-            configure,
-            state,
-            characteristic,
-            claim_update_req.clone().lock_script,
-            out_point,
-        );
+        let (key, value) = if version == 0 {
+            (
+                generate_withdrawal_key(cota_id, token_index).1,
+                generate_withdrawal_value(
+                    configure,
+                    state,
+                    characteristic,
+                    claim_update_req.clone().lock_script,
+                    out_point,
+                )
+                .1,
+            )
+        } else {
+            (
+                generate_withdrawal_key_v1(cota_id, token_index, out_point).1,
+                generate_withdrawal_value_v1(
+                    configure,
+                    state,
+                    characteristic,
+                    claim_update_req.clone().lock_script,
+                )
+                .1,
+            )
+        };
         withdrawal_update_leaves.push((key, value));
-        let claim_info = CotaNFTInfoBuilder::default()
+        let nft_info = CotaNFTInfoBuilder::default()
             .characteristic(Characteristic::from_slice(&characteristic).unwrap())
             .configure(Byte::from(configure))
             .state(Byte::from(state))
+            .build();
+        let claim_info = ClaimCotaNFTInfoBuilder::default()
+            .nft_info(nft_info)
+            .version(Byte::from(version))
             .build();
         claim_infos.push(claim_info);
 
@@ -84,9 +106,8 @@ pub fn generate_claim_update_smt(
 
         let (claim_key, key) = generate_claim_key(cota_id, token_index, out_point);
         claim_keys.push(claim_key);
-        key_vec.push(key);
+        key_vec.push((key, version));
     }
-    let withdrawal_root_hash = withdrawal_smt.root().clone();
     let withdraw_merkle_proof = withdrawal_smt
         .merkle_proof(
             withdrawal_update_leaves
@@ -104,17 +125,14 @@ pub fn generate_claim_update_smt(
             error!("Withdraw SMT proof error: {:?}", e.to_string());
             Error::SMTProofError("Withdraw".to_string())
         })?;
-    withdraw_merkle_proof_compiled
-        .verify::<Blake2bHasher>(&withdrawal_root_hash, withdrawal_update_leaves.clone())
-        .expect("withdraw smt proof verify failed");
 
     let merkel_proof_vec: Vec<u8> = withdraw_merkle_proof_compiled.into();
     let withdrawal_proof = BytesBuilder::default()
         .extend(merkel_proof_vec.iter().map(|v| Byte::from(*v)))
         .build();
 
-    for key in key_vec {
-        let (claim_value, value) = generate_claim_value();
+    for (key, version) in key_vec {
+        let (claim_value, value) = generate_claim_value(version);
         claim_values.push(claim_value);
         claim_smt
             .update(key, value)
@@ -125,11 +143,6 @@ pub fn generate_claim_update_smt(
     let mut root_hash_bytes = [0u8; 32];
     root_hash_bytes.copy_from_slice(claim_update_root_hash.as_slice());
     let claim_update_root_hash_hex = hex::encode(root_hash_bytes);
-
-    info!(
-        "claim_update_smt_root_hash: {:?}",
-        claim_update_root_hash_hex
-    );
 
     let claim_update_merkle_proof = claim_smt
         .merkle_proof(claim_update_leaves.iter().map(|leave| leave.0).collect())
@@ -143,9 +156,6 @@ pub fn generate_claim_update_smt(
             error!("Claim update SMT proof error: {:?}", e.to_string());
             Error::SMTProofError("ClaimUpdate".to_string())
         })?;
-    claim_update_merkle_proof_compiled
-        .verify::<Blake2bHasher>(&claim_update_root_hash, claim_update_leaves.clone())
-        .expect("claim update smt proof verify failed");
 
     let merkel_proof_vec: Vec<u8> = claim_update_merkle_proof_compiled.into();
     let claim_proof = BytesBuilder::default()
@@ -179,8 +189,6 @@ pub fn generate_claim_update_smt(
         .build();
 
     let claim_update_entry = hex::encode(claim_update_entries.as_slice());
-
-    info!("claim_update_smt_entry: {:?}", claim_update_entry);
 
     Ok((claim_update_root_hash_hex, claim_update_entry))
 }

@@ -1,9 +1,11 @@
 use super::helper::SqlConnection;
+use crate::models::helper::generate_crc;
 use crate::schema::scripts::dsl::scripts;
 use crate::schema::scripts::*;
 use crate::schema::scripts::{args, code_hash, hash_type};
 use crate::utils::error::Error;
-use crate::utils::helper::{parse_bytes, parse_bytes_n};
+use crate::utils::helper::{diff_time, parse_bytes, parse_bytes_n};
+use chrono::prelude::*;
 use cota_smt::ckb_types::packed::{Byte32, BytesBuilder, Script as LockScript, ScriptBuilder};
 use cota_smt::ckb_types::prelude::*;
 use cota_smt::molecule::prelude::Byte;
@@ -32,6 +34,7 @@ pub fn get_script_map_by_ids(
     conn: &SqlConnection,
     script_ids: Vec<i64>,
 ) -> Result<HashMap<i64, Vec<u8>>, Error> {
+    let start_time = Local::now().timestamp_millis();
     let scripts_db = scripts
         .select((id, code_hash, hash_type, args))
         .filter(id.eq_any(script_ids))
@@ -48,6 +51,7 @@ pub fn get_script_map_by_ids(
         .map(|script_db| (script_db.id, generate_script_vec(script_db)))
         .collect();
     let script_map: HashMap<i64, Vec<u8>> = scripts_.into_iter().collect();
+    diff_time(start_time, "SQL get_script_map_by_ids");
     Ok(script_map)
 }
 
@@ -55,19 +59,29 @@ pub fn get_script_id_by_lock_script(
     conn: &SqlConnection,
     lock_script: &[u8],
 ) -> Result<Option<i64>, Error> {
+    let start_time = Local::now().timestamp_millis();
     let lock = LockScript::from_slice(lock_script).unwrap();
+
     let lock_code_hash = hex::encode(lock.code_hash().as_slice().to_vec());
+    let lock_code_hash_crc = generate_crc(lock_code_hash.as_bytes());
+
     let lock_args = hex::encode(lock.args().raw_data().to_vec());
+    let lock_args_crc = generate_crc(lock_args.as_bytes());
+
     let script_ids: Vec<i64> = scripts
         .select(id)
-        .filter(code_hash.eq(lock_code_hash))
+        .filter(code_hash_crc.eq(lock_code_hash_crc))
         .filter(hash_type.eq(lock.hash_type().as_slice()[0]))
+        .filter(args_crc.eq(lock_args_crc))
+        .filter(code_hash.eq(lock_code_hash))
         .filter(args.eq(lock_args))
+        .limit(1)
         .load::<i64>(conn)
         .map_err(|e| {
             error!("Query script error: {}", e.to_string());
             Error::DatabaseQueryError(e.to_string())
         })?;
+    diff_time(start_time, "SQL get_script_id_by_lock_script");
     Ok(script_ids.get(0).map(|script_id| *script_id))
 }
 

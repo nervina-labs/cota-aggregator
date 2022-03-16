@@ -2,14 +2,14 @@ use crate::models::hold::get_hold_cota_by_lock_hash;
 use crate::request::withdrawal::WithdrawalReq;
 use crate::smt::common::{
     generate_empty_value, generate_history_smt, generate_hold_key, generate_hold_value,
-    generate_withdrawal_key, generate_withdrawal_value,
+    generate_withdrawal_key_v1, generate_withdrawal_value_v1,
 };
 use crate::utils::error::Error;
 use cota_smt::common::*;
 use cota_smt::molecule::prelude::*;
-use cota_smt::smt::{Blake2bHasher, H256};
-use cota_smt::transfer::WithdrawalCotaNFTEntriesBuilder;
-use log::{error, info};
+use cota_smt::smt::H256;
+use cota_smt::transfer::WithdrawalCotaNFTV1EntriesBuilder;
+use log::error;
 
 pub fn generate_withdrawal_smt(withdrawal_req: WithdrawalReq) -> Result<(String, String), Error> {
     let mut smt = generate_history_smt(withdrawal_req.lock_hash)?;
@@ -30,8 +30,8 @@ pub fn generate_withdrawal_smt(withdrawal_req: WithdrawalReq) -> Result<(String,
     }
     let mut hold_keys: Vec<CotaNFTId> = Vec::new();
     let mut hold_values: Vec<CotaNFTInfo> = Vec::new();
-    let mut withdrawal_keys: Vec<CotaNFTId> = Vec::new();
-    let mut withdrawal_values: Vec<WithdrawalCotaNFTValue> = Vec::new();
+    let mut withdrawal_keys: Vec<WithdrawalCotaNFTKeyV1> = Vec::new();
+    let mut withdrawal_values: Vec<WithdrawalCotaNFTValueV1> = Vec::new();
     let mut update_leaves: Vec<(H256, H256)> = Vec::with_capacity(withdrawals.len() * 2);
     for (hold_db, withdrawal) in db_holds.iter().zip(withdrawals.iter()) {
         let (hold_key, key) = generate_hold_key(hold_db.cota_id, hold_db.token_index);
@@ -44,14 +44,18 @@ pub fn generate_withdrawal_smt(withdrawal_req: WithdrawalReq) -> Result<(String,
         smt.update(key, value)
             .expect("withdraw SMT update leave error");
 
-        let (withdrawal_key, key) = generate_withdrawal_key(hold_db.cota_id, hold_db.token_index);
+        let (withdrawal_key, key) = generate_withdrawal_key_v1(
+            hold_db.cota_id,
+            hold_db.token_index,
+            withdrawal_req.out_point,
+        );
         withdrawal_keys.push(withdrawal_key);
-        let (withdrawal_value, value) = generate_withdrawal_value(
+
+        let (withdrawal_value, value) = generate_withdrawal_value_v1(
             hold_db.configure,
             hold_db.state,
             hold_db.characteristic,
             withdrawal.clone().to_lock_script,
-            withdrawal_req.out_point,
         );
         withdrawal_values.push(withdrawal_value);
         update_leaves.push((key, value));
@@ -63,8 +67,6 @@ pub fn generate_withdrawal_smt(withdrawal_req: WithdrawalReq) -> Result<(String,
     let mut root_hash_bytes = [0u8; 32];
     root_hash_bytes.copy_from_slice(root_hash.as_slice());
     let root_hash_hex = hex::encode(root_hash_bytes);
-
-    info!("withdraw_smt_root_hash: {:?}", root_hash_hex);
 
     let withdrawal_merkle_proof = smt
         .merkle_proof(update_leaves.iter().map(|leave| leave.0).collect())
@@ -78,9 +80,6 @@ pub fn generate_withdrawal_smt(withdrawal_req: WithdrawalReq) -> Result<(String,
         error!("Withdraw SMT proof error: {:?}", e.to_string());
         Error::SMTProofError("Withdraw".to_string())
     })?;
-    withdrawal_merkle_proof_compiled
-        .verify::<Blake2bHasher>(&root_hash, update_leaves.clone())
-        .expect("withdraw smt proof verify failed");
 
     let merkel_proof_vec: Vec<u8> = withdrawal_merkle_proof_compiled.into();
     let merkel_proof_bytes = BytesBuilder::default()
@@ -99,7 +98,7 @@ pub fn generate_withdrawal_smt(withdrawal_req: WithdrawalReq) -> Result<(String,
         .set(action_vec.iter().map(|v| Byte::from(*v)).collect())
         .build();
 
-    let withdrawal_entries = WithdrawalCotaNFTEntriesBuilder::default()
+    let withdrawal_entries = WithdrawalCotaNFTV1EntriesBuilder::default()
         .hold_keys(HoldCotaNFTKeyVecBuilder::default().set(hold_keys).build())
         .hold_values(
             HoldCotaNFTValueVecBuilder::default()
@@ -107,12 +106,12 @@ pub fn generate_withdrawal_smt(withdrawal_req: WithdrawalReq) -> Result<(String,
                 .build(),
         )
         .withdrawal_keys(
-            WithdrawalCotaNFTKeyVecBuilder::default()
+            WithdrawalCotaNFTKeyV1VecBuilder::default()
                 .set(withdrawal_keys)
                 .build(),
         )
         .withdrawal_values(
-            WithdrawalCotaNFTValueVecBuilder::default()
+            WithdrawalCotaNFTValueV1VecBuilder::default()
                 .set(withdrawal_values)
                 .build(),
         )
@@ -121,8 +120,6 @@ pub fn generate_withdrawal_smt(withdrawal_req: WithdrawalReq) -> Result<(String,
         .build();
 
     let withdrawal_entry = hex::encode(withdrawal_entries.as_slice());
-
-    info!("withdrawal_smt_entry: {:?}", withdrawal_entry);
 
     Ok((root_hash_hex, withdrawal_entry))
 }

@@ -29,6 +29,7 @@ use crate::smt::update::generate_update_smt;
 use crate::smt::withdrawal::generate_withdrawal_smt;
 use jsonrpc_http_server::jsonrpc_core::serde_json::Map;
 use jsonrpc_http_server::jsonrpc_core::{Error, Params, Value};
+use log::info;
 
 pub async fn define_rpc(params: Params) -> Result<Value, Error> {
     let map: Map<String, Value> = Params::parse(params)?;
@@ -71,6 +72,7 @@ pub async fn update_rpc(params: Params) -> Result<Value, Error> {
 }
 
 pub async fn transfer_rpc(params: Params) -> Result<Value, Error> {
+    info!("Transfer request: {:?}", params);
     let map: Map<String, Value> = Params::parse(params)?;
     let transfer_req = TransferReq::from_map(&map).map_err(|err| err.into())?;
     let transfer_smt = generate_transfer_smt(transfer_req).map_err(|err| err.into())?;
@@ -148,6 +150,7 @@ pub async fn is_claimed_rpc(params: Params) -> Result<Value, Error> {
 }
 
 pub async fn get_sender_lock_hash(params: Params) -> Result<Value, Error> {
+    info!("Get sender lock request: {:?}", params);
     let map: Map<String, Value> = Params::parse(params)?;
     let SenderLockReq {
         lock_script,

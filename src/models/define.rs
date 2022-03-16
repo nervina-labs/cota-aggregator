@@ -4,7 +4,8 @@ use crate::models::helper::{SqlConnection, PAGE_SIZE};
 use crate::models::DBResult;
 use crate::schema::define_cota_nft_kv_pairs::dsl::*;
 use crate::utils::error::Error;
-use crate::utils::helper::parse_bytes_n;
+use crate::utils::helper::{diff_time, parse_bytes_n};
+use chrono::prelude::*;
 use diesel::*;
 use log::error;
 use serde::{Deserialize, Serialize};
@@ -29,6 +30,7 @@ pub fn get_define_cota_by_lock_hash_with_conn(
     conn: &SqlConnection,
     lock_hash_: [u8; 32],
 ) -> DBResult<DefineDb> {
+    let start_time = Local::now().timestamp_millis();
     let (lock_hash_hex, lock_hash_crc_) = parse_lock_hash(lock_hash_);
     let mut page: i64 = 0;
     let mut defines: Vec<DefineDb> = Vec::new();
@@ -55,6 +57,7 @@ pub fn get_define_cota_by_lock_hash_with_conn(
         page += 1;
     }
     let block_height = get_syncer_tip_block_number_with_conn(conn)?;
+    diff_time(start_time, "SQL get_define_cota_by_lock_hash");
     Ok((defines, block_height))
 }
 
@@ -66,6 +69,7 @@ pub fn get_define_cota_by_lock_hash_and_cota_id(
     lock_hash_: [u8; 32],
     cota_id_: [u8; 20],
 ) -> Result<Option<DefineDb>, Error> {
+    let start_time = Local::now().timestamp_millis();
     let conn = &establish_connection();
     let (lock_hash_hex, lock_hash_crc_) = parse_lock_hash(lock_hash_);
     let cota_id_hex = hex::encode(cota_id_);
@@ -74,6 +78,7 @@ pub fn get_define_cota_by_lock_hash_and_cota_id(
         .filter(lock_hash_crc.eq(lock_hash_crc_))
         .filter(lock_hash.eq(lock_hash_hex))
         .filter(cota_id.eq(cota_id_hex))
+        .limit(1)
         .load::<DefineCotaNft>(conn)
         .map_or_else(
             |e| {
@@ -82,6 +87,7 @@ pub fn get_define_cota_by_lock_hash_and_cota_id(
             },
             |defines| Ok(parse_define_cota_nft(defines)),
         )?;
+    diff_time(start_time, "SQL get_define_cota_by_lock_hash_and_cota_id");
     Ok(defines.get(0).map(|v| *v))
 }
 
