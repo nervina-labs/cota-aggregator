@@ -26,27 +26,6 @@ table! {
 }
 
 table! {
-    class_infos (id) {
-        id -> Bigint,
-        block_number -> Unsigned<Bigint>,
-        cota_id -> Char,
-        version -> Varchar,
-        name -> Varchar,
-        symbol -> Varchar,
-        description -> Varchar,
-        image -> Varchar,
-        audio -> Varchar,
-        video -> Varchar,
-        model -> Varchar,
-        schema -> Varchar,
-        properties -> Varchar,
-        localization -> Varchar,
-        created_at -> Datetime,
-        updated_at -> Datetime,
-    }
-}
-
-table! {
     define_cota_nft_kv_pair_versions (id) {
         id -> Bigint,
         old_block_number -> Unsigned<Bigint>,
@@ -117,22 +96,6 @@ table! {
 }
 
 table! {
-    issuer_infos (id) {
-        id -> Bigint,
-        block_number -> Unsigned<Bigint>,
-        lock_hash -> Char,
-        lock_hash_crc -> Unsigned<Integer>,
-        version -> Varchar,
-        name -> Varchar,
-        avatar -> Varchar,
-        description -> Varchar,
-        localization -> Varchar,
-        created_at -> Datetime,
-        updated_at -> Datetime,
-    }
-}
-
-table! {
     register_cota_kv_pairs (id) {
         id -> Bigint,
         block_number -> Unsigned<Bigint>,
@@ -186,12 +149,10 @@ table! {
 allow_tables_to_appear_in_same_query!(
     check_infos,
     claimed_cota_nft_kv_pairs,
-    class_infos,
     define_cota_nft_kv_pair_versions,
     define_cota_nft_kv_pairs,
     hold_cota_nft_kv_pair_versions,
     hold_cota_nft_kv_pairs,
-    issuer_infos,
     register_cota_kv_pairs,
     schema_migrations,
     scripts,
