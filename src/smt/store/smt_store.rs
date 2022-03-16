@@ -38,11 +38,7 @@ impl<'a> SMTStore<'a> {
         }
     }
 
-    pub fn inner_store(&self) -> &CotaRocksDB {
-        self.store
-    }
-
-    pub fn save_root(&self, root: H256) -> Result<(), SMTError> {
+    pub fn save_root(&self, root: &H256) -> Result<(), SMTError> {
         self.store
             .insert_raw(self.root_col, &self.lock_hash, root.as_slice())
             .map_err(|err| SMTError::Store(format!("insert error {:?}", err)))?;

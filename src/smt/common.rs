@@ -293,6 +293,9 @@ pub fn generate_history_smt(db: &CotaRocksDB, lock_hash: [u8; 32]) -> Result<Cot
         let (_, value) = generate_claim_value(version);
         smt.update(key, value).expect("SMT update leave error");
     }
+    smt.store()
+        .save_root(smt.root())
+        .expect("Save smt root error");
     diff_time(start_time, "Push claim history leaves to smt");
     Ok(smt)
 }
