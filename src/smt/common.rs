@@ -227,6 +227,7 @@ pub fn generate_history_smt(lock_hash: [u8; 32]) -> Result<SMT, Error> {
             characteristic,
             receiver_lock_script,
             out_point,
+            version,
         } = withdrawal_db;
         let (_, key) = generate_withdrawal_key(cota_id, token_index);
         let (_, value) = generate_withdrawal_value(
@@ -237,8 +238,6 @@ pub fn generate_history_smt(lock_hash: [u8; 32]) -> Result<SMT, Error> {
             out_point,
         );
         smt.update(key, value).expect("SMT update leave error");
-        // TODO: Mock version
-        let version = 1u8;
         let ClaimDb {
             cota_id,
             token_index,

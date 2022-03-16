@@ -13,8 +13,6 @@ use cota_smt::transfer::ClaimCotaNFTEntriesBuilder;
 use log::error;
 
 pub fn generate_claim_smt(claim_req: ClaimReq) -> Result<(String, String), Error> {
-    // TODO: Mock version
-    let version = 1u8;
     let claims = claim_req.clone().claims;
     let claims_len = claims.len();
     if claims_len == 0 {
@@ -41,7 +39,7 @@ pub fn generate_claim_smt(claim_req: ClaimReq) -> Result<(String, String), Error
     let mut withdrawal_update_leaves: Vec<(H256, H256)> = Vec::with_capacity(claims_len);
 
     let mut claim_keys: Vec<ClaimCotaNFTKey> = Vec::new();
-    let mut key_vec: Vec<H256> = Vec::new();
+    let mut key_vec: Vec<(H256, u8)> = Vec::new();
     let mut claim_values: Vec<Byte32> = Vec::new();
     let mut claim_smt = generate_history_smt(blake2b_256(&claim_req.lock_script))?;
     let mut claim_update_leaves: Vec<(H256, H256)> = Vec::with_capacity(claims_len * 2);
@@ -53,6 +51,7 @@ pub fn generate_claim_smt(claim_req: ClaimReq) -> Result<(String, String), Error
             state,
             configure,
             out_point,
+            version,
             ..
         } = withdrawal;
         let key = if version == 0 {
@@ -91,7 +90,7 @@ pub fn generate_claim_smt(claim_req: ClaimReq) -> Result<(String, String), Error
 
         let (claim_key, key) = generate_claim_key(cota_id, token_index, out_point);
         claim_keys.push(claim_key);
-        key_vec.push(key);
+        key_vec.push((key, version));
     }
     let withdraw_merkle_proof = withdrawal_smt
         .merkle_proof(
@@ -116,7 +115,7 @@ pub fn generate_claim_smt(claim_req: ClaimReq) -> Result<(String, String), Error
         .extend(merkel_proof_vec.iter().map(|v| Byte::from(*v)))
         .build();
 
-    for key in key_vec {
+    for (key, version) in key_vec {
         let (claim_value, value) = generate_claim_value(version);
         claim_values.push(claim_value);
         claim_smt

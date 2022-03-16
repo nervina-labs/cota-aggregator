@@ -15,8 +15,6 @@ use cota_smt::transfer::TransferCotaNFTV1EntriesBuilder;
 use log::{error, info};
 
 pub fn generate_transfer_smt(transfer_req: TransferReq) -> Result<(String, String), Error> {
-    // TODO: Mock version
-    let version = 1u8;
     let transfers = transfer_req.clone().transfers;
     let transfers_len = transfers.len();
     if transfers_len == 0 {
@@ -66,6 +64,7 @@ pub fn generate_transfer_smt(transfer_req: TransferReq) -> Result<(String, Strin
             state,
             configure,
             out_point,
+            version,
             ..
         } = withdrawal_db;
         let TransferWithdrawal { to_lock_script, .. } = transfer;
@@ -80,7 +79,7 @@ pub fn generate_transfer_smt(transfer_req: TransferReq) -> Result<(String, Strin
                 configure,
                 state,
                 characteristic,
-                to_lock_script.clone(),
+                transfer_req.lock_script.clone(),
                 out_point,
             )
             .1
