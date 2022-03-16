@@ -1,14 +1,14 @@
 use crate::models::define::{get_define_cota_by_lock_hash_and_cota_id, DefineDb};
 use crate::request::mint::{MintReq, MintWithdrawal};
-use crate::smt::common::generate_history_smt;
+use crate::smt::common::{generate_define_key, generate_define_value};
 use crate::smt::common::{
-    generate_define_key, generate_define_value, generate_withdrawal_key, generate_withdrawal_value,
+    generate_history_smt, generate_withdrawal_key_v1, generate_withdrawal_value_v1,
 };
 use crate::utils::error::Error;
 use crate::utils::helper::diff_time;
 use chrono::prelude::*;
 use cota_smt::common::*;
-use cota_smt::mint::MintCotaNFTEntriesBuilder;
+use cota_smt::mint::MintCotaNFTV1EntriesBuilder;
 use cota_smt::molecule::prelude::*;
 use cota_smt::smt::H256;
 use log::error;
@@ -27,8 +27,8 @@ pub fn generate_mint_smt(mint_req: MintReq) -> Result<(String, String), Error> {
     let mut define_keys: Vec<DefineCotaNFTId> = Vec::new();
     let mut define_old_values: Vec<DefineCotaNFTValue> = Vec::new();
     let mut define_new_values: Vec<DefineCotaNFTValue> = Vec::new();
-    let mut withdrawal_keys: Vec<CotaNFTId> = Vec::new();
-    let mut withdrawal_values: Vec<WithdrawalCotaNFTValue> = Vec::new();
+    let mut withdrawal_keys: Vec<WithdrawalCotaNFTKeyV1> = Vec::new();
+    let mut withdrawal_values: Vec<WithdrawalCotaNFTValueV1> = Vec::new();
     let mut smt = generate_history_smt(mint_req.lock_hash)?;
     let mut update_leaves: Vec<(H256, H256)> = Vec::with_capacity(withdrawals_len + 1);
     let DefineDb {
@@ -69,16 +69,12 @@ pub fn generate_mint_smt(mint_req: MintReq) -> Result<(String, String), Error> {
         to_lock_script,
     } in withdrawals
     {
-        let (withdrawal_key, key) = generate_withdrawal_key(cota_id, token_index);
+        let (withdrawal_key, key) =
+            generate_withdrawal_key_v1(cota_id, token_index, mint_req.out_point);
         withdrawal_keys.push(withdrawal_key);
 
-        let (withdrawal_value, value) = generate_withdrawal_value(
-            configure,
-            state,
-            characteristic,
-            to_lock_script,
-            mint_req.out_point,
-        );
+        let (withdrawal_value, value) =
+            generate_withdrawal_value_v1(configure, state, characteristic, to_lock_script);
         withdrawal_values.push(withdrawal_value);
 
         update_leaves.push((key, value));
@@ -116,7 +112,7 @@ pub fn generate_mint_smt(mint_req: MintReq) -> Result<(String, String), Error> {
         .set(action_vec.iter().map(|v| Byte::from(*v)).collect())
         .build();
 
-    let mint_entries = MintCotaNFTEntriesBuilder::default()
+    let mint_entries = MintCotaNFTV1EntriesBuilder::default()
         .define_keys(
             DefineCotaNFTKeyVecBuilder::default()
                 .set(define_keys)
@@ -133,12 +129,12 @@ pub fn generate_mint_smt(mint_req: MintReq) -> Result<(String, String), Error> {
                 .build(),
         )
         .withdrawal_keys(
-            WithdrawalCotaNFTKeyVecBuilder::default()
+            WithdrawalCotaNFTKeyV1VecBuilder::default()
                 .set(withdrawal_keys)
                 .build(),
         )
         .withdrawal_values(
-            WithdrawalCotaNFTValueVecBuilder::default()
+            WithdrawalCotaNFTValueV1VecBuilder::default()
                 .set(withdrawal_values)
                 .build(),
         )

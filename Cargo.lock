@@ -292,7 +292,7 @@ dependencies = [
 
 [[package]]
 name = "cota-aggregator"
-version = "0.1.0"
+version = "0.2.0"
 dependencies = [
  "chrono",
  "cota-smt",
@@ -312,10 +312,10 @@ dependencies = [
 [[package]]
 name = "cota-smt"
 version = "0.1.0"
-source = "git+https://github.com/nervina-labs/cota-smt?tag=0.0.1#687e20910c061ff80631e2cc7894a44739670c0f"
+source = "git+https://github.com/nervina-labs/cota-smt?tag=0.1.0#d4491021491c5eabd1c0a4c435f5009c8126254d"
 dependencies = [
  "blake2b-ref 0.3.0",
- "cfg-if 0.1.10",
+ "cfg-if 1.0.0",
  "ckb-types",
  "sparse-merkle-tree",
 ]

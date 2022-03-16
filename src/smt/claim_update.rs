@@ -2,7 +2,8 @@ use crate::models::withdrawal::{get_withdrawal_cota_by_lock_hash, WithdrawDb};
 use crate::request::claim::ClaimUpdateReq;
 use crate::smt::common::{
     generate_claim_key, generate_claim_value, generate_history_smt, generate_hold_key,
-    generate_hold_value, generate_withdrawal_key, generate_withdrawal_value,
+    generate_hold_value, generate_withdrawal_key, generate_withdrawal_key_v1,
+    generate_withdrawal_value, generate_withdrawal_value_v1,
 };
 use crate::utils::error::Error;
 use cota_smt::common::*;
@@ -39,9 +40,9 @@ pub fn generate_claim_update_smt(
     let mut withdrawal_update_leaves: Vec<(H256, H256)> = Vec::with_capacity(nfts_len);
 
     let mut claim_keys: Vec<ClaimCotaNFTKey> = Vec::new();
-    let mut key_vec: Vec<H256> = Vec::new();
+    let mut key_vec: Vec<(H256, u8)> = Vec::new();
     let mut claim_values: Vec<Byte32> = Vec::new();
-    let mut claim_infos: Vec<CotaNFTInfo> = Vec::new();
+    let mut claim_infos: Vec<ClaimCotaNFTInfo> = Vec::new();
     let mut claim_smt = generate_history_smt(blake2b_256(&claim_update_req.lock_script))?;
     let mut claim_update_leaves: Vec<(H256, H256)> = Vec::with_capacity(nfts_len * 2);
     for (index, withdrawal) in sender_withdrawals.into_iter().enumerate() {
@@ -52,21 +53,42 @@ pub fn generate_claim_update_smt(
             state,
             configure,
             out_point,
+            version,
             ..
         } = withdrawal;
-        let (_, key) = generate_withdrawal_key(cota_id, token_index);
-        let (_, value) = generate_withdrawal_value(
-            configure,
-            state,
-            characteristic,
-            claim_update_req.clone().lock_script,
-            out_point,
-        );
+        let (key, value) = if version == 0 {
+            (
+                generate_withdrawal_key(cota_id, token_index).1,
+                generate_withdrawal_value(
+                    configure,
+                    state,
+                    characteristic,
+                    claim_update_req.clone().lock_script,
+                    out_point,
+                )
+                .1,
+            )
+        } else {
+            (
+                generate_withdrawal_key_v1(cota_id, token_index, out_point).1,
+                generate_withdrawal_value_v1(
+                    configure,
+                    state,
+                    characteristic,
+                    claim_update_req.clone().lock_script,
+                )
+                .1,
+            )
+        };
         withdrawal_update_leaves.push((key, value));
-        let claim_info = CotaNFTInfoBuilder::default()
+        let nft_info = CotaNFTInfoBuilder::default()
             .characteristic(Characteristic::from_slice(&characteristic).unwrap())
             .configure(Byte::from(configure))
             .state(Byte::from(state))
+            .build();
+        let claim_info = ClaimCotaNFTInfoBuilder::default()
+            .nft_info(nft_info)
+            .version(Byte::from(version))
             .build();
         claim_infos.push(claim_info);
 
@@ -84,7 +106,7 @@ pub fn generate_claim_update_smt(
 
         let (claim_key, key) = generate_claim_key(cota_id, token_index, out_point);
         claim_keys.push(claim_key);
-        key_vec.push(key);
+        key_vec.push((key, version));
     }
     let withdraw_merkle_proof = withdrawal_smt
         .merkle_proof(
@@ -109,8 +131,8 @@ pub fn generate_claim_update_smt(
         .extend(merkel_proof_vec.iter().map(|v| Byte::from(*v)))
         .build();
 
-    for key in key_vec {
-        let (claim_value, value) = generate_claim_value();
+    for (key, version) in key_vec {
+        let (claim_value, value) = generate_claim_value(version);
         claim_values.push(claim_value);
         claim_smt
             .update(key, value)
