@@ -2,19 +2,16 @@ use crate::models::hold::get_hold_cota_by_lock_hash;
 use crate::request::withdrawal::WithdrawalReq;
 use crate::smt::common::{
     generate_empty_value, generate_history_smt, generate_hold_key, generate_hold_value,
-    generate_withdrawal_key, generate_withdrawal_key_v1, generate_withdrawal_value,
-    generate_withdrawal_value_v1,
+    generate_withdrawal_key_v1, generate_withdrawal_value_v1,
 };
 use crate::utils::error::Error;
 use cota_smt::common::*;
 use cota_smt::molecule::prelude::*;
-use cota_smt::smt::{Blake2bHasher, H256};
+use cota_smt::smt::H256;
 use cota_smt::transfer::WithdrawalCotaNFTV1EntriesBuilder;
-use log::{error, info};
+use log::error;
 
 pub fn generate_withdrawal_smt(withdrawal_req: WithdrawalReq) -> Result<(String, String), Error> {
-    // TODO: Mock version
-    let version = 1u8;
     let mut smt = generate_history_smt(withdrawal_req.lock_hash)?;
     let withdrawals = withdrawal_req.withdrawals;
     if withdrawals.is_empty() {
@@ -47,50 +44,19 @@ pub fn generate_withdrawal_smt(withdrawal_req: WithdrawalReq) -> Result<(String,
         smt.update(key, value)
             .expect("withdraw SMT update leave error");
 
-        let key = if version == 0 {
-            generate_withdrawal_key(hold_db.cota_id, hold_db.token_index).1
-        } else {
-            generate_withdrawal_key_v1(
-                hold_db.cota_id,
-                hold_db.token_index,
-                withdrawal_req.out_point,
-            )
-            .1
-        };
-        let withdrawal_key = generate_withdrawal_key_v1(
+        let (withdrawal_key, key) = generate_withdrawal_key_v1(
             hold_db.cota_id,
             hold_db.token_index,
             withdrawal_req.out_point,
-        )
-        .0;
+        );
         withdrawal_keys.push(withdrawal_key);
 
-        let value = if version == 0 {
-            generate_withdrawal_value(
-                hold_db.configure,
-                hold_db.state,
-                hold_db.characteristic,
-                withdrawal.clone().to_lock_script,
-                withdrawal_req.out_point,
-            )
-            .1
-        } else {
-            generate_withdrawal_value_v1(
-                hold_db.configure,
-                hold_db.state,
-                hold_db.characteristic,
-                withdrawal.clone().to_lock_script,
-            )
-            .1
-        };
-
-        let withdrawal_value = generate_withdrawal_value_v1(
+        let (withdrawal_value, value) = generate_withdrawal_value_v1(
             hold_db.configure,
             hold_db.state,
             hold_db.characteristic,
             withdrawal.clone().to_lock_script,
-        )
-        .0;
+        );
         withdrawal_values.push(withdrawal_value);
         update_leaves.push((key, value));
         smt.update(key, value)

@@ -7,9 +7,9 @@ use crate::smt::common::{
 use crate::utils::error::Error;
 use cota_smt::common::*;
 use cota_smt::molecule::prelude::*;
-use cota_smt::smt::{blake2b_256, Blake2bHasher, H256};
+use cota_smt::smt::{blake2b_256, H256};
 use cota_smt::transfer_update::TransferUpdateCotaNFTV1EntriesBuilder;
-use log::{error, info};
+use log::error;
 
 pub fn generate_transfer_update_smt(
     transfer_update_req: TransferUpdateReq,
@@ -56,7 +56,7 @@ pub fn generate_transfer_update_smt(
     let mut withdrawal_update_leaves: Vec<(H256, H256)> = Vec::with_capacity(transfers_len);
     let mut transfer_update_smt =
         generate_history_smt(blake2b_256(&transfer_update_req.lock_script))?;
-    let mut withdrawal_smt = generate_history_smt(transfer_update_req.withdrawal_lock_hash)?;
+    let withdrawal_smt = generate_history_smt(transfer_update_req.withdrawal_lock_hash)?;
     for (withdrawal_db, transfer) in sender_withdrawals.into_iter().zip(transfers.clone()) {
         let WithdrawDb {
             cota_id,
@@ -75,33 +75,37 @@ pub fn generate_transfer_update_smt(
             .build();
         let claimed_info = ClaimCotaNFTInfoBuilder::default()
             .nft_info(nft_info)
-            .version(Byte::from(1u8))
+            .version(Byte::from(version))
             .build();
         claimed_infos.push(claimed_info);
 
         let TransferUpdate { to_lock_script, .. } = transfer;
 
-        let key = if version == 0 {
-            generate_withdrawal_key(cota_id, token_index).1
-        } else {
-            generate_withdrawal_key_v1(cota_id, token_index, out_point).1
-        };
-        let value = if version == 0 {
-            generate_withdrawal_value(
-                configure,
-                state,
-                characteristic,
-                transfer_update_req.lock_script.clone(),
-                out_point,
+        let (key, value) = if version == 0 {
+            (
+                generate_withdrawal_key(cota_id, token_index).1,
+                generate_withdrawal_value(
+                    configure,
+                    state,
+                    characteristic,
+                    transfer_update_req.lock_script.clone(),
+                    out_point,
+                )
+                .1,
             )
-            .1
         } else {
-            generate_withdrawal_value_v1(configure, state, characteristic, to_lock_script.clone()).1
+            (
+                generate_withdrawal_key_v1(cota_id, token_index, out_point).1,
+                generate_withdrawal_value_v1(
+                    configure,
+                    state,
+                    characteristic,
+                    transfer_update_req.lock_script.clone(),
+                )
+                .1,
+            )
         };
         withdrawal_update_leaves.push((key, value));
-        withdrawal_smt
-            .update(key, value)
-            .expect("withdraw SMT update leave error");
 
         let (withdrawal_key, key) = generate_withdrawal_key_v1(
             cota_id,

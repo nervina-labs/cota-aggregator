@@ -56,28 +56,29 @@ pub fn generate_claim_update_smt(
             version,
             ..
         } = withdrawal;
-        let key = if version == 0 {
-            generate_withdrawal_key(cota_id, token_index).1
-        } else {
-            generate_withdrawal_key_v1(cota_id, token_index, out_point).1
-        };
-        let value = if version == 0 {
-            generate_withdrawal_value(
-                configure,
-                state,
-                characteristic,
-                claim_update_req.clone().lock_script,
-                out_point,
+        let (key, value) = if version == 0 {
+            (
+                generate_withdrawal_key(cota_id, token_index).1,
+                generate_withdrawal_value(
+                    configure,
+                    state,
+                    characteristic,
+                    claim_update_req.clone().lock_script,
+                    out_point,
+                )
+                .1,
             )
-            .1
         } else {
-            generate_withdrawal_value_v1(
-                configure,
-                state,
-                characteristic,
-                claim_update_req.clone().lock_script,
+            (
+                generate_withdrawal_key_v1(cota_id, token_index, out_point).1,
+                generate_withdrawal_value_v1(
+                    configure,
+                    state,
+                    characteristic,
+                    claim_update_req.clone().lock_script,
+                )
+                .1,
             )
-            .1
         };
         withdrawal_update_leaves.push((key, value));
         let nft_info = CotaNFTInfoBuilder::default()
@@ -87,7 +88,7 @@ pub fn generate_claim_update_smt(
             .build();
         let claim_info = ClaimCotaNFTInfoBuilder::default()
             .nft_info(nft_info)
-            .version(Byte::from(1u8))
+            .version(Byte::from(version))
             .build();
         claim_infos.push(claim_info);
 
