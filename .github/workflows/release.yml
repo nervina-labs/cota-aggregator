@@ -25,7 +25,7 @@ jobs:
             os: ubuntu-18.04
             rust: 1.59.0
           - build: macos
-            os: macos-latest
+            os: macos-11
             rust: 1.59.0
 
     steps:
@@ -35,11 +35,11 @@ jobs:
 
       - name: Install macos dependencies (mysql-client)
         run: brew install mysql-client
-        if: matrix.os == 'macos-latest'
+        if: matrix.os == 'macos-11'
 
       - name: Install macos dependencies (diesel_cli)
         run: RUSTFLAGS='-L/usr/local/opt/mysql-client/lib' cargo install diesel_cli --no-default-features --features mysql
-        if: matrix.os == 'macos-latest'
+        if: matrix.os == 'macos-11'
 
       - name: Build
         run: RUSTFLAGS='-L/usr/local/opt/mysql-client/lib' cargo build --verbose --release
@@ -52,13 +52,13 @@ jobs:
         if: matrix.os == 'ubuntu-18.04'
 
       - name: Install p7zip
-        # 7Zip not available on MacOS, install p7zip via homebrew.
+        # 7Zip not available on macOS, install p7zip via homebrew.
         run: brew install p7zip
-        if: matrix.os == 'macos-latest'
+        if: matrix.os == 'macos-11'
 
       - name: Create archive for MacOS
         run: 7z a -tzip ./artifacts/${{ env.RELEASE_BIN }}-mac-x86_64.zip ./target/release/${{ env.RELEASE_BIN }} ${{ env.RELEASE_ADDS }}
-        if: matrix.os == 'macos-latest'
+        if: matrix.os == 'macos-11'
 
       - name: Upload Release Asset
         uses: softprops/action-gh-release@v1

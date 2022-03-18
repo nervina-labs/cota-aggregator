@@ -17,7 +17,7 @@ jobs:
             os: ubuntu-latest
             rust: 1.59.0
           - build: macos
-            os: macos-latest
+            os: macos-11
             rust: 1.59.0
 
     steps:
@@ -25,11 +25,11 @@ jobs:
 
       - name: Install macos dependencies (mysql-client)
         run: brew install mysql-client
-        if: matrix.os == 'macos-latest'
+        if: matrix.os == 'macos-11'
 
       - name: Install macos dependencies (diesel_cli)
         run: RUSTFLAGS='-L/usr/local/opt/mysql-client/lib' cargo install diesel_cli --no-default-features --features mysql
-        if: matrix.os == 'macos-latest'
+        if: matrix.os == 'macos-11'
 
       - name: Install Rust components
         run: rustup component add rustfmt && rustup component add clippy
@@ -47,4 +47,4 @@ jobs:
         run: RUSTFLAGS='-L/usr/local/opt/mysql-client/lib' cargo build --verbose --release
 
       - name: Test aggregator
-        run: cargo test --all
+        run: RUSTFLAGS='-L/usr/local/opt/mysql-client/lib' cargo test --all
