@@ -10,6 +10,19 @@ The aggregator service of [CoTA](https://talk.nervos.org/t/rfc-cota-a-compact-to
 
 > The aggregator and syncer share the same mysql database, and the aggregator use CoTA data from the database to provide RPC service
 
+- `mysql-client` for macOS: `brew install mysql-client`
+
+If the output is as blow:
+```shell
+If you need to have mysql-client first in your PATH, run:
+  echo 'export PATH="/opt/homebrew/opt/mysql-client/bin:$PATH"' >> ~/.zshrc
+
+For compilers to find mysql-client you may need to set:
+  export LDFLAGS="-L/opt/homebrew/opt/mysql-client/lib"
+  export CPPFLAGS="-I/opt/homebrew/opt/mysql-client/include"
+```
+Then put the `RUSTFLAGS='-L/opt/homebrew/opt/mysql-client/lib' ` before `cargo build` and `cargo test`
+
 ## Quick Start
 
 ### Manual

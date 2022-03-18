@@ -1,0 +1,53 @@
+name: CI
+
+on:
+  pull_request: # trigger on pull requests
+  push:
+    branches: # array of glob patterns matching against refs/heads. Optional; defaults to all
+      - master        # triggers on pushes that contain changes in master
+      - develop
+
+jobs:
+  Build:
+    name: Build
+
+    runs-on: ${{ matrix.os }}
+    strategy:
+      matrix:
+        build: [ linux, macos ]
+        include:
+          - build: linux
+            os: ubuntu-latest
+            rust: 1.59.0
+          - build: macos
+            os: macos-11
+            rust: 1.59.0
+
+    steps:
+      - uses: actions/checkout@v3
+
+      - name: Install macos dependencies (mysql-client)
+        run: brew install mysql-client
+        if: matrix.os == 'macos-11'
+
+      - name: Install macos dependencies (diesel_cli)
+        run: RUSTFLAGS='-L/usr/local/opt/mysql-client/lib' cargo install diesel_cli --no-default-features --features mysql
+        if: matrix.os == 'macos-11'
+
+      - name: Install Rust components
+        run: rustup component add rustfmt && rustup component add clippy
+      - uses: actions/checkout@v3
+      - uses: actions-rs/toolchain@v1
+        with:
+          profile: minimal
+          toolchain: nightly-2022-01-19
+          override: true
+
+      - name: Check Rust format
+        run: cargo fmt -- --check
+
+      - name: Build aggregator
+        run: RUSTFLAGS='-L/usr/local/opt/mysql-client/lib' cargo build --verbose --release
+
+      - name: Test aggregator
+        run: RUSTFLAGS='-L/usr/local/opt/mysql-client/lib' cargo test --all
