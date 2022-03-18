@@ -58,21 +58,12 @@ jobs:
         run: 7z a -tzip ./artifacts/${{ env.RELEASE_BIN }}-mac.zip ./target/release/${{ env.RELEASE_BIN }} ${{ env.RELEASE_ADDS }}
         if: matrix.os == 'macos-latest'
 
-      - name: Create Release
-        id: create_release
-        uses: actions/create-release@v1.0.0
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        with:
-          tag_name: ${{ github.ref }}
-          release_name: ${{ env.RELEASE_BIN }} ${{ github.ref }}
-          draft: false
-          prerelease: false
       - name: Upload Release Asset
         uses: softprops/action-gh-release@v1
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         with:
+          name: ${{ env.RELEASE_BIN }} ${{ github.ref }}
           files: |
             ./artifacts/${{ env.RELEASE_BIN }}-linux-x86_64.tar.gz
             ./artifacts/${{ env.RELEASE_BIN }}-mac.zip
