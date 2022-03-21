@@ -355,3 +355,32 @@ http://127.0.0.1:3030
     "id":2
 }
 ```
+
+- get_define_info
+
+```shell
+echo '{
+    "id":2,
+    "jsonrpc":"2.0",
+    "method":"get_define_info",
+    "params":{
+        "cota_id":"0xb22585a8053af3fed0fd39127f5b1487ce08b756"
+    }
+}' \
+| tr -d '\n' \
+| curl -H 'content-type: application/json' -d @- \
+http://127.0.0.1:3030
+```
+
+```shell
+{
+    "jsonrpc":"2.0",
+    "result":{
+        "block_number":4735284,
+        "configure":0,
+        "issued":3,
+        "total":306
+    },
+    "id":2
+}
+```
