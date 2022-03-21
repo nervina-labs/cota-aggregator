@@ -377,7 +377,7 @@ http://127.0.0.1:3030
     "jsonrpc":"2.0",
     "result":{
         "block_number":4735284,
-        "configure":0,
+        "configure":"0x0",
         "issued":3,
         "total":306
     },
