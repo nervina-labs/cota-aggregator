@@ -12,3 +12,24 @@ pub fn parse_define_smt(
     map.insert_u64("block_number", block_number);
     map
 }
+
+pub fn parse_define_info(
+    define_info: Option<(u32, u32, u8)>,
+    block_number: u64,
+) -> Map<String, Value> {
+    let mut map = Map::new();
+    match define_info {
+        Some(define) => {
+            map.insert_u32("total", define.0);
+            map.insert_u32("issued", define.1);
+            map.insert_u8("configure", define.2);
+        }
+        None => {
+            map.insert_null("total");
+            map.insert_null("issued");
+            map.insert_null("configure");
+        }
+    }
+    map.insert_u64("block_number", block_number);
+    map
+}
