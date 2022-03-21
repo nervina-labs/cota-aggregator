@@ -1,5 +1,7 @@
 use crate::models::claim::{get_claim_cota_by_lock_hash_with_conn, ClaimDb};
-use crate::models::define::{get_define_cota_by_lock_hash_with_conn, DefineDb};
+use crate::models::define::{
+    get_define_cota_by_cota_id, get_define_cota_by_lock_hash_with_conn, DefineDb,
+};
 use crate::models::helper::establish_connection;
 use crate::models::hold::{
     check_hold_cota_by_lock_hash, get_hold_cota_by_lock_hash_and_page,
@@ -71,4 +73,9 @@ pub fn get_sender_lock_hash_by_cota_nft(
         return Ok(None);
     }
     get_sender_lock_by_script_id(conn, lock_script_id_opt.unwrap(), cota_id, token_index)
+}
+
+pub fn get_define_info_by_cota_id(cota_id: [u8; 20]) -> Result<Option<(u32, u32, u8)>, Error> {
+    let define_opt: Option<DefineDb> = get_define_cota_by_cota_id(cota_id)?;
+    Ok(define_opt.map(|define: DefineDb| (define.total, define.issued, define.configure)))
 }

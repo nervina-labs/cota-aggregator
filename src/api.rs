@@ -1,17 +1,17 @@
 use crate::models::block::get_syncer_tip_block_number;
 use crate::models::common::{
-    check_cota_claimed, get_hold_cota, get_mint_cota, get_sender_lock_hash_by_cota_nft,
-    get_withdrawal_cota,
+    check_cota_claimed, get_define_info_by_cota_id, get_hold_cota, get_mint_cota,
+    get_sender_lock_hash_by_cota_nft, get_withdrawal_cota,
 };
 use crate::request::claim::{ClaimReq, ClaimUpdateReq, IsClaimedReq};
-use crate::request::define::DefineReq;
+use crate::request::define::{DefineInfoReq, DefineReq};
 use crate::request::fetch::FetchReq;
 use crate::request::mint::MintReq;
 use crate::request::transfer::{TransferReq, TransferUpdateReq};
 use crate::request::update::UpdateReq;
 use crate::request::withdrawal::{SenderLockReq, WithdrawalReq};
 use crate::response::claim::{parse_claimed_response, parse_claimed_smt, parse_claimed_update_smt};
-use crate::response::define::parse_define_smt;
+use crate::response::define::{parse_define_info, parse_define_smt};
 use crate::response::hold::parse_hold_response;
 use crate::response::mint::{parse_mint_response, parse_mint_smt};
 use crate::response::transfer::{parse_transfer_smt, parse_transfer_update_smt};
@@ -160,6 +160,15 @@ pub async fn get_sender_lock_hash(params: Params) -> Result<Value, Error> {
     let sender_lock_hash = get_sender_lock_hash_by_cota_nft(lock_script, cota_id, token_index)
         .map_err(|err| err.into())?;
     let response = parse_sender_response(sender_lock_hash, get_block_number()?);
+    Ok(Value::Object(response))
+}
+
+pub async fn get_define_info(params: Params) -> Result<Value, Error> {
+    info!("Get define info request: {:?}", params);
+    let map: Map<String, Value> = Params::parse(params)?;
+    let DefineInfoReq { cota_id } = DefineInfoReq::from_map(&map).map_err(|err| err.into())?;
+    let define_info_opt = get_define_info_by_cota_id(cota_id).map_err(|err| err.into())?;
+    let response = parse_define_info(define_info_opt, get_block_number()?);
     Ok(Value::Object(response))
 }
 

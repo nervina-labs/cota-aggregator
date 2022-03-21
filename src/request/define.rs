@@ -12,6 +12,11 @@ pub struct DefineReq {
     pub configure: u8,
 }
 
+#[derive(Copy, Clone, Eq, PartialEq)]
+pub struct DefineInfoReq {
+    pub cota_id: [u8; 20],
+}
+
 impl DefineReq {
     pub fn from_map(map: &Map<String, Value>) -> Result<Self, Error> {
         Ok(DefineReq {
@@ -20,6 +25,14 @@ impl DefineReq {
             total:     map.get_hex_bytes_filed::<4>("total")?,
             issued:    map.get_hex_bytes_filed::<4>("issued")?,
             configure: map.get_hex_bytes_filed::<1>("configure")?[0],
+        })
+    }
+}
+
+impl DefineInfoReq {
+    pub fn from_map(map: &Map<String, Value>) -> Result<Self, Error> {
+        Ok(DefineInfoReq {
+            cota_id: map.get_hex_bytes_filed::<20>("cota_id")?,
         })
     }
 }

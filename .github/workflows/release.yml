@@ -1,0 +1,75 @@
+on:
+  push:
+    # Sequence of patterns matched against refs/tags
+    tags:
+      - 'v*' # Push events to matching v*, i.e. v1.0, v20.15.10
+
+name: Create Release
+
+env:
+  RELEASE_BIN: cota-aggregator
+
+jobs:
+  build:
+    name: Build release
+
+    runs-on: ${{ matrix.os }}
+    strategy:
+      matrix:
+        build: [linux]
+        include:
+          - build: linux
+            os: ubuntu-20.04
+            rust: 1.59.0
+#          - build: macos
+#            os: macos-11
+#            rust: 1.59.0
+
+    steps:
+      - uses: actions/checkout@v1
+      - name: Set env
+        run: echo "RELEASE_VERSION=${GITHUB_REF#refs/*/}" >> $GITHUB_ENV
+
+#      - name: Install macos dependencies (mysql-client)
+#        run: brew install mysql-client
+#        if: matrix.os == 'macos-11'
+#
+#      - name: Install macos dependencies (diesel_cli)
+#        run: RUSTFLAGS='-L/usr/local/opt/mysql-client/lib' cargo install diesel_cli --no-default-features --features mysql
+#        if: matrix.os == 'macos-11'
+
+#      - name: Build macos
+#        run: RUSTFLAGS='-L/usr/local/opt/mysql-client/lib' cargo build --verbose --release
+
+      - name: Install linux dependencies (libmysqlclient)
+        run: sudo apt-get update && sudo apt-get install libmysqlclient-dev
+        if: matrix.os == 'ubuntu-20.04'
+
+      - name: Build ubuntu
+        run: cargo build --verbose --release
+
+      - name: Create artifact directory
+        run: mkdir artifacts
+
+      - name: Create archive for Linux
+        run: 7z a -ttar -so -an ./target/release/${{ env.RELEASE_BIN }} ${{ env.RELEASE_ADDS }} | 7z a -si ./artifacts/${{ env.RELEASE_BIN }}-linux-x86_64.tar.gz
+        if: matrix.os == 'ubuntu-20.04'
+
+#      - name: Install p7zip
+#        # 7Zip not available on macOS, install p7zip via homebrew.
+#        run: brew install p7zip
+#        if: matrix.os == 'macos-11'
+#
+#      - name: Create archive for MacOS
+#        run: 7z a -tzip ./artifacts/${{ env.RELEASE_BIN }}-mac-x86_64.zip ./target/release/${{ env.RELEASE_BIN }} ${{ env.RELEASE_ADDS }}
+#        if: matrix.os == 'macos-11'
+
+      - name: Upload Release Asset
+        uses: softprops/action-gh-release@v1
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          name: ${{ env.RELEASE_BIN }} ${{ env.RELEASE_VERSION }}
+          files: |
+            ./artifacts/${{ env.RELEASE_BIN }}-linux-x86_64.tar.gz
+#            ./artifacts/${{ env.RELEASE_BIN }}-mac-x86_64.zip

@@ -10,6 +10,19 @@ The aggregator service of [CoTA](https://talk.nervos.org/t/rfc-cota-a-compact-to
 
 > The aggregator and syncer share the same mysql database, and the aggregator use CoTA data from the database to provide RPC service
 
+- `mysql-client` for macOS: `brew install mysql-client`
+
+If the output is as blow:
+```shell
+If you need to have mysql-client first in your PATH, run:
+  echo 'export PATH="/opt/homebrew/opt/mysql-client/bin:$PATH"' >> ~/.zshrc
+
+For compilers to find mysql-client you may need to set:
+  export LDFLAGS="-L/opt/homebrew/opt/mysql-client/lib"
+  export CPPFLAGS="-I/opt/homebrew/opt/mysql-client/include"
+```
+Then put the `RUSTFLAGS='-L/opt/homebrew/opt/mysql-client/lib' ` before `cargo build` and `cargo test`
+
 ## Quick Start
 
 ### Manual
@@ -338,6 +351,35 @@ http://127.0.0.1:3030
     "result":{
         "block_number":4397997,
         "sender_lock_hash":"0x8a8f45a094cbe050d1a612924901b11edc1bce28c0fd8d96cdc8779889f28aa8"
+    },
+    "id":2
+}
+```
+
+- get_define_info
+
+```shell
+echo '{
+    "id":2,
+    "jsonrpc":"2.0",
+    "method":"get_define_info",
+    "params":{
+        "cota_id":"0xb22585a8053af3fed0fd39127f5b1487ce08b756"
+    }
+}' \
+| tr -d '\n' \
+| curl -H 'content-type: application/json' -d @- \
+http://127.0.0.1:3030
+```
+
+```shell
+{
+    "jsonrpc":"2.0",
+    "result":{
+        "block_number":4735284,
+        "configure":0,
+        "issued":3,
+        "total":306
     },
     "id":2
 }
