@@ -22,7 +22,7 @@ pub fn parse_define_info(
         Some(define) => {
             map.insert_u32("total", define.0);
             map.insert_u32("issued", define.1);
-            map.insert_u8("configure", define.2);
+            map.insert_str("configure", format!("0x{}", hex::encode(&[define.2])));
         }
         None => {
             map.insert_null("total");

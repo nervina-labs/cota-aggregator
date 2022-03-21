@@ -47,7 +47,8 @@ fn main() {
         .start_http(&"0.0.0.0:3030".parse().unwrap())
         .unwrap();
 
-    info!("Cota aggregator server start");
+    let version = env!("CARGO_PKG_VERSION");
+    info!("{}", format!("Cota aggregator v{} server start", version));
 
     server.wait();
 }
