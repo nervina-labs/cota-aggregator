@@ -35,6 +35,7 @@ fn main() {
     io.add_method("get_mint_cota_nft", fetch_mint_rpc);
     io.add_method("is_claimed", is_claimed_rpc);
     io.add_method("get_cota_nft_sender", get_sender_lock_hash);
+    io.add_method("get_define_info", get_define_info);
 
     let threads: usize = match env::var("THREADS") {
         Ok(thread) => from_str::<usize>(&thread).unwrap(),

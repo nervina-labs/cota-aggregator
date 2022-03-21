@@ -91,6 +91,26 @@ pub fn get_define_cota_by_lock_hash_and_cota_id(
     Ok(defines.get(0).map(|v| *v))
 }
 
+pub fn get_define_cota_by_cota_id(cota_id_: [u8; 20]) -> Result<Option<DefineDb>, Error> {
+    let start_time = Local::now().timestamp_millis();
+    let conn = &establish_connection();
+    let cota_id_hex = hex::encode(cota_id_);
+    let defines: Vec<DefineDb> = define_cota_nft_kv_pairs
+        .select(get_selection())
+        .filter(cota_id.eq(cota_id_hex))
+        .limit(1)
+        .load::<DefineCotaNft>(conn)
+        .map_or_else(
+            |e| {
+                error!("Query define error: {}", e.to_string());
+                Err(Error::DatabaseQueryError(e.to_string()))
+            },
+            |defines| Ok(parse_define_cota_nft(defines)),
+        )?;
+    diff_time(start_time, "SQL get_define_cota_by_cota_id");
+    Ok(defines.get(0).map(|v| *v))
+}
+
 fn parse_define_cota_nft(defines: Vec<DefineCotaNft>) -> Vec<DefineDb> {
     defines
         .into_iter()

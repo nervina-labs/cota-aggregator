@@ -5,6 +5,8 @@ pub trait Inserter {
     fn insert_hex(&mut self, k: &str, v: &[u8]) -> Option<Value>;
     fn insert_i64(&mut self, k: &str, v: i64) -> Option<Value>;
     fn insert_u64(&mut self, k: &str, v: u64) -> Option<Value>;
+    fn insert_u32(&mut self, k: &str, v: u32) -> Option<Value>;
+    fn insert_u8(&mut self, k: &str, v: u8) -> Option<Value>;
     fn insert_str(&mut self, k: &str, v: String) -> Option<Value>;
     fn insert_array(&mut self, k: &str, v: Vec<Value>) -> Option<Value>;
     fn insert_null(&mut self, k: &str) -> Option<Value>;
@@ -23,6 +25,14 @@ impl Inserter for Map<String, Value> {
     }
 
     fn insert_u64(&mut self, k: &str, v: u64) -> Option<Value> {
+        self.insert(k.to_string(), Value::Number(Number::from(v)))
+    }
+
+    fn insert_u32(&mut self, k: &str, v: u32) -> Option<Value> {
+        self.insert(k.to_string(), Value::Number(Number::from(v)))
+    }
+
+    fn insert_u8(&mut self, k: &str, v: u8) -> Option<Value> {
         self.insert(k.to_string(), Value::Number(Number::from(v)))
     }
 
