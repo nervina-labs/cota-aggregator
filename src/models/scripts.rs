@@ -10,7 +10,7 @@ use cota_smt::ckb_types::packed::{Byte32, BytesBuilder, Script as LockScript, Sc
 use cota_smt::ckb_types::prelude::*;
 use cota_smt::molecule::prelude::Byte;
 use diesel::*;
-use log::error;
+use log::{error, info};
 use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
 
@@ -35,6 +35,7 @@ pub fn get_script_map_by_ids(
     script_ids: Vec<i64>,
 ) -> Result<HashMap<i64, Vec<u8>>, Error> {
     let start_time = Local::now().timestamp_millis();
+    info!("script_ids: {:?}", script_ids);
     let scripts_db = scripts
         .select((id, code_hash, hash_type, args))
         .filter(id.eq_any(script_ids))
