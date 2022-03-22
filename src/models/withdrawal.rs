@@ -55,7 +55,7 @@ pub fn get_withdrawal_cota_by_lock_hash_with_conn(
     let start_time = Local::now().timestamp_millis();
     let (lock_hash_hex, lock_hash_crc_) = parse_lock_hash(lock_hash_);
     let mut withdraw_nfts: Vec<WithdrawCotaNft> = vec![];
-    let withdraw_cota_nfts: Vec<WithdrawCotaNft> = match cota_id_and_token_index_pairs {
+    match cota_id_and_token_index_pairs {
         Some(pairs) => {
             let pair_vec = parse_cota_id_and_token_index_pairs(pairs);
             for (cota_id_str, token_index_u32) in pair_vec.into_iter() {
@@ -78,7 +78,6 @@ pub fn get_withdrawal_cota_by_lock_hash_with_conn(
                     withdraw_nfts.push(withdrawal);
                 }
             }
-            withdraw_nfts
         }
         None => {
             let mut page: i64 = 0;
@@ -101,11 +100,10 @@ pub fn get_withdrawal_cota_by_lock_hash_with_conn(
                 }
                 page += 1;
             }
-            withdraw_nfts
         }
     };
     diff_time(start_time, "SQL get_withdrawal_cota_by_lock_hash");
-    parse_withdraw_db(conn, withdraw_cota_nfts)
+    parse_withdraw_db(conn, withdraw_nfts)
 }
 
 pub fn get_withdrawal_cota_by_lock_hash(
