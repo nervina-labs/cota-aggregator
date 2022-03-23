@@ -12,11 +12,11 @@ pub struct RocksDB {
 }
 
 impl RocksDB {
-    pub fn new() -> Result<Self, Error> {
+    pub fn default() -> Result<Self, Error> {
         let path = "./store.db";
 
         let mut opts = Options::default();
-        opts.create_if_missing(false);
+        opts.create_if_missing(true);
         opts.create_missing_column_families(true);
 
         let cf_names: Vec<_> = (0..COLUMNS).map(|c| c.to_string()).collect();
@@ -26,7 +26,7 @@ impl RocksDB {
             .collect();
 
         let db = DB::open_cf_descriptors(&opts, path, cf_descriptors)
-            .map_err(|_e| Error::RocksDBError("RocksDB open error".to_owned()))?;
+            .map_err(|e| Error::RocksDBError(format!("RocksDB open error: {:?}", e.to_string())))?;
         Ok(RocksDB {
             inner: Arc::new(db),
         })

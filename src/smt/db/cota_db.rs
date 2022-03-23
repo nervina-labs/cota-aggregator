@@ -7,9 +7,9 @@ pub struct CotaRocksDB {
 }
 
 impl CotaRocksDB {
-    pub fn new() -> Self {
+    pub fn default() -> Self {
         CotaRocksDB {
-            inner: RocksDB::new().expect("RocksDB create error"),
+            inner: RocksDB::default().expect("RocksDB create error"),
         }
     }
 
