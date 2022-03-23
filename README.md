@@ -58,7 +58,7 @@ echo '{
     "jsonrpc":"2.0",
     "method":"generate_define_cota_smt",
     "params":{
-        "lock_hash":"0x1c5a6f36e6f1485e4df40906f22247888545dd00590a22d985d3be1f63b62db1",
+        "lock_hash":"0x490000001000000030000000310000009bd7e06f3ecf4be0f2fcd2188b23f1b9fcc88e5d4b65a8637b17723bbda3cce80114000000e616d1460d634668b8ad81971c3a53e705f51e60",
         "cota_id":"0xea28c98f38b4a57aa81756b167bb37fa42daf67e",
         "total":"0x00000050",
         "issued":"0x00000000",
@@ -89,7 +89,7 @@ echo '{
     "jsonrpc":"2.0",
     "method":"generate_mint_cota_smt",
     "params":{
-        "lock_hash":"0x8a8f45a094cbe050d1a612924901b11edc1bce28c0fd8d96cdc8779889f28aa8",
+        "lock_script":"0x490000001000000030000000310000009bd7e06f3ecf4be0f2fcd2188b23f1b9fcc88e5d4b65a8637b17723bbda3cce80114000000e616d1460d634668b8ad81971c3a53e705f51e60",
         "cota_id":"0xb22585a8053af3fed0fd39127f5b1487ce08b756",
         "out_point":"0x90dceb81ab5b6c0a364b502d6d4febff0ca570c100000000",
         "withdrawals":[
@@ -133,7 +133,7 @@ echo '{
     "method":"generate_transfer_cota_smt",
     "params":{
         "lock_script":"0x49000000100000003000000031000000124a60cd799e1fbca664196de46b3f7f0ecb7138133dcaea4893c51df5b02be60114000000fa15357eb4ad2989f910268db3b3a585a9b51cbe",
-        "withdrawal_lock_hash":"0xc84947784cce65bdd259948630a5e77ebcfce205fd53a55dc333afe98007bd19",
+        "withdrawal_lock_script":"0x490000001000000030000000310000009bd7e06f3ecf4be0f2fcd2188b23f1b9fcc88e5d4b65a8637b17723bbda3cce80114000000af4baf7e15c13b9f95ee56166b9c840dd46973b1",
         "transfer_out_point":"0x777347181a25dc39c31ad290b9e2d52ded42295000000000",
         "transfers":[
             {
