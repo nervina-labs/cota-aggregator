@@ -1,3 +1,4 @@
+use crate::indexer::index::get_cota_smt_root;
 use crate::models::withdrawal::{get_withdrawal_cota_by_lock_hash, WithdrawDb};
 use crate::request::transfer::TransferReq;
 use crate::request::withdrawal::TransferWithdrawal;
@@ -13,10 +14,10 @@ use cota_smt::common::*;
 use cota_smt::molecule::prelude::*;
 use cota_smt::smt::{blake2b_256, H256};
 use cota_smt::transfer::TransferCotaNFTV1EntriesBuilder;
-use log::error;
+use log::{error, info};
 
-pub fn generate_transfer_smt(transfer_req: TransferReq) -> Result<(String, String), Error> {
-    let transfers = transfer_req.clone().transfers;
+pub async fn generate_transfer_smt(transfer_req: TransferReq) -> Result<(String, String), Error> {
+    let transfers = transfer_req.transfers.clone();
     let transfers_len = transfers.len();
     if transfers_len == 0 {
         return Err(Error::RequestParamNotFound("transfers".to_string()));
@@ -28,7 +29,7 @@ pub fn generate_transfer_smt(transfer_req: TransferReq) -> Result<(String, Strin
             .collect(),
     );
     let sender_withdrawals = get_withdrawal_cota_by_lock_hash(
-        transfer_req.withdrawal_lock_hash,
+        blake2b_256(transfer_req.withdrawal_lock_script.clone()),
         cota_id_and_token_index_pairs,
     )?
     .0;
@@ -54,9 +55,10 @@ pub fn generate_transfer_smt(transfer_req: TransferReq) -> Result<(String, Strin
     let mut withdrawal_values: Vec<WithdrawalCotaNFTValueV1> = Vec::new();
     let mut transfer_update_leaves: Vec<(H256, H256)> = Vec::with_capacity(transfers_len * 2);
     let mut withdrawal_update_leaves: Vec<(H256, H256)> = Vec::with_capacity(transfers_len);
-    let db = CotaRocksDB::new();
-    let mut transfer_smt = generate_history_smt(&db, blake2b_256(&transfer_req.lock_script))?;
-    let withdrawal_smt = generate_history_smt(&db, transfer_req.withdrawal_lock_hash)?;
+    let db = CotaRocksDB::default();
+    let mut transfer_smt = generate_history_smt(&db, transfer_req.lock_script.clone()).await?;
+    let withdrawal_smt =
+        generate_history_smt(&db, transfer_req.withdrawal_lock_script.clone()).await?;
     let start_time = Local::now().timestamp_millis();
     for (withdrawal_db, transfer) in sender_withdrawals.into_iter().zip(transfers.clone()) {
         let WithdrawDb {

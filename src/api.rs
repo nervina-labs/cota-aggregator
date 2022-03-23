@@ -34,7 +34,9 @@ use log::info;
 pub async fn define_rpc(params: Params) -> Result<Value, Error> {
     let map: Map<String, Value> = Params::parse(params)?;
     let define_req = DefineReq::from_map(&map).map_err(|err| err.into())?;
-    let define_smt = generate_define_smt(define_req).map_err(|err| err.into())?;
+    let define_smt = generate_define_smt(define_req)
+        .await
+        .map_err(|err| err.into())?;
     let response = parse_define_smt(define_smt, get_block_number()?);
     Ok(Value::Object(response))
 }
@@ -42,7 +44,9 @@ pub async fn define_rpc(params: Params) -> Result<Value, Error> {
 pub async fn mint_rpc(params: Params) -> Result<Value, Error> {
     let map: Map<String, Value> = Params::parse(params)?;
     let mint_req = MintReq::from_map(&map).map_err(|err| err.into())?;
-    let mint_smt = generate_mint_smt(mint_req).map_err(|err| err.into())?;
+    let mint_smt = generate_mint_smt(mint_req)
+        .await
+        .map_err(|err| err.into())?;
     let response = parse_mint_smt(mint_smt, get_block_number()?);
     Ok(Value::Object(response))
 }
@@ -50,7 +54,9 @@ pub async fn mint_rpc(params: Params) -> Result<Value, Error> {
 pub async fn withdrawal_rpc(params: Params) -> Result<Value, Error> {
     let map: Map<String, Value> = Params::parse(params)?;
     let withdrawal_req = WithdrawalReq::from_map(&map).map_err(|err| err.into())?;
-    let withdrawal_smt = generate_withdrawal_smt(withdrawal_req).map_err(|err| err.into())?;
+    let withdrawal_smt = generate_withdrawal_smt(withdrawal_req)
+        .await
+        .map_err(|err| err.into())?;
     let response = parse_withdrawal_smt(withdrawal_smt, get_block_number()?);
     Ok(Value::Object(response))
 }
@@ -58,7 +64,9 @@ pub async fn withdrawal_rpc(params: Params) -> Result<Value, Error> {
 pub async fn claim_rpc(params: Params) -> Result<Value, Error> {
     let map: Map<String, Value> = Params::parse(params)?;
     let claim_req = ClaimReq::from_map(&map).map_err(|err| err.into())?;
-    let claim_smt = generate_claim_smt(claim_req).map_err(|err| err.into())?;
+    let claim_smt = generate_claim_smt(claim_req)
+        .await
+        .map_err(|err| err.into())?;
     let response = parse_claimed_smt(claim_smt, get_block_number()?);
     Ok(Value::Object(response))
 }
@@ -66,7 +74,9 @@ pub async fn claim_rpc(params: Params) -> Result<Value, Error> {
 pub async fn update_rpc(params: Params) -> Result<Value, Error> {
     let map: Map<String, Value> = Params::parse(params)?;
     let update_req = UpdateReq::from_map(&map).map_err(|err| err.into())?;
-    let update_smt = generate_update_smt(update_req).map_err(|err| err.into())?;
+    let update_smt = generate_update_smt(update_req)
+        .await
+        .map_err(|err| err.into())?;
     let response = parse_update_smt(update_smt, get_block_number()?);
     Ok(Value::Object(response))
 }
@@ -75,7 +85,9 @@ pub async fn transfer_rpc(params: Params) -> Result<Value, Error> {
     info!("Transfer request: {:?}", params);
     let map: Map<String, Value> = Params::parse(params)?;
     let transfer_req = TransferReq::from_map(&map).map_err(|err| err.into())?;
-    let transfer_smt = generate_transfer_smt(transfer_req).map_err(|err| err.into())?;
+    let transfer_smt = generate_transfer_smt(transfer_req)
+        .await
+        .map_err(|err| err.into())?;
     let response = parse_transfer_smt(transfer_smt, get_block_number()?);
     Ok(Value::Object(response))
 }
@@ -83,7 +95,9 @@ pub async fn transfer_rpc(params: Params) -> Result<Value, Error> {
 pub async fn claim_update_rpc(params: Params) -> Result<Value, Error> {
     let map: Map<String, Value> = Params::parse(params)?;
     let claim_update_req = ClaimUpdateReq::from_map(&map).map_err(|err| err.into())?;
-    let claim_update_smt = generate_claim_update_smt(claim_update_req).map_err(|err| err.into())?;
+    let claim_update_smt = generate_claim_update_smt(claim_update_req)
+        .await
+        .map_err(|err| err.into())?;
     let response = parse_claimed_update_smt(claim_update_smt, get_block_number()?);
     Ok(Value::Object(response))
 }
@@ -91,8 +105,9 @@ pub async fn claim_update_rpc(params: Params) -> Result<Value, Error> {
 pub async fn transfer_update_rpc(params: Params) -> Result<Value, Error> {
     let map: Map<String, Value> = Params::parse(params)?;
     let transfer_update_req = TransferUpdateReq::from_map(&map).map_err(|err| err.into())?;
-    let transfer_update_smt =
-        generate_transfer_update_smt(transfer_update_req).map_err(|err| err.into())?;
+    let transfer_update_smt = generate_transfer_update_smt(transfer_update_req)
+        .await
+        .map_err(|err| err.into())?;
     let response = parse_transfer_update_smt(transfer_update_smt, get_block_number()?);
     Ok(Value::Object(response))
 }

@@ -7,13 +7,13 @@ use crate::utils::error::Error;
 use cota_smt::common::*;
 use cota_smt::define::DefineCotaNFTEntriesBuilder;
 use cota_smt::molecule::prelude::*;
-use cota_smt::smt::H256;
+use cota_smt::smt::{blake2b_256, H256};
 use log::error;
 
-pub fn generate_define_smt(define_req: DefineReq) -> Result<(String, String), Error> {
-    let db = CotaRocksDB::new();
-    let mut smt = generate_history_smt(&db, define_req.lock_hash)?;
-    let db_defines = get_define_cota_by_lock_hash(define_req.lock_hash)?.0;
+pub async fn generate_define_smt(define_req: DefineReq) -> Result<(String, String), Error> {
+    let db = CotaRocksDB::default();
+    let mut smt = generate_history_smt(&db, define_req.lock_script.clone()).await?;
+    let db_defines = get_define_cota_by_lock_hash(blake2b_256(&define_req.lock_script.clone()))?.0;
     if !db_defines.is_empty() {
         for DefineDb {
             cota_id,

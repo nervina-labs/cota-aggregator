@@ -5,13 +5,13 @@ use crate::smt::db::cota_db::CotaRocksDB;
 use crate::utils::error::Error;
 use cota_smt::common::*;
 use cota_smt::molecule::prelude::*;
-use cota_smt::smt::H256;
+use cota_smt::smt::{blake2b_256, H256};
 use cota_smt::update::UpdateCotaNFTEntriesBuilder;
 use log::error;
 
-pub fn generate_update_smt(update_req: UpdateReq) -> Result<(String, String), Error> {
-    let db = CotaRocksDB::new();
-    let mut smt = generate_history_smt(&db, update_req.lock_hash)?;
+pub async fn generate_update_smt(update_req: UpdateReq) -> Result<(String, String), Error> {
+    let db = CotaRocksDB::default();
+    let mut smt = generate_history_smt(&db, update_req.lock_script.clone()).await?;
     let nfts = update_req.nfts;
     if nfts.is_empty() {
         return Err(Error::RequestParamNotFound("nfts".to_string()));
@@ -21,8 +21,11 @@ pub fn generate_update_smt(update_req: UpdateReq) -> Result<(String, String), Er
             .map(|nft| (nft.cota_id, nft.token_index))
             .collect(),
     );
-    let db_holds =
-        get_hold_cota_by_lock_hash(update_req.lock_hash, cota_id_and_token_index_pairs)?.0;
+    let db_holds = get_hold_cota_by_lock_hash(
+        blake2b_256(&update_req.lock_script.clone()),
+        cota_id_and_token_index_pairs,
+    )?
+    .0;
     if db_holds.is_empty() || db_holds.len() != nfts.len() {
         return Err(Error::CotaIdAndTokenIndexHasNotHeld);
     }

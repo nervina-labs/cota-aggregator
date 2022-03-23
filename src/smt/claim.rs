@@ -13,8 +13,8 @@ use cota_smt::smt::{blake2b_256, H256};
 use cota_smt::transfer::ClaimCotaNFTEntriesBuilder;
 use log::error;
 
-pub fn generate_claim_smt(claim_req: ClaimReq) -> Result<(String, String), Error> {
-    let claims = claim_req.clone().claims;
+pub async fn generate_claim_smt(claim_req: ClaimReq) -> Result<(String, String), Error> {
+    let claims = claim_req.claims.clone();
     let claims_len = claims.len();
     if claims_len == 0 {
         return Err(Error::RequestParamNotFound("claims".to_string()));
@@ -26,7 +26,7 @@ pub fn generate_claim_smt(claim_req: ClaimReq) -> Result<(String, String), Error
             .collect(),
     );
     let sender_withdrawals = get_withdrawal_cota_by_lock_hash(
-        claim_req.withdrawal_lock_hash,
+        blake2b_256(claim_req.withdrawal_lock_script.clone()),
         cota_id_and_token_index_pairs,
     )?
     .0;
@@ -36,14 +36,15 @@ pub fn generate_claim_smt(claim_req: ClaimReq) -> Result<(String, String), Error
 
     let mut hold_keys: Vec<CotaNFTId> = Vec::new();
     let mut hold_values: Vec<CotaNFTInfo> = Vec::new();
-    let db = CotaRocksDB::new();
-    let withdrawal_smt = generate_history_smt(&db, (&claim_req).withdrawal_lock_hash)?;
+    let db = CotaRocksDB::default();
+    let withdrawal_smt =
+        generate_history_smt(&db, claim_req.withdrawal_lock_script.clone()).await?;
     let mut withdrawal_update_leaves: Vec<(H256, H256)> = Vec::with_capacity(claims_len);
 
     let mut claim_keys: Vec<ClaimCotaNFTKey> = Vec::new();
     let mut key_vec: Vec<(H256, u8)> = Vec::new();
     let mut claim_values: Vec<Byte32> = Vec::new();
-    let mut claim_smt = generate_history_smt(&db, blake2b_256(&claim_req.lock_script))?;
+    let mut claim_smt = generate_history_smt(&db, claim_req.lock_script.clone()).await?;
     let mut claim_update_leaves: Vec<(H256, H256)> = Vec::with_capacity(claims_len * 2);
     for withdrawal in sender_withdrawals {
         let WithdrawDb {
@@ -63,7 +64,7 @@ pub fn generate_claim_smt(claim_req: ClaimReq) -> Result<(String, String), Error
                     configure,
                     state,
                     characteristic,
-                    claim_req.clone().lock_script,
+                    claim_req.lock_script.clone(),
                     out_point,
                 )
                 .1,
@@ -75,7 +76,7 @@ pub fn generate_claim_smt(claim_req: ClaimReq) -> Result<(String, String), Error
                     configure,
                     state,
                     characteristic,
-                    claim_req.clone().lock_script,
+                    claim_req.lock_script.clone(),
                 )
                 .1,
             )

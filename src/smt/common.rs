@@ -1,3 +1,4 @@
+use crate::indexer::index::get_cota_smt_root;
 use crate::models::claim::ClaimDb;
 use crate::models::common::get_all_cota_by_lock_hash;
 use crate::models::define::DefineDb;
@@ -18,24 +19,6 @@ use cota_smt::smt::{blake2b_256, Blake2bHasher, H256};
 use log::info;
 use sparse_merkle_tree::SparseMerkleTree;
 use std::collections::HashMap;
-
-pub type CotaSMT<'a> = SparseMerkleTree<Blake2bHasher, H256, SMTStore<'a>>;
-
-pub fn generate_smt(db: &CotaRocksDB, lock_hash: [u8; 32]) -> Result<CotaSMT, Error> {
-    let smt_store = SMTStore::new(
-        lock_hash,
-        COLUMN_SMT_LEAF,
-        COLUMN_SMT_BRANCH,
-        COLUMN_SMT_ROOT,
-        db,
-    );
-    let root = smt_store
-        .get_root()
-        .map_err(|_e| Error::SMTError("Get root".to_string()))?
-        .unwrap_or_default();
-    let smt: CotaSMT = CotaSMT::new(root, smt_store);
-    Ok(smt)
-}
 
 pub fn generate_define_key(cota_id: [u8; 20]) -> (DefineCotaNFTId, H256) {
     let cota_id = CotaId::from_slice(&cota_id).unwrap();
@@ -204,13 +187,41 @@ pub fn generate_empty_value() -> (Byte32, H256) {
     (empty_value, value)
 }
 
-pub fn generate_history_smt(db: &CotaRocksDB, lock_hash: [u8; 32]) -> Result<CotaSMT, Error> {
-    let start_time = Local::now().timestamp_millis();
-    let mut smt = generate_smt(db, lock_hash)?;
-    let (defines, holds, withdrawals, claims) = get_all_cota_by_lock_hash(lock_hash)?;
-    diff_time(start_time, "Load history smt leaves from database");
+pub type CotaSMT<'a> = SparseMerkleTree<Blake2bHasher, H256, SMTStore<'a>>;
 
+pub async fn generate_history_smt<'a>(
+    db: &'a CotaRocksDB,
+    lock_script: Vec<u8>,
+) -> Result<CotaSMT<'a>, Error> {
+    let lock_hash = blake2b_256(lock_script.clone());
+    let smt_store = SMTStore::new(
+        lock_hash,
+        COLUMN_SMT_LEAF,
+        COLUMN_SMT_BRANCH,
+        COLUMN_SMT_ROOT,
+        db,
+    );
+    let root = smt_store
+        .get_root()
+        .map_err(|_e| Error::SMTError("Get smt root".to_string()))?
+        .unwrap_or_default();
+    info!("db smt root: {:?}", root);
+    let smt: CotaSMT = CotaSMT::new(root, smt_store);
+    let smt_root_opt = get_cota_smt_root(lock_script.clone(), false).await?;
+    if let Some(smt_root) = smt_root_opt {
+        info!("cota cell smt root: {:?}", smt_root);
+        if smt_root.as_slice() == root.as_slice() {
+            return Ok(smt);
+        }
+    }
+    generate_mysql_smt(smt, lock_hash)
+}
+
+fn generate_mysql_smt<'a>(mut smt: CotaSMT<'a>, lock_hash: [u8; 32]) -> Result<CotaSMT<'a>, Error> {
     let start_time = Local::now().timestamp_millis();
+    let (defines, holds, withdrawals, claims) = get_all_cota_by_lock_hash(lock_hash)?;
+    let start_time = Local::now().timestamp_millis();
+
     info!("Define history leaves: {}", defines.len());
     for define_db in defines {
         let DefineDb {
@@ -296,6 +307,7 @@ pub fn generate_history_smt(db: &CotaRocksDB, lock_hash: [u8; 32]) -> Result<Cot
     smt.store()
         .save_root(smt.root())
         .expect("Save smt root error");
+    info!("latest smt root: {:?}", smt.root());
     diff_time(start_time, "Push claim history leaves to smt");
     Ok(smt)
 }

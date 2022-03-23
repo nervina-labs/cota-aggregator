@@ -12,10 +12,10 @@ use cota_smt::smt::{blake2b_256, H256};
 use cota_smt::transfer_update::TransferUpdateCotaNFTV1EntriesBuilder;
 use log::error;
 
-pub fn generate_transfer_update_smt(
+pub async fn generate_transfer_update_smt(
     transfer_update_req: TransferUpdateReq,
 ) -> Result<(String, String), Error> {
-    let transfers = transfer_update_req.clone().transfers;
+    let transfers = transfer_update_req.transfers.clone();
     let transfers_len = transfers.len();
     if transfers_len == 0 {
         return Err(Error::RequestParamNotFound("transfers".to_string()));
@@ -27,7 +27,7 @@ pub fn generate_transfer_update_smt(
             .collect(),
     );
     let sender_withdrawals = get_withdrawal_cota_by_lock_hash(
-        transfer_update_req.withdrawal_lock_hash,
+        blake2b_256(&transfer_update_req.withdrawal_lock_script),
         cota_id_and_token_index_pairs,
     )?
     .0;
@@ -55,10 +55,11 @@ pub fn generate_transfer_update_smt(
     let mut withdrawal_values: Vec<WithdrawalCotaNFTValueV1> = Vec::new();
     let mut transfer_update_leaves: Vec<(H256, H256)> = Vec::with_capacity(transfers_len * 2);
     let mut withdrawal_update_leaves: Vec<(H256, H256)> = Vec::with_capacity(transfers_len);
-    let db = CotaRocksDB::new();
+    let db = CotaRocksDB::default();
     let mut transfer_update_smt =
-        generate_history_smt(&db, blake2b_256(&transfer_update_req.lock_script))?;
-    let withdrawal_smt = generate_history_smt(&db, transfer_update_req.withdrawal_lock_hash)?;
+        generate_history_smt(&db, transfer_update_req.lock_script.clone()).await?;
+    let withdrawal_smt =
+        generate_history_smt(&db, transfer_update_req.withdrawal_lock_script.clone()).await?;
     for (withdrawal_db, transfer) in sender_withdrawals.into_iter().zip(transfers.clone()) {
         let WithdrawDb {
             cota_id,

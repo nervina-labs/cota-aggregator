@@ -8,13 +8,15 @@ use crate::smt::db::cota_db::CotaRocksDB;
 use crate::utils::error::Error;
 use cota_smt::common::*;
 use cota_smt::molecule::prelude::*;
-use cota_smt::smt::H256;
+use cota_smt::smt::{blake2b_256, H256};
 use cota_smt::transfer::WithdrawalCotaNFTV1EntriesBuilder;
 use log::error;
 
-pub fn generate_withdrawal_smt(withdrawal_req: WithdrawalReq) -> Result<(String, String), Error> {
-    let db = CotaRocksDB::new();
-    let mut smt = generate_history_smt(&db, withdrawal_req.lock_hash)?;
+pub async fn generate_withdrawal_smt(
+    withdrawal_req: WithdrawalReq,
+) -> Result<(String, String), Error> {
+    let db = CotaRocksDB::default();
+    let mut smt = generate_history_smt(&db, withdrawal_req.lock_script.clone()).await?;
     let withdrawals = withdrawal_req.withdrawals;
     if withdrawals.is_empty() {
         return Err(Error::RequestParamNotFound("withdrawals".to_string()));
@@ -25,8 +27,11 @@ pub fn generate_withdrawal_smt(withdrawal_req: WithdrawalReq) -> Result<(String,
             .map(|withdrawal| (withdrawal.cota_id, withdrawal.token_index))
             .collect(),
     );
-    let db_holds =
-        get_hold_cota_by_lock_hash(withdrawal_req.lock_hash, cota_id_and_token_index_pairs)?.0;
+    let db_holds = get_hold_cota_by_lock_hash(
+        blake2b_256(&withdrawal_req.lock_script.clone()),
+        cota_id_and_token_index_pairs,
+    )?
+    .0;
     if db_holds.is_empty() || db_holds.len() != withdrawals.len() {
         return Err(Error::CotaIdAndTokenIndexHasNotHeld);
     }

@@ -86,7 +86,7 @@ impl Error {
             Self::SMTProofError(msg) => format!("'{}' SMT proof error", msg),
             Self::SMTError(_) => "Internal error".into(),
             Self::RocksDBError(_) => "Internal error".into(),
-            Self::Other(_) => "Internal error".into(),
+            Self::Other(msg) => format!("Internal error: {:}", msg),
         }
     }
 }

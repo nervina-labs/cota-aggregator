@@ -13,10 +13,10 @@ use cota_smt::smt::{blake2b_256, H256};
 use cota_smt::transfer_update::ClaimUpdateCotaNFTEntriesBuilder;
 use log::error;
 
-pub fn generate_claim_update_smt(
+pub async fn generate_claim_update_smt(
     claim_update_req: ClaimUpdateReq,
 ) -> Result<(String, String), Error> {
-    let nfts = claim_update_req.clone().nfts;
+    let nfts = claim_update_req.nfts.clone();
     let nfts_len = nfts.len();
     if nfts_len == 0 {
         return Err(Error::RequestParamNotFound("nfts".to_string()));
@@ -27,7 +27,7 @@ pub fn generate_claim_update_smt(
             .collect(),
     );
     let sender_withdrawals = get_withdrawal_cota_by_lock_hash(
-        claim_update_req.withdrawal_lock_hash,
+        blake2b_256(claim_update_req.withdrawal_lock_script.clone()),
         cota_id_and_token_index_pairs,
     )?
     .0;
@@ -37,15 +37,16 @@ pub fn generate_claim_update_smt(
 
     let mut hold_keys: Vec<CotaNFTId> = Vec::new();
     let mut hold_values: Vec<CotaNFTInfo> = Vec::new();
-    let db = CotaRocksDB::new();
-    let withdrawal_smt = generate_history_smt(&db, (&claim_update_req).withdrawal_lock_hash)?;
+    let db = CotaRocksDB::default();
+    let withdrawal_smt =
+        generate_history_smt(&db, claim_update_req.withdrawal_lock_script.clone()).await?;
     let mut withdrawal_update_leaves: Vec<(H256, H256)> = Vec::with_capacity(nfts_len);
 
     let mut claim_keys: Vec<ClaimCotaNFTKey> = Vec::new();
     let mut key_vec: Vec<(H256, u8)> = Vec::new();
     let mut claim_values: Vec<Byte32> = Vec::new();
     let mut claim_infos: Vec<ClaimCotaNFTInfo> = Vec::new();
-    let mut claim_smt = generate_history_smt(&db, blake2b_256(&claim_update_req.lock_script))?;
+    let mut claim_smt = generate_history_smt(&db, claim_update_req.lock_script.clone()).await?;
     let mut claim_update_leaves: Vec<(H256, H256)> = Vec::with_capacity(nfts_len * 2);
     for (index, withdrawal) in sender_withdrawals.into_iter().enumerate() {
         let WithdrawDb {
@@ -65,7 +66,7 @@ pub fn generate_claim_update_smt(
                     configure,
                     state,
                     characteristic,
-                    claim_update_req.clone().lock_script,
+                    claim_update_req.lock_script.clone(),
                     out_point,
                 )
                 .1,
@@ -77,7 +78,7 @@ pub fn generate_claim_update_smt(
                     configure,
                     state,
                     characteristic,
-                    claim_update_req.clone().lock_script,
+                    claim_update_req.lock_script.clone(),
                 )
                 .1,
             )

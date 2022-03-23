@@ -1,9 +1,7 @@
 use crate::models::define::{get_define_cota_by_lock_hash_and_cota_id, DefineDb};
 use crate::request::mint::{MintReq, MintWithdrawal};
-use crate::smt::common::{generate_define_key, generate_define_value};
-use crate::smt::common::{
-    generate_history_smt, generate_withdrawal_key_v1, generate_withdrawal_value_v1,
-};
+use crate::smt::common::{generate_define_key, generate_define_value, generate_history_smt};
+use crate::smt::common::{generate_withdrawal_key_v1, generate_withdrawal_value_v1};
 use crate::smt::db::cota_db::CotaRocksDB;
 use crate::utils::error::Error;
 use crate::utils::helper::diff_time;
@@ -11,16 +9,19 @@ use chrono::prelude::*;
 use cota_smt::common::*;
 use cota_smt::mint::MintCotaNFTV1EntriesBuilder;
 use cota_smt::molecule::prelude::*;
-use cota_smt::smt::H256;
+use cota_smt::smt::{blake2b_256, H256};
 use log::error;
 
-pub fn generate_mint_smt(mint_req: MintReq) -> Result<(String, String), Error> {
-    let withdrawals = mint_req.withdrawals;
+pub async fn generate_mint_smt(mint_req: MintReq) -> Result<(String, String), Error> {
+    let withdrawals = mint_req.withdrawals.clone();
     let withdrawals_len = withdrawals.len();
     if withdrawals_len == 0 {
         return Err(Error::RequestParamNotFound("withdrawals".to_string()));
     }
-    let db_define = get_define_cota_by_lock_hash_and_cota_id(mint_req.lock_hash, mint_req.cota_id)?;
+    let db_define = get_define_cota_by_lock_hash_and_cota_id(
+        blake2b_256(&mint_req.lock_script),
+        mint_req.cota_id,
+    )?;
     if db_define.is_none() {
         let cota_id_hex = hex::encode(mint_req.cota_id);
         return Err(Error::CotaIdHasNotDefined(cota_id_hex));
@@ -30,8 +31,8 @@ pub fn generate_mint_smt(mint_req: MintReq) -> Result<(String, String), Error> {
     let mut define_new_values: Vec<DefineCotaNFTValue> = Vec::new();
     let mut withdrawal_keys: Vec<WithdrawalCotaNFTKeyV1> = Vec::new();
     let mut withdrawal_values: Vec<WithdrawalCotaNFTValueV1> = Vec::new();
-    let db = CotaRocksDB::new();
-    let mut smt = generate_history_smt(&db, mint_req.lock_hash)?;
+    let db = CotaRocksDB::default();
+    let mut smt = generate_history_smt(&db, mint_req.lock_script.clone()).await?;
     let mut update_leaves: Vec<(H256, H256)> = Vec::with_capacity(withdrawals_len + 1);
     let DefineDb {
         cota_id,
