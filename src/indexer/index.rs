@@ -2,6 +2,7 @@ use crate::utils::error::Error;
 use ckb_jsonrpc_types::{BlockNumber, CellOutput, JsonBytes, OutPoint, Uint32};
 use ckb_types::packed::Script;
 use ckb_types::prelude::Entity;
+use dotenv::dotenv;
 use serde::Deserialize;
 use serde_json::{from_str, json, Map, Value};
 use std::env;
@@ -12,6 +13,8 @@ const MAINNET_COTA_CODE_HASH: &str =
     "0x1122a4fb54697cf2e6e3a96c9d80fd398a936559b90954c6e88eb7ba0cf652df";
 
 pub async fn get_cota_smt_root(lock_script: Vec<u8>) -> Result<Option<Vec<u8>>, Error> {
+    dotenv().ok();
+
     let ckb_indexer_url =
         env::var("CKB_INDEXER").map_err(|_e| Error::Other("CKB_INDEXER must be set".to_owned()))?;
 
@@ -59,6 +62,8 @@ pub async fn get_cota_smt_root(lock_script: Vec<u8>) -> Result<Option<Vec<u8>>, 
 }
 
 fn generate_params(lock_script: Vec<u8>) -> Result<Value, Error> {
+    dotenv().ok();
+
     let lock = Script::from_slice(&lock_script)
         .map_err(|_e| Error::Other("Lock script foramt error".to_owned()))?;
     let hash_type = match lock.hash_type().into() {

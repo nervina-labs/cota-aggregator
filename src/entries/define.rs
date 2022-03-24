@@ -1,4 +1,4 @@
-use crate::entries::helper::{generate_define_key, generate_define_value};
+use crate::entries::helper::{generate_define_key, generate_define_value, save_smt_root_and_keys};
 use crate::models::define::{get_define_cota_by_lock_hash, DefineDb};
 use crate::request::define::DefineReq;
 use crate::smt::db::cota_db::CotaRocksDB;
@@ -50,12 +50,12 @@ pub async fn generate_define_smt(define_req: DefineReq) -> Result<(String, Strin
     root_hash_bytes.copy_from_slice(root_hash.as_slice());
     let root_hash_hex = hex::encode(root_hash_bytes);
 
-    let define_merkle_proof = smt
-        .merkle_proof(update_leaves.iter().map(|leave| leave.0).collect())
-        .map_err(|e| {
-            error!("Define SMT proof error: {:?}", e.to_string());
-            Error::SMTProofError("Mint".to_string())
-        })?;
+    let update_keys: Vec<H256> = update_leaves.iter().map(|leave| leave.0).collect();
+    save_smt_root_and_keys(&smt, "Define", Some(update_keys.clone()));
+    let define_merkle_proof = smt.merkle_proof(update_keys).map_err(|e| {
+        error!("Define SMT proof error: {:?}", e.to_string());
+        Error::SMTProofError("Mint".to_string())
+    })?;
     let define_merkle_proof_compiled =
         define_merkle_proof
             .compile(update_leaves.clone())

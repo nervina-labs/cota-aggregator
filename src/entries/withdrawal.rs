@@ -1,6 +1,6 @@
 use crate::entries::helper::{
     generate_empty_value, generate_hold_key, generate_hold_value, generate_withdrawal_key_v1,
-    generate_withdrawal_value_v1,
+    generate_withdrawal_value_v1, save_smt_root_and_keys,
 };
 use crate::models::hold::get_hold_cota_by_lock_hash;
 use crate::request::withdrawal::WithdrawalReq;
@@ -76,6 +76,8 @@ pub async fn generate_withdrawal_smt(
     root_hash_bytes.copy_from_slice(root_hash.as_slice());
     let root_hash_hex = hex::encode(root_hash_bytes);
 
+    let update_keys: Vec<H256> = update_leaves.iter().map(|leave| leave.0).collect();
+    save_smt_root_and_keys(&smt, "Withdrawal", Some(update_keys.clone()));
     let withdrawal_merkle_proof = smt
         .merkle_proof(update_leaves.iter().map(|leave| leave.0).collect())
         .map_err(|e| {

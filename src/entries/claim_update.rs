@@ -1,7 +1,7 @@
 use crate::entries::helper::{
     generate_claim_key, generate_claim_value, generate_hold_key, generate_hold_value,
     generate_withdrawal_key, generate_withdrawal_key_v1, generate_withdrawal_value,
-    generate_withdrawal_value_v1,
+    generate_withdrawal_value_v1, save_smt_root_and_keys,
 };
 use crate::models::withdrawal::{get_withdrawal_cota_by_lock_hash, WithdrawDb};
 use crate::request::claim::ClaimUpdateReq;
@@ -112,6 +112,7 @@ pub async fn generate_claim_update_smt(
         claim_keys.push(claim_key);
         key_vec.push((key, version));
     }
+    save_smt_root_and_keys(&withdrawal_smt, "Withdrawal of claim_update", None);
     let withdraw_merkle_proof = withdrawal_smt
         .merkle_proof(
             withdrawal_update_leaves
@@ -148,12 +149,12 @@ pub async fn generate_claim_update_smt(
     root_hash_bytes.copy_from_slice(claim_update_root_hash.as_slice());
     let claim_update_root_hash_hex = hex::encode(root_hash_bytes);
 
-    let claim_update_merkle_proof = claim_smt
-        .merkle_proof(claim_update_leaves.iter().map(|leave| leave.0).collect())
-        .map_err(|e| {
-            error!("Claim update SMT proof error: {:?}", e.to_string());
-            Error::SMTProofError("ClaimUpdate".to_string())
-        })?;
+    let update_keys: Vec<H256> = claim_update_leaves.iter().map(|leave| leave.0).collect();
+    save_smt_root_and_keys(&claim_smt, "Claim_update", Some(update_keys.clone()));
+    let claim_update_merkle_proof = claim_smt.merkle_proof(update_keys).map_err(|e| {
+        error!("Claim update SMT proof error: {:?}", e.to_string());
+        Error::SMTProofError("ClaimUpdate".to_string())
+    })?;
     let claim_update_merkle_proof_compiled = claim_update_merkle_proof
         .compile(claim_update_leaves.clone())
         .map_err(|e| {

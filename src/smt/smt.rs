@@ -1,7 +1,8 @@
 use crate::entries::helper::{
     generate_claim_key, generate_claim_value, generate_cota_index, generate_define_key,
-    generate_define_value, generate_hold_key, generate_hold_value, generate_withdrawal_key,
-    generate_withdrawal_key_v1, generate_withdrawal_value, generate_withdrawal_value_v1,
+    generate_define_value, generate_empty_value, generate_hold_key, generate_hold_value,
+    generate_withdrawal_key, generate_withdrawal_key_v1, generate_withdrawal_value,
+    generate_withdrawal_value_v1,
 };
 use crate::indexer::index::get_cota_smt_root;
 use crate::models::claim::ClaimDb;
@@ -53,6 +54,7 @@ pub async fn generate_history_smt<'a>(
     );
     if let Some(smt_root) = smt_root_opt {
         if smt_root.as_slice() == root.as_slice() {
+            smt.store().batch_delete_with_prefix();
             return Ok(smt);
         }
     }
@@ -60,6 +62,16 @@ pub async fn generate_history_smt<'a>(
 }
 
 fn generate_mysql_smt<'a>(mut smt: CotaSMT<'a>, lock_hash: [u8; 32]) -> Result<CotaSMT<'a>, Error> {
+    let start_time = Local::now().timestamp_millis();
+    let temp_keys = smt.store().get_keys_with_prefix();
+    for temp_key in temp_keys {
+        smt.update(temp_key, generate_empty_value().1);
+    }
+    diff_time(
+        start_time,
+        "Push all temp smt leaves from rocks db to smt object",
+    );
+
     let start_time = Local::now().timestamp_millis();
     let (defines, holds, withdrawals, claims) = get_all_cota_by_lock_hash(lock_hash)?;
     diff_time(
@@ -149,10 +161,6 @@ fn generate_mysql_smt<'a>(mut smt: CotaSMT<'a>, lock_hash: [u8; 32]) -> Result<C
         let (_, value) = generate_claim_value(version);
         smt.update(key, value).expect("SMT update leave error");
     }
-    smt.store()
-        .save_root(smt.root())
-        .expect("Save smt root error");
-    debug!("latest smt root: {:?}", smt.root());
     diff_time(start_time, "Push claim history leaves to smt");
     Ok(smt)
 }

@@ -1,6 +1,6 @@
 use crate::entries::helper::{
     generate_claim_key, generate_claim_value, generate_withdrawal_key, generate_withdrawal_key_v1,
-    generate_withdrawal_value, generate_withdrawal_value_v1,
+    generate_withdrawal_value, generate_withdrawal_value_v1, save_smt_root_and_keys,
 };
 use crate::models::withdrawal::{get_withdrawal_cota_by_lock_hash, WithdrawDb};
 use crate::request::transfer::TransferReq;
@@ -130,12 +130,12 @@ pub async fn generate_transfer_smt(transfer_req: TransferReq) -> Result<(String,
     let transfer_root_hash_hex = hex::encode(root_hash_bytes);
 
     let start_time = Local::now().timestamp_millis();
-    let transfer_merkle_proof = transfer_smt
-        .merkle_proof(transfer_update_leaves.iter().map(|leave| leave.0).collect())
-        .map_err(|e| {
-            error!("Transfer SMT proof error: {:?}", e.to_string());
-            Error::SMTProofError("Transfer".to_string())
-        })?;
+    let update_keys: Vec<H256> = transfer_update_leaves.iter().map(|leave| leave.0).collect();
+    save_smt_root_and_keys(&transfer_smt, "Transfer", Some(update_keys.clone()));
+    let transfer_merkle_proof = transfer_smt.merkle_proof(update_keys).map_err(|e| {
+        error!("Transfer SMT proof error: {:?}", e.to_string());
+        Error::SMTProofError("Transfer".to_string())
+    })?;
     let transfer_merkle_proof_compiled = transfer_merkle_proof
         .compile(transfer_update_leaves.clone())
         .map_err(|e| {
@@ -150,6 +150,7 @@ pub async fn generate_transfer_smt(transfer_req: TransferReq) -> Result<(String,
         .build();
 
     let start_time = Local::now().timestamp_millis();
+    save_smt_root_and_keys(&withdrawal_smt, "Withdrawal of transfer", None);
     let withdrawal_merkle_proof = withdrawal_smt
         .merkle_proof(
             withdrawal_update_leaves
