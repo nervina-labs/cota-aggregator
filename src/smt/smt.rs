@@ -45,7 +45,7 @@ pub async fn generate_history_smt<'a>(
         hex::encode(lock_hash)
     );
     let smt: CotaSMT = CotaSMT::new(root, smt_store);
-    let smt_root_opt = get_cota_smt_root(lock_script.clone(), false).await?;
+    let smt_root_opt = get_cota_smt_root(lock_script.clone()).await?;
     debug!(
         "cota cell smt root: {:?} of {:?}",
         smt_root_opt,

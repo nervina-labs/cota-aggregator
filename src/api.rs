@@ -32,6 +32,7 @@ use jsonrpc_http_server::jsonrpc_core::{Error, Params, Value};
 use log::info;
 
 pub async fn define_rpc(params: Params) -> Result<Value, Error> {
+    info!("Define request: {:?}", params);
     let map: Map<String, Value> = Params::parse(params)?;
     let define_req = DefineReq::from_map(&map).map_err(|err| err.into())?;
     let define_smt = generate_define_smt(define_req)
@@ -42,6 +43,7 @@ pub async fn define_rpc(params: Params) -> Result<Value, Error> {
 }
 
 pub async fn mint_rpc(params: Params) -> Result<Value, Error> {
+    info!("Mint request: {:?}", params);
     let map: Map<String, Value> = Params::parse(params)?;
     let mint_req = MintReq::from_map(&map).map_err(|err| err.into())?;
     let mint_smt = generate_mint_smt(mint_req)
@@ -52,6 +54,7 @@ pub async fn mint_rpc(params: Params) -> Result<Value, Error> {
 }
 
 pub async fn withdrawal_rpc(params: Params) -> Result<Value, Error> {
+    info!("Withdrawal request: {:?}", params);
     let map: Map<String, Value> = Params::parse(params)?;
     let withdrawal_req = WithdrawalReq::from_map(&map).map_err(|err| err.into())?;
     let withdrawal_smt = generate_withdrawal_smt(withdrawal_req)
@@ -62,6 +65,7 @@ pub async fn withdrawal_rpc(params: Params) -> Result<Value, Error> {
 }
 
 pub async fn claim_rpc(params: Params) -> Result<Value, Error> {
+    info!("Claim request: {:?}", params);
     let map: Map<String, Value> = Params::parse(params)?;
     let claim_req = ClaimReq::from_map(&map).map_err(|err| err.into())?;
     let claim_smt = generate_claim_smt(claim_req)
@@ -72,6 +76,7 @@ pub async fn claim_rpc(params: Params) -> Result<Value, Error> {
 }
 
 pub async fn update_rpc(params: Params) -> Result<Value, Error> {
+    info!("Update request: {:?}", params);
     let map: Map<String, Value> = Params::parse(params)?;
     let update_req = UpdateReq::from_map(&map).map_err(|err| err.into())?;
     let update_smt = generate_update_smt(update_req)
@@ -93,6 +98,7 @@ pub async fn transfer_rpc(params: Params) -> Result<Value, Error> {
 }
 
 pub async fn claim_update_rpc(params: Params) -> Result<Value, Error> {
+    info!("Claim & Update request: {:?}", params);
     let map: Map<String, Value> = Params::parse(params)?;
     let claim_update_req = ClaimUpdateReq::from_map(&map).map_err(|err| err.into())?;
     let claim_update_smt = generate_claim_update_smt(claim_update_req)
@@ -103,6 +109,7 @@ pub async fn claim_update_rpc(params: Params) -> Result<Value, Error> {
 }
 
 pub async fn transfer_update_rpc(params: Params) -> Result<Value, Error> {
+    info!("Transfer & Update request: {:?}", params);
     let map: Map<String, Value> = Params::parse(params)?;
     let transfer_update_req = TransferUpdateReq::from_map(&map).map_err(|err| err.into())?;
     let transfer_update_smt = generate_transfer_update_smt(transfer_update_req)
@@ -113,6 +120,7 @@ pub async fn transfer_update_rpc(params: Params) -> Result<Value, Error> {
 }
 
 pub async fn fetch_hold_rpc(params: Params) -> Result<Value, Error> {
+    info!("Fetch hold request: {:?}", params);
     let map: Map<String, Value> = Params::parse(params)?;
     let FetchReq {
         lock_script,
@@ -126,6 +134,7 @@ pub async fn fetch_hold_rpc(params: Params) -> Result<Value, Error> {
 }
 
 pub async fn fetch_withdrawal_rpc(params: Params) -> Result<Value, Error> {
+    info!("Fetch withdrawal request: {:?}", params);
     let map: Map<String, Value> = Params::parse(params)?;
     let FetchReq {
         lock_script,
@@ -139,6 +148,7 @@ pub async fn fetch_withdrawal_rpc(params: Params) -> Result<Value, Error> {
 }
 
 pub async fn fetch_mint_rpc(params: Params) -> Result<Value, Error> {
+    info!("Fetch mint request: {:?}", params);
     let map: Map<String, Value> = Params::parse(params)?;
     let FetchReq {
         lock_script,
@@ -152,6 +162,7 @@ pub async fn fetch_mint_rpc(params: Params) -> Result<Value, Error> {
 }
 
 pub async fn is_claimed_rpc(params: Params) -> Result<Value, Error> {
+    info!("Is claimed request: {:?}", params);
     let map: Map<String, Value> = Params::parse(params)?;
     let IsClaimedReq {
         lock_hash,

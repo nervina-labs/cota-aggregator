@@ -3,7 +3,7 @@ use ckb_jsonrpc_types::{BlockNumber, CellOutput, JsonBytes, OutPoint, Uint32};
 use ckb_types::packed::Script;
 use ckb_types::prelude::Entity;
 use serde::Deserialize;
-use serde_json::{json, Map, Value};
+use serde_json::{from_str, json, Map, Value};
 use std::env;
 
 const TESTNET_COTA_CODE_HASH: &str =
@@ -11,10 +11,7 @@ const TESTNET_COTA_CODE_HASH: &str =
 const MAINNET_COTA_CODE_HASH: &str =
     "0x1122a4fb54697cf2e6e3a96c9d80fd398a936559b90954c6e88eb7ba0cf652df";
 
-pub async fn get_cota_smt_root(
-    lock_script: Vec<u8>,
-    is_mainnet: bool,
-) -> Result<Option<Vec<u8>>, Error> {
+pub async fn get_cota_smt_root(lock_script: Vec<u8>) -> Result<Option<Vec<u8>>, Error> {
     let ckb_indexer_url =
         env::var("CKB_INDEXER").map_err(|_e| Error::Other("CKB_INDEXER must be set".to_owned()))?;
 
@@ -22,10 +19,7 @@ pub async fn get_cota_smt_root(
     req_json.insert("id".to_owned(), json!("1"));
     req_json.insert("jsonrpc".to_owned(), json!("2.0"));
     req_json.insert("method".to_owned(), json!("get_cells"));
-    req_json.insert(
-        "params".to_owned(),
-        generate_params(lock_script, is_mainnet)?,
-    );
+    req_json.insert("params".to_owned(), generate_params(lock_script)?);
 
     let client = reqwest::Client::new();
 
@@ -43,27 +37,28 @@ pub async fn get_cota_smt_root(
     let result: CellPagination = match output {
         jsonrpc_core::response::Output::Success(success) => {
             serde_json::from_value::<CellPagination>(success.result)
-                .map_err(|_e| Error::Other("Parse response error".to_owned()))
+                .map_err(|_e| Error::CKBIndexerError("Parse response error".to_owned()))
         }
-        jsonrpc_core::response::Output::Failure(failure) => Err(Error::Other(format!(
-            "CKB Indexer rpc error: {:?}",
-            failure.error.message
-        ))),
+        jsonrpc_core::response::Output::Failure(failure) => {
+            Err(Error::CKBIndexerError(failure.error.message))
+        }
     }?;
     if result.objects.is_empty() {
-        return Err(Error::Other("CKB Indexer response empty".to_owned()));
+        return Err(Error::CKBIndexerError(
+            "CoTA live cells should not empty".to_owned(),
+        ));
     }
     let cell_data = result.objects.first().unwrap().output_data.as_bytes();
     match cell_data.len() {
         1 => Ok(None),
         33 => Ok(Some(cell_data[1..].to_vec())),
-        _ => Err(Error::Other(
-            "CKB Indexer cota cell length error".to_owned(),
+        _ => Err(Error::CKBIndexerError(
+            "CoTA cell data length error".to_owned(),
         )),
     }
 }
 
-fn generate_params(lock_script: Vec<u8>, is_mainnet: bool) -> Result<Value, Error> {
+fn generate_params(lock_script: Vec<u8>) -> Result<Value, Error> {
     let lock = Script::from_slice(&lock_script)
         .map_err(|_e| Error::Other("Lock script foramt error".to_owned()))?;
     let hash_type = match lock.hash_type().into() {
@@ -71,6 +66,10 @@ fn generate_params(lock_script: Vec<u8>, is_mainnet: bool) -> Result<Value, Erro
         1u8 => "type",
         2u8 => "data1",
         _ => "0",
+    };
+    let is_mainnet: bool = match env::var("IS_MAINNET") {
+        Ok(mainnet) => from_str::<bool>(&mainnet).unwrap(),
+        Err(_e) => false,
     };
     let code_hash = if is_mainnet {
         MAINNET_COTA_CODE_HASH
