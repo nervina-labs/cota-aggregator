@@ -2,10 +2,8 @@ use crate::utils::error::Error;
 use ckb_jsonrpc_types::{BlockNumber, CellOutput, JsonBytes, OutPoint, Uint32};
 use ckb_types::packed::Script;
 use ckb_types::prelude::Entity;
-use log::info;
 use serde::Deserialize;
 use serde_json::{json, Map, Value};
-use sparse_merkle_tree::H256;
 use std::env;
 
 const TESTNET_COTA_CODE_HASH: &str =
@@ -103,15 +101,20 @@ fn generate_params(lock_script: Vec<u8>, is_mainnet: bool) -> Result<Value, Erro
 
 #[derive(Deserialize)]
 struct Cell {
-    output:       CellOutput,
-    output_data:  JsonBytes,
-    out_point:    OutPoint,
-    block_number: BlockNumber,
-    tx_index:     Uint32,
+    #[serde(skip_deserializing)]
+    _output:       CellOutput,
+    output_data:   JsonBytes,
+    #[serde(skip_deserializing)]
+    _out_point:    OutPoint,
+    #[serde(skip_deserializing)]
+    _block_number: BlockNumber,
+    #[serde(skip_deserializing)]
+    _tx_index:     Uint32,
 }
 
 #[derive(Deserialize)]
 struct CellPagination {
-    objects:     Vec<Cell>,
-    last_cursor: JsonBytes,
+    objects:      Vec<Cell>,
+    #[serde(skip_deserializing)]
+    _last_cursor: JsonBytes,
 }

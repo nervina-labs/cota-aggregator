@@ -1,12 +1,12 @@
-use crate::indexer::index::get_cota_smt_root;
 use crate::models::withdrawal::{get_withdrawal_cota_by_lock_hash, WithdrawDb};
 use crate::request::transfer::TransferReq;
 use crate::request::withdrawal::TransferWithdrawal;
-use crate::smt::common::{
-    generate_claim_key, generate_claim_value, generate_history_smt, generate_withdrawal_key,
-    generate_withdrawal_key_v1, generate_withdrawal_value, generate_withdrawal_value_v1,
-};
 use crate::smt::db::cota_db::CotaRocksDB;
+use crate::smt::helper::{
+    generate_claim_key, generate_claim_value, generate_withdrawal_key, generate_withdrawal_key_v1,
+    generate_withdrawal_value, generate_withdrawal_value_v1,
+};
+use crate::smt::smt::generate_history_smt;
 use crate::utils::error::Error;
 use crate::utils::helper::diff_time;
 use chrono::prelude::*;
@@ -14,7 +14,7 @@ use cota_smt::common::*;
 use cota_smt::molecule::prelude::*;
 use cota_smt::smt::{blake2b_256, H256};
 use cota_smt::transfer::TransferCotaNFTV1EntriesBuilder;
-use log::{error, info};
+use log::error;
 
 pub async fn generate_transfer_smt(transfer_req: TransferReq) -> Result<(String, String), Error> {
     let transfers = transfer_req.transfers.clone();

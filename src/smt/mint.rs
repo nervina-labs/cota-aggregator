@@ -1,8 +1,9 @@
 use crate::models::define::{get_define_cota_by_lock_hash_and_cota_id, DefineDb};
 use crate::request::mint::{MintReq, MintWithdrawal};
-use crate::smt::common::{generate_define_key, generate_define_value, generate_history_smt};
-use crate::smt::common::{generate_withdrawal_key_v1, generate_withdrawal_value_v1};
 use crate::smt::db::cota_db::CotaRocksDB;
+use crate::smt::helper::{generate_define_key, generate_define_value};
+use crate::smt::helper::{generate_withdrawal_key_v1, generate_withdrawal_value_v1};
+use crate::smt::smt::generate_history_smt;
 use crate::utils::error::Error;
 use crate::utils::helper::diff_time;
 use chrono::prelude::*;
