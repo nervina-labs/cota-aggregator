@@ -1,3 +1,8 @@
+use crate::entries::helper::{
+    generate_claim_key, generate_claim_value, generate_cota_index, generate_define_key,
+    generate_define_value, generate_hold_key, generate_hold_value, generate_withdrawal_key,
+    generate_withdrawal_key_v1, generate_withdrawal_value, generate_withdrawal_value_v1,
+};
 use crate::indexer::index::get_cota_smt_root;
 use crate::models::claim::ClaimDb;
 use crate::models::common::get_all_cota_by_lock_hash;
@@ -6,11 +11,6 @@ use crate::models::hold::HoldDb;
 use crate::models::withdrawal::WithdrawDb;
 use crate::smt::db::cota_db::CotaRocksDB;
 use crate::smt::db::schema::{COLUMN_SMT_BRANCH, COLUMN_SMT_LEAF, COLUMN_SMT_ROOT};
-use crate::smt::helper::{
-    generate_claim_key, generate_claim_value, generate_cota_index, generate_define_key,
-    generate_define_value, generate_hold_key, generate_hold_value, generate_withdrawal_key,
-    generate_withdrawal_key_v1, generate_withdrawal_value, generate_withdrawal_value_v1,
-};
 use crate::smt::store::smt_store::SMTStore;
 use crate::utils::error::Error;
 use crate::utils::helper::diff_time;

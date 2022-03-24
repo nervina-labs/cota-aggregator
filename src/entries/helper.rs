@@ -1,4 +1,4 @@
-use crate::smt::constants::{
+use crate::entries::constants::{
     CLAIM_NFT_SMT_TYPE, DEFINE_NFT_SMT_TYPE, HOLD_NFT_SMT_TYPE, WITHDRAWAL_NFT_SMT_TYPE,
 };
 use cota_smt::common::{Uint16, Uint32, *};

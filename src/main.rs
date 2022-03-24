@@ -10,6 +10,7 @@ use log::info;
 use std::env;
 
 pub mod api;
+mod entries;
 mod indexer;
 mod models;
 mod request;

@@ -1,22 +1,23 @@
-use crate::models::withdrawal::{get_withdrawal_cota_by_lock_hash, WithdrawDb};
-use crate::request::transfer::{TransferUpdate, TransferUpdateReq};
-use crate::smt::db::cota_db::CotaRocksDB;
-use crate::smt::helper::{
+use crate::entries::helper::{
     generate_claim_key, generate_claim_value, generate_withdrawal_key, generate_withdrawal_key_v1,
     generate_withdrawal_value, generate_withdrawal_value_v1,
 };
+use crate::models::withdrawal::{get_withdrawal_cota_by_lock_hash, WithdrawDb};
+use crate::request::transfer::TransferReq;
+use crate::request::withdrawal::TransferWithdrawal;
+use crate::smt::db::cota_db::CotaRocksDB;
 use crate::smt::smt::generate_history_smt;
 use crate::utils::error::Error;
+use crate::utils::helper::diff_time;
+use chrono::prelude::*;
 use cota_smt::common::*;
 use cota_smt::molecule::prelude::*;
 use cota_smt::smt::{blake2b_256, H256};
-use cota_smt::transfer_update::TransferUpdateCotaNFTV1EntriesBuilder;
+use cota_smt::transfer::TransferCotaNFTV1EntriesBuilder;
 use log::error;
 
-pub async fn generate_transfer_update_smt(
-    transfer_update_req: TransferUpdateReq,
-) -> Result<(String, String), Error> {
-    let transfers = transfer_update_req.transfers.clone();
+pub async fn generate_transfer_smt(transfer_req: TransferReq) -> Result<(String, String), Error> {
+    let transfers = transfer_req.transfers.clone();
     let transfers_len = transfers.len();
     if transfers_len == 0 {
         return Err(Error::RequestParamNotFound("transfers".to_string()));
@@ -28,7 +29,7 @@ pub async fn generate_transfer_update_smt(
             .collect(),
     );
     let sender_withdrawals = get_withdrawal_cota_by_lock_hash(
-        blake2b_256(&transfer_update_req.withdrawal_lock_script),
+        blake2b_256(transfer_req.withdrawal_lock_script.clone()),
         cota_id_and_token_index_pairs,
     )?
     .0;
@@ -43,7 +44,6 @@ pub async fn generate_transfer_update_smt(
         action_vec.extend(&sender_withdrawals.first().unwrap().token_index);
         action_vec.extend(" to ".as_bytes());
         action_vec.extend(&transfers.first().unwrap().to_lock_script);
-        action_vec.extend(" and update the NFT information".as_bytes());
     }
     let action_bytes = BytesBuilder::default()
         .set(action_vec.iter().map(|v| Byte::from(*v)).collect())
@@ -51,16 +51,15 @@ pub async fn generate_transfer_update_smt(
 
     let mut claimed_keys: Vec<ClaimCotaNFTKey> = Vec::new();
     let mut claimed_values: Vec<Byte32> = Vec::new();
-    let mut claimed_infos: Vec<ClaimCotaNFTInfo> = Vec::new();
     let mut withdrawal_keys: Vec<WithdrawalCotaNFTKeyV1> = Vec::new();
     let mut withdrawal_values: Vec<WithdrawalCotaNFTValueV1> = Vec::new();
     let mut transfer_update_leaves: Vec<(H256, H256)> = Vec::with_capacity(transfers_len * 2);
     let mut withdrawal_update_leaves: Vec<(H256, H256)> = Vec::with_capacity(transfers_len);
     let db = CotaRocksDB::default();
-    let mut transfer_update_smt =
-        generate_history_smt(&db, transfer_update_req.lock_script.clone()).await?;
+    let mut transfer_smt = generate_history_smt(&db, transfer_req.lock_script.clone()).await?;
     let withdrawal_smt =
-        generate_history_smt(&db, transfer_update_req.withdrawal_lock_script.clone()).await?;
+        generate_history_smt(&db, transfer_req.withdrawal_lock_script.clone()).await?;
+    let start_time = Local::now().timestamp_millis();
     for (withdrawal_db, transfer) in sender_withdrawals.into_iter().zip(transfers.clone()) {
         let WithdrawDb {
             cota_id,
@@ -72,18 +71,7 @@ pub async fn generate_transfer_update_smt(
             version,
             ..
         } = withdrawal_db;
-        let nft_info = CotaNFTInfoBuilder::default()
-            .characteristic(Characteristic::from_slice(&characteristic).unwrap())
-            .configure(Byte::from(configure))
-            .state(Byte::from(state))
-            .build();
-        let claimed_info = ClaimCotaNFTInfoBuilder::default()
-            .nft_info(nft_info)
-            .version(Byte::from(version))
-            .build();
-        claimed_infos.push(claimed_info);
-
-        let TransferUpdate { to_lock_script, .. } = transfer;
+        let TransferWithdrawal { to_lock_script, .. } = transfer;
 
         let (key, value) = if version == 0 {
             (
@@ -92,7 +80,7 @@ pub async fn generate_transfer_update_smt(
                     configure,
                     state,
                     characteristic,
-                    transfer_update_req.lock_script.clone(),
+                    transfer_req.lock_script.clone(),
                     out_point,
                 )
                 .1,
@@ -104,69 +92,64 @@ pub async fn generate_transfer_update_smt(
                     configure,
                     state,
                     characteristic,
-                    transfer_update_req.lock_script.clone(),
+                    transfer_req.lock_script.clone(),
                 )
                 .1,
             )
         };
         withdrawal_update_leaves.push((key, value));
 
-        let (withdrawal_key, key) = generate_withdrawal_key_v1(
-            cota_id,
-            token_index,
-            transfer_update_req.transfer_out_point,
-        );
-        let (withdrawal_value, value) = generate_withdrawal_value_v1(
-            configure,
-            transfer.state,
-            transfer.characteristic,
-            to_lock_script,
-        );
+        let (withdrawal_key, key) =
+            generate_withdrawal_key_v1(cota_id, token_index, transfer_req.transfer_out_point);
+        let (withdrawal_value, value) =
+            generate_withdrawal_value_v1(configure, state, characteristic, to_lock_script);
         withdrawal_keys.push(withdrawal_key);
         withdrawal_values.push(withdrawal_value);
         transfer_update_leaves.push((key, value));
-        transfer_update_smt
+        transfer_smt
             .update(key, value)
-            .expect("transfer update SMT update leave error");
+            .expect("transfer SMT update leave error");
 
         let (claimed_key, key) = generate_claim_key(cota_id, token_index, out_point);
         claimed_keys.push(claimed_key);
-
         let (claimed_value, value) = generate_claim_value(version);
         claimed_values.push(claimed_value);
         transfer_update_leaves.push((key, value));
-        transfer_update_smt
+        transfer_smt
             .update(key, value)
             .expect("transfer SMT update leave error");
     }
+    diff_time(
+        start_time,
+        "Generate transfer smt object with update leaves",
+    );
 
-    let root_hash = transfer_update_smt.root().clone();
+    let root_hash = transfer_smt.root().clone();
     let mut root_hash_bytes = [0u8; 32];
     root_hash_bytes.copy_from_slice(root_hash.as_slice());
-    let transfer_update_root_hash_hex = hex::encode(root_hash_bytes);
+    let transfer_root_hash_hex = hex::encode(root_hash_bytes);
 
-    let transfer_update_merkle_proof = transfer_update_smt
+    let start_time = Local::now().timestamp_millis();
+    let transfer_merkle_proof = transfer_smt
         .merkle_proof(transfer_update_leaves.iter().map(|leave| leave.0).collect())
         .map_err(|e| {
-            error!("Transfer update SMT proof error: {:?}", e.to_string());
+            error!("Transfer SMT proof error: {:?}", e.to_string());
             Error::SMTProofError("Transfer".to_string())
         })?;
-    let transfer_update_merkle_proof_compiled = transfer_update_merkle_proof
+    let transfer_merkle_proof_compiled = transfer_merkle_proof
         .compile(transfer_update_leaves.clone())
         .map_err(|e| {
             error!("Transfer SMT proof error: {:?}", e.to_string());
-            Error::SMTProofError("Transfer update".to_string())
+            Error::SMTProofError("Transfer".to_string())
         })?;
+    diff_time(start_time, "Generate transfer smt proof");
 
-    let transfer_update_merkel_proof_vec: Vec<u8> = transfer_update_merkle_proof_compiled.into();
-    let transfer_update_merkel_proof_bytes = BytesBuilder::default()
-        .extend(
-            transfer_update_merkel_proof_vec
-                .iter()
-                .map(|v| Byte::from(*v)),
-        )
+    let transfer_merkel_proof_vec: Vec<u8> = transfer_merkle_proof_compiled.into();
+    let transfer_merkel_proof_bytes = BytesBuilder::default()
+        .extend(transfer_merkel_proof_vec.iter().map(|v| Byte::from(*v)))
         .build();
 
+    let start_time = Local::now().timestamp_millis();
     let withdrawal_merkle_proof = withdrawal_smt
         .merkle_proof(
             withdrawal_update_leaves
@@ -176,29 +159,30 @@ pub async fn generate_transfer_update_smt(
         )
         .map_err(|e| {
             error!("Transfer SMT proof error: {:?}", e.to_string());
-            Error::SMTProofError("Transfer update".to_string())
+            Error::SMTProofError("Transfer".to_string())
         })?;
     let withdrawal_merkle_proof_compiled = withdrawal_merkle_proof
         .compile(withdrawal_update_leaves.clone())
         .map_err(|e| {
-            error!("Transfer update SMT proof error: {:?}", e.to_string());
-            Error::SMTProofError("Transfer update".to_string())
+            error!("Transfer SMT proof error: {:?}", e.to_string());
+            Error::SMTProofError("Transfer".to_string())
         })?;
+    diff_time(start_time, "Generate withdraw smt proof");
 
     let withdrawal_merkel_proof_vec: Vec<u8> = withdrawal_merkle_proof_compiled.into();
     let withdrawal_merkel_proof_bytes = BytesBuilder::default()
         .extend(withdrawal_merkel_proof_vec.iter().map(|v| Byte::from(*v)))
         .build();
 
-    let transfer_update_entries = TransferUpdateCotaNFTV1EntriesBuilder::default()
+    let transfer_entries = TransferCotaNFTV1EntriesBuilder::default()
         .claim_keys(
             ClaimCotaNFTKeyVecBuilder::default()
                 .set(claimed_keys)
                 .build(),
         )
-        .claim_infos(
-            ClaimCotaNFTInfoVecBuilder::default()
-                .set(claimed_infos)
+        .claim_values(
+            ClaimCotaNFTValueVecBuilder::default()
+                .set(claimed_values)
                 .build(),
         )
         .withdrawal_keys(
@@ -211,12 +195,12 @@ pub async fn generate_transfer_update_smt(
                 .set(withdrawal_values)
                 .build(),
         )
-        .proof(transfer_update_merkel_proof_bytes)
+        .proof(transfer_merkel_proof_bytes)
         .withdrawal_proof(withdrawal_merkel_proof_bytes)
         .action(action_bytes)
         .build();
 
-    let transfer_update_entry = hex::encode(transfer_update_entries.as_slice());
+    let transfer_entry = hex::encode(transfer_entries.as_slice());
 
-    Ok((transfer_update_root_hash_hex, transfer_update_entry))
+    Ok((transfer_root_hash_hex, transfer_entry))
 }

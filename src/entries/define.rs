@@ -1,7 +1,7 @@
+use crate::entries::helper::{generate_define_key, generate_define_value};
 use crate::models::define::{get_define_cota_by_lock_hash, DefineDb};
 use crate::request::define::DefineReq;
 use crate::smt::db::cota_db::CotaRocksDB;
-use crate::smt::helper::{generate_define_key, generate_define_value};
 use crate::smt::smt::generate_history_smt;
 use crate::utils::error::Error;
 use cota_smt::common::*;

@@ -1,3 +1,11 @@
+use crate::entries::claim::generate_claim_smt;
+use crate::entries::claim_update::generate_claim_update_smt;
+use crate::entries::define::generate_define_smt;
+use crate::entries::mint::generate_mint_smt;
+use crate::entries::transfer::generate_transfer_smt;
+use crate::entries::transfer_update::generate_transfer_update_smt;
+use crate::entries::update::generate_update_smt;
+use crate::entries::withdrawal::generate_withdrawal_smt;
 use crate::models::block::get_syncer_tip_block_number;
 use crate::models::common::{
     check_cota_claimed, get_define_info_by_cota_id, get_hold_cota, get_mint_cota,
@@ -19,14 +27,6 @@ use crate::response::update::parse_update_smt;
 use crate::response::withdrawal::{
     parse_sender_response, parse_withdrawal_response, parse_withdrawal_smt,
 };
-use crate::smt::claim::generate_claim_smt;
-use crate::smt::claim_update::generate_claim_update_smt;
-use crate::smt::define::generate_define_smt;
-use crate::smt::mint::generate_mint_smt;
-use crate::smt::transfer::generate_transfer_smt;
-use crate::smt::transfer_update::generate_transfer_update_smt;
-use crate::smt::update::generate_update_smt;
-use crate::smt::withdrawal::generate_withdrawal_smt;
 use jsonrpc_http_server::jsonrpc_core::serde_json::Map;
 use jsonrpc_http_server::jsonrpc_core::{Error, Params, Value};
 use log::info;
