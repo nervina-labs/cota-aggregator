@@ -34,22 +34,24 @@ pub async fn generate_update_smt(update_req: UpdateReq) -> Result<(String, Strin
     let mut hold_old_values: Vec<CotaNFTInfo> = Vec::new();
     let mut hold_values: Vec<CotaNFTInfo> = Vec::new();
     let mut update_leaves: Vec<(H256, H256)> = Vec::with_capacity(nfts.len());
+    let mut previous_leaves: Vec<(H256, H256)> = Vec::with_capacity(nfts.len());
     for (hold_db, nft) in db_holds.iter().zip(nfts.iter()) {
         let (hold_key, key) = generate_hold_key(hold_db.cota_id, hold_db.token_index);
-        hold_keys.push(hold_key);
-        let (hold_old_value, _) =
+        let (hold_old_value, old_value) =
             generate_hold_value(hold_db.configure, hold_db.state, hold_db.characteristic);
-        hold_old_values.push(hold_old_value);
         let (hold_value, value) =
             generate_hold_value(hold_db.configure, nft.state, nft.characteristic);
+        hold_keys.push(hold_key);
+        hold_old_values.push(hold_old_value);
         hold_values.push(hold_value);
         update_leaves.push((key, value));
+        previous_leaves.push((key, old_value));
         smt.update(key, value).expect("hold SMT update leave error");
     }
 
     let root_hash = hex::encode(smt.root().as_slice());
 
-    save_smt_root_and_leaves(&smt, "Update", Some(update_leaves.clone()))?;
+    save_smt_root_and_leaves(&smt, "Update", Some(previous_leaves))?;
     let update_merkle_proof = smt
         .merkle_proof(update_leaves.iter().map(|leave| leave.0).collect())
         .map_err(|e| {

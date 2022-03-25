@@ -41,14 +41,17 @@ pub async fn generate_withdrawal_smt(
     let mut withdrawal_keys: Vec<WithdrawalCotaNFTKeyV1> = Vec::new();
     let mut withdrawal_values: Vec<WithdrawalCotaNFTValueV1> = Vec::new();
     let mut update_leaves: Vec<(H256, H256)> = Vec::with_capacity(withdrawals.len() * 2);
+    let mut previous_leaves: Vec<(H256, H256)> = Vec::with_capacity(withdrawals.len() * 2);
     for (hold_db, withdrawal) in db_holds.iter().zip(withdrawals.iter()) {
         let (hold_key, key) = generate_hold_key(hold_db.cota_id, hold_db.token_index);
-        hold_keys.push(hold_key);
-        let (hold_value, _) =
+        let (hold_value, old_value) =
             generate_hold_value(hold_db.configure, hold_db.state, hold_db.characteristic);
-        hold_values.push(hold_value);
         let (_, value) = generate_empty_value();
+        hold_keys.push(hold_key);
+        hold_values.push(hold_value);
         update_leaves.push((key, value));
+        previous_leaves.push((key, old_value));
+
         smt.update(key, value)
             .expect("withdraw SMT update leave error");
 
@@ -67,13 +70,14 @@ pub async fn generate_withdrawal_smt(
         );
         withdrawal_values.push(withdrawal_value);
         update_leaves.push((key, value));
+        previous_leaves.push((key, H256::from([0u8; 32])));
         smt.update(key, value)
             .expect("withdraw SMT update leave error");
     }
 
     let root_hash = hex::encode(smt.root().as_slice());
 
-    save_smt_root_and_leaves(&smt, "Update", Some(update_leaves.clone()))?;
+    save_smt_root_and_leaves(&smt, "Update", Some(previous_leaves))?;
     let withdrawal_merkle_proof = smt
         .merkle_proof(update_leaves.iter().map(|leave| leave.0).collect())
         .map_err(|e| {

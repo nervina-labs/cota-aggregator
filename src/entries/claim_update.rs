@@ -49,6 +49,7 @@ pub async fn generate_claim_update_smt(
     let mut claim_infos: Vec<ClaimCotaNFTInfo> = Vec::new();
     let mut claim_smt = generate_history_smt(&db, claim_update_req.lock_script.clone()).await?;
     let mut claim_update_leaves: Vec<(H256, H256)> = Vec::with_capacity(nfts_len * 2);
+    let mut previous_leaves: Vec<(H256, H256)> = Vec::with_capacity(nfts_len * 2);
     for (index, withdrawal) in sender_withdrawals.into_iter().enumerate() {
         let WithdrawDb {
             cota_id,
@@ -107,6 +108,7 @@ pub async fn generate_claim_update_smt(
             .update(key, value)
             .expect("claim SMT update leave error");
         claim_update_leaves.push((key, value));
+        previous_leaves.push((key, H256::from([0u8; 32])));
 
         let (claim_key, key) = generate_claim_key(cota_id, token_index, out_point);
         claim_keys.push(claim_key);
@@ -142,15 +144,12 @@ pub async fn generate_claim_update_smt(
         claim_smt
             .update(key, value)
             .expect("claim SMT update leave error");
-        claim_update_leaves.push((key, value))
+        claim_update_leaves.push((key, value));
+        previous_leaves.push((key, H256::from([0u8; 32])));
     }
     let claim_update_root_hash = hex::encode(claim_smt.root().as_slice());
 
-    save_smt_root_and_leaves(
-        &claim_smt,
-        "Claim update",
-        Some(claim_update_leaves.clone()),
-    )?;
+    save_smt_root_and_leaves(&claim_smt, "Claim update", Some(previous_leaves))?;
     let claim_update_merkle_proof = claim_smt
         .merkle_proof(claim_update_leaves.iter().map(|leave| leave.0).collect())
         .map_err(|e| {

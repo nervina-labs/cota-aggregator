@@ -54,6 +54,7 @@ pub async fn generate_transfer_smt(transfer_req: TransferReq) -> Result<(String,
     let mut withdrawal_keys: Vec<WithdrawalCotaNFTKeyV1> = Vec::new();
     let mut withdrawal_values: Vec<WithdrawalCotaNFTValueV1> = Vec::new();
     let mut transfer_update_leaves: Vec<(H256, H256)> = Vec::with_capacity(transfers_len * 2);
+    let mut previous_leaves: Vec<(H256, H256)> = Vec::with_capacity(transfers_len * 2);
     let mut withdrawal_update_leaves: Vec<(H256, H256)> = Vec::with_capacity(transfers_len);
     let db = CotaRocksDB::default();
     let mut transfer_smt = generate_history_smt(&db, transfer_req.lock_script.clone()).await?;
@@ -106,15 +107,17 @@ pub async fn generate_transfer_smt(transfer_req: TransferReq) -> Result<(String,
         withdrawal_keys.push(withdrawal_key);
         withdrawal_values.push(withdrawal_value);
         transfer_update_leaves.push((key, value));
+        previous_leaves.push((key, H256::from([0u8; 32])));
         transfer_smt
             .update(key, value)
             .expect("transfer SMT update leave error");
 
         let (claimed_key, key) = generate_claim_key(cota_id, token_index, out_point);
-        claimed_keys.push(claimed_key);
         let (claimed_value, value) = generate_claim_value(version);
+        claimed_keys.push(claimed_key);
         claimed_values.push(claimed_value);
         transfer_update_leaves.push((key, value));
+        previous_leaves.push((key, H256::from([0u8; 32])));
         transfer_smt
             .update(key, value)
             .expect("transfer SMT update leave error");
@@ -127,11 +130,7 @@ pub async fn generate_transfer_smt(transfer_req: TransferReq) -> Result<(String,
     let root_hash = hex::encode(transfer_smt.root().as_slice());
 
     let start_time = Local::now().timestamp_millis();
-    save_smt_root_and_leaves(
-        &transfer_smt,
-        "Transfer",
-        Some(transfer_update_leaves.clone()),
-    )?;
+    save_smt_root_and_leaves(&transfer_smt, "Transfer", Some(previous_leaves))?;
     let transfer_merkle_proof = transfer_smt
         .merkle_proof(transfer_update_leaves.iter().map(|leave| leave.0).collect())
         .map_err(|e| {

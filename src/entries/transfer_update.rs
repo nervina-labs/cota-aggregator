@@ -55,6 +55,7 @@ pub async fn generate_transfer_update_smt(
     let mut withdrawal_keys: Vec<WithdrawalCotaNFTKeyV1> = Vec::new();
     let mut withdrawal_values: Vec<WithdrawalCotaNFTValueV1> = Vec::new();
     let mut transfer_update_leaves: Vec<(H256, H256)> = Vec::with_capacity(transfers_len * 2);
+    let mut previous_leaves: Vec<(H256, H256)> = Vec::with_capacity(transfers_len * 2);
     let mut withdrawal_update_leaves: Vec<(H256, H256)> = Vec::with_capacity(transfers_len);
     let db = CotaRocksDB::default();
     let mut transfer_update_smt =
@@ -125,6 +126,8 @@ pub async fn generate_transfer_update_smt(
         withdrawal_keys.push(withdrawal_key);
         withdrawal_values.push(withdrawal_value);
         transfer_update_leaves.push((key, value));
+        previous_leaves.push((key, H256::from([0u8; 32])));
+
         transfer_update_smt
             .update(key, value)
             .expect("transfer update SMT update leave error");
@@ -135,6 +138,7 @@ pub async fn generate_transfer_update_smt(
         let (claimed_value, value) = generate_claim_value(version);
         claimed_values.push(claimed_value);
         transfer_update_leaves.push((key, value));
+        previous_leaves.push((key, H256::from([0u8; 32])));
         transfer_update_smt
             .update(key, value)
             .expect("transfer SMT update leave error");
@@ -145,7 +149,7 @@ pub async fn generate_transfer_update_smt(
     save_smt_root_and_leaves(
         &transfer_update_smt,
         "Transfer update",
-        Some(transfer_update_leaves.clone()),
+        Some(previous_leaves),
     )?;
     let transfer_update_merkle_proof = transfer_update_smt
         .merkle_proof(transfer_update_leaves.iter().map(|leave| leave.0).collect())
