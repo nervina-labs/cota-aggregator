@@ -2,7 +2,7 @@ use crate::entries::helper::{
     generate_claim_key, generate_claim_value, generate_withdrawal_key, generate_withdrawal_key_v1,
     generate_withdrawal_value, generate_withdrawal_value_v1,
 };
-use crate::entries::smt::generate_history_smt;
+use crate::entries::smt::{generate_history_smt, save_smt_root_and_leaves};
 use crate::models::withdrawal::{get_withdrawal_cota_by_lock_hash, WithdrawDb};
 use crate::request::transfer::{TransferUpdate, TransferUpdateReq};
 use crate::smt::db::cota_db::CotaRocksDB;
@@ -140,11 +140,13 @@ pub async fn generate_transfer_update_smt(
             .expect("transfer SMT update leave error");
     }
 
-    let root_hash = transfer_update_smt.root().clone();
-    let mut root_hash_bytes = [0u8; 32];
-    root_hash_bytes.copy_from_slice(root_hash.as_slice());
-    let transfer_update_root_hash_hex = hex::encode(root_hash_bytes);
+    let root_hash = hex::encode(transfer_update_smt.root().as_slice());
 
+    save_smt_root_and_leaves(
+        &transfer_update_smt,
+        "Transfer update",
+        Some(transfer_update_leaves.clone()),
+    )?;
     let transfer_update_merkle_proof = transfer_update_smt
         .merkle_proof(transfer_update_leaves.iter().map(|leave| leave.0).collect())
         .map_err(|e| {
@@ -167,6 +169,7 @@ pub async fn generate_transfer_update_smt(
         )
         .build();
 
+    save_smt_root_and_leaves(&withdrawal_smt, "Withdrawal of transfer update", None)?;
     let withdrawal_merkle_proof = withdrawal_smt
         .merkle_proof(
             withdrawal_update_leaves
@@ -218,5 +221,5 @@ pub async fn generate_transfer_update_smt(
 
     let transfer_update_entry = hex::encode(transfer_update_entries.as_slice());
 
-    Ok((transfer_update_root_hash_hex, transfer_update_entry))
+    Ok((root_hash, transfer_update_entry))
 }

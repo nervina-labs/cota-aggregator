@@ -1,5 +1,5 @@
 use crate::entries::helper::{generate_hold_key, generate_hold_value};
-use crate::entries::smt::generate_history_smt;
+use crate::entries::smt::{generate_history_smt, save_smt_root_and_leaves};
 use crate::models::hold::get_hold_cota_by_lock_hash;
 use crate::request::update::UpdateReq;
 use crate::smt::db::cota_db::CotaRocksDB;
@@ -47,11 +47,9 @@ pub async fn generate_update_smt(update_req: UpdateReq) -> Result<(String, Strin
         smt.update(key, value).expect("hold SMT update leave error");
     }
 
-    let root_hash = smt.root().clone();
-    let mut root_hash_bytes = [0u8; 32];
-    root_hash_bytes.copy_from_slice(root_hash.as_slice());
-    let root_hash_hex = hex::encode(root_hash_bytes);
+    let root_hash = hex::encode(smt.root().as_slice());
 
+    save_smt_root_and_leaves(&smt, "Update", Some(update_leaves.clone()))?;
     let update_merkle_proof = smt
         .merkle_proof(update_leaves.iter().map(|leave| leave.0).collect())
         .map_err(|e| {
@@ -95,5 +93,5 @@ pub async fn generate_update_smt(update_req: UpdateReq) -> Result<(String, Strin
 
     let update_entry = hex::encode(update_entries.as_slice());
 
-    Ok((root_hash_hex, update_entry))
+    Ok((root_hash, update_entry))
 }

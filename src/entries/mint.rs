@@ -1,6 +1,6 @@
 use crate::entries::helper::{generate_define_key, generate_define_value};
 use crate::entries::helper::{generate_withdrawal_key_v1, generate_withdrawal_value_v1};
-use crate::entries::smt::generate_history_smt;
+use crate::entries::smt::{generate_history_smt, save_smt_root_and_leaves};
 use crate::models::define::{get_define_cota_by_lock_hash_and_cota_id, DefineDb};
 use crate::request::mint::{MintReq, MintWithdrawal};
 use crate::smt::db::cota_db::CotaRocksDB;
@@ -86,12 +86,10 @@ pub async fn generate_mint_smt(mint_req: MintReq) -> Result<(String, String), Er
     }
     diff_time(start_time, "Generate mint smt object with update leaves");
 
-    let root_hash = smt.root().clone();
-    let mut root_hash_bytes = [0u8; 32];
-    root_hash_bytes.copy_from_slice(root_hash.as_slice());
-    let root_hash_hex = hex::encode(root_hash_bytes);
+    let root_hash = hex::encode(smt.root().as_slice());
 
     let start_time = Local::now().timestamp_millis();
+    save_smt_root_and_leaves(&smt, "Mint", Some(update_leaves.clone()))?;
     let mint_merkle_proof = smt
         .merkle_proof(update_leaves.iter().map(|leave| leave.0).collect())
         .map_err(|e| {
@@ -148,5 +146,5 @@ pub async fn generate_mint_smt(mint_req: MintReq) -> Result<(String, String), Er
 
     let mint_entry = hex::encode(mint_entries.as_slice());
 
-    Ok((root_hash_hex, mint_entry))
+    Ok((root_hash, mint_entry))
 }

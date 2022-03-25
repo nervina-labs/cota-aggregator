@@ -61,7 +61,7 @@ pub async fn generate_history_smt<'a>(
             return Ok(smt);
         }
     }
-    // smt = reset_smt_temp_leaves(smt)?;
+    smt = reset_smt_temp_leaves(smt)?;
     generate_mysql_smt(smt, lock_hash)
 }
 
@@ -162,7 +162,7 @@ fn generate_mysql_smt<'a>(mut smt: CotaSMT<'a>, lock_hash: [u8; 32]) -> Result<C
 pub fn save_smt_root_and_leaves(
     smt: &CotaSMT,
     msg: &str,
-    leaves: Vec<(H256, H256)>,
+    leaves_opt: Option<Vec<(H256, H256)>>,
 ) -> Result<(), Error> {
     let start_time = Local::now().timestamp_millis();
     smt.store()
@@ -170,7 +170,9 @@ pub fn save_smt_root_and_leaves(
         .expect("Save smt root error");
     debug!("{} latest smt root: {:?}", msg, smt.root());
 
-    smt.store().insert_leaves(leaves)?;
+    if let Some(leaves) = leaves_opt {
+        smt.store().insert_leaves(leaves)?;
+    }
     diff_time(start_time, "Save smt root and leaves");
     Ok(())
 }

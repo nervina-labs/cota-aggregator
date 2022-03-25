@@ -2,7 +2,7 @@ use crate::entries::helper::{
     generate_empty_value, generate_hold_key, generate_hold_value, generate_withdrawal_key_v1,
     generate_withdrawal_value_v1,
 };
-use crate::entries::smt::generate_history_smt;
+use crate::entries::smt::{generate_history_smt, save_smt_root_and_leaves};
 use crate::models::hold::get_hold_cota_by_lock_hash;
 use crate::request::withdrawal::WithdrawalReq;
 use crate::smt::db::cota_db::CotaRocksDB;
@@ -71,11 +71,9 @@ pub async fn generate_withdrawal_smt(
             .expect("withdraw SMT update leave error");
     }
 
-    let root_hash = smt.root().clone();
-    let mut root_hash_bytes = [0u8; 32];
-    root_hash_bytes.copy_from_slice(root_hash.as_slice());
-    let root_hash_hex = hex::encode(root_hash_bytes);
+    let root_hash = hex::encode(smt.root().as_slice());
 
+    save_smt_root_and_leaves(&smt, "Update", Some(update_leaves.clone()))?;
     let withdrawal_merkle_proof = smt
         .merkle_proof(update_leaves.iter().map(|leave| leave.0).collect())
         .map_err(|e| {
@@ -129,5 +127,5 @@ pub async fn generate_withdrawal_smt(
 
     let withdrawal_entry = hex::encode(withdrawal_entries.as_slice());
 
-    Ok((root_hash_hex, withdrawal_entry))
+    Ok((root_hash, withdrawal_entry))
 }

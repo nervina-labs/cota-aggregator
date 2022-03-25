@@ -30,7 +30,7 @@ pub async fn generate_define_smt(define_req: DefineReq) -> Result<(String, Strin
 
     let root_hash = hex::encode(smt.root().as_slice());
 
-    save_smt_root_and_leaves(&smt, "Define", update_leaves.clone())?;
+    save_smt_root_and_leaves(&smt, "Define", Some(update_leaves.clone()))?;
     let define_merkle_proof = smt
         .merkle_proof(update_leaves.iter().map(|leave| leave.0).collect())
         .map_err(|e| {

@@ -2,7 +2,7 @@ use crate::entries::helper::{
     generate_claim_key, generate_claim_value, generate_withdrawal_key, generate_withdrawal_key_v1,
     generate_withdrawal_value, generate_withdrawal_value_v1,
 };
-use crate::entries::smt::generate_history_smt;
+use crate::entries::smt::{generate_history_smt, save_smt_root_and_leaves};
 use crate::models::withdrawal::{get_withdrawal_cota_by_lock_hash, WithdrawDb};
 use crate::request::transfer::TransferReq;
 use crate::request::withdrawal::TransferWithdrawal;
@@ -124,12 +124,14 @@ pub async fn generate_transfer_smt(transfer_req: TransferReq) -> Result<(String,
         "Generate transfer smt object with update leaves",
     );
 
-    let root_hash = transfer_smt.root().clone();
-    let mut root_hash_bytes = [0u8; 32];
-    root_hash_bytes.copy_from_slice(root_hash.as_slice());
-    let transfer_root_hash_hex = hex::encode(root_hash_bytes);
+    let root_hash = hex::encode(transfer_smt.root().as_slice());
 
     let start_time = Local::now().timestamp_millis();
+    save_smt_root_and_leaves(
+        &transfer_smt,
+        "Transfer",
+        Some(transfer_update_leaves.clone()),
+    )?;
     let transfer_merkle_proof = transfer_smt
         .merkle_proof(transfer_update_leaves.iter().map(|leave| leave.0).collect())
         .map_err(|e| {
@@ -150,6 +152,7 @@ pub async fn generate_transfer_smt(transfer_req: TransferReq) -> Result<(String,
         .build();
 
     let start_time = Local::now().timestamp_millis();
+    save_smt_root_and_leaves(&withdrawal_smt, "Withdrawal of transfer", None)?;
     let withdrawal_merkle_proof = withdrawal_smt
         .merkle_proof(
             withdrawal_update_leaves
@@ -202,5 +205,5 @@ pub async fn generate_transfer_smt(transfer_req: TransferReq) -> Result<(String,
 
     let transfer_entry = hex::encode(transfer_entries.as_slice());
 
-    Ok((transfer_root_hash_hex, transfer_entry))
+    Ok((root_hash, transfer_entry))
 }
