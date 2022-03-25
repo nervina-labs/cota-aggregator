@@ -10,14 +10,16 @@ use crate::models::define::DefineDb;
 use crate::models::hold::HoldDb;
 use crate::models::withdrawal::WithdrawDb;
 use crate::smt::db::cota_db::CotaRocksDB;
-use crate::smt::db::schema::{COLUMN_SMT_BRANCH, COLUMN_SMT_LEAF, COLUMN_SMT_ROOT};
+use crate::smt::db::schema::{
+    COLUMN_SMT_BRANCH, COLUMN_SMT_LEAF, COLUMN_SMT_ROOT, COLUMN_SMT_TEMP_LEAVES,
+};
 use crate::smt::store::smt_store::SMTStore;
 use crate::smt::CotaSMT;
 use crate::utils::error::Error;
 use crate::utils::helper::diff_time;
 use chrono::prelude::*;
 use cota_smt::common::*;
-use cota_smt::smt::blake2b_256;
+use cota_smt::smt::{blake2b_256, H256};
 use log::debug;
 use std::collections::HashMap;
 
@@ -31,6 +33,7 @@ pub async fn generate_history_smt<'a>(
         COLUMN_SMT_LEAF,
         COLUMN_SMT_BRANCH,
         COLUMN_SMT_ROOT,
+        COLUMN_SMT_TEMP_LEAVES,
         db,
     );
     let root = smt_store
@@ -42,7 +45,11 @@ pub async fn generate_history_smt<'a>(
         root,
         hex::encode(lock_hash)
     );
-    let smt: CotaSMT = CotaSMT::new(root, smt_store);
+    let mut smt: CotaSMT = CotaSMT::new(root, smt_store);
+
+    if root.as_slice() == &[0u8; 32] {
+        return generate_mysql_smt(smt, lock_hash);
+    }
     let smt_root_opt = get_cota_smt_root(lock_script.clone()).await?;
     debug!(
         "cota cell smt root: {:?} of {:?}",
@@ -54,6 +61,7 @@ pub async fn generate_history_smt<'a>(
             return Ok(smt);
         }
     }
+    // smt = reset_smt_temp_leaves(smt)?;
     generate_mysql_smt(smt, lock_hash)
 }
 
@@ -147,10 +155,32 @@ fn generate_mysql_smt<'a>(mut smt: CotaSMT<'a>, lock_hash: [u8; 32]) -> Result<C
         let (_, value) = generate_claim_value(version);
         smt.update(key, value).expect("SMT update leave error");
     }
+    diff_time(start_time, "Push claim history leaves to smt");
+    Ok(smt)
+}
+
+pub fn save_smt_root_and_leaves(
+    smt: &CotaSMT,
+    msg: &str,
+    leaves: Vec<(H256, H256)>,
+) -> Result<(), Error> {
+    let start_time = Local::now().timestamp_millis();
     smt.store()
         .save_root(smt.root())
         .expect("Save smt root error");
-    debug!("latest smt root: {:?}", smt.root());
-    diff_time(start_time, "Push claim history leaves to smt");
+    debug!("{} latest smt root: {:?}", msg, smt.root());
+
+    smt.store().insert_leaves(leaves)?;
+    diff_time(start_time, "Save smt root and leaves");
+    Ok(())
+}
+
+fn reset_smt_temp_leaves<'a>(mut smt: CotaSMT<'a>) -> Result<CotaSMT<'a>, Error> {
+    let leaves_opt = smt.store().get_leaves()?;
+    if let Some(leaves) = leaves_opt {
+        smt.update_all(leaves)
+            .expect("SMT update temp leaves error");
+    }
+    debug!("Reset temp leaves successfully");
     Ok(smt)
 }
