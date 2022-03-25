@@ -12,16 +12,14 @@ use crate::models::withdrawal::WithdrawDb;
 use crate::smt::db::cota_db::CotaRocksDB;
 use crate::smt::db::schema::{COLUMN_SMT_BRANCH, COLUMN_SMT_LEAF, COLUMN_SMT_ROOT};
 use crate::smt::store::smt_store::SMTStore;
+use crate::smt::CotaSMT;
 use crate::utils::error::Error;
 use crate::utils::helper::diff_time;
 use chrono::prelude::*;
 use cota_smt::common::*;
-use cota_smt::smt::{blake2b_256, Blake2bHasher, H256};
+use cota_smt::smt::blake2b_256;
 use log::debug;
-use sparse_merkle_tree::SparseMerkleTree;
 use std::collections::HashMap;
-
-pub type CotaSMT<'a> = SparseMerkleTree<Blake2bHasher, H256, SMTStore<'a>>;
 
 pub async fn generate_history_smt<'a>(
     db: &'a CotaRocksDB,

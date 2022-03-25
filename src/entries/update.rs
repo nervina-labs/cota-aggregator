@@ -1,8 +1,8 @@
 use crate::entries::helper::{generate_hold_key, generate_hold_value};
+use crate::entries::smt::generate_history_smt;
 use crate::models::hold::get_hold_cota_by_lock_hash;
 use crate::request::update::UpdateReq;
 use crate::smt::db::cota_db::CotaRocksDB;
-use crate::smt::smt::generate_history_smt;
 use crate::utils::error::Error;
 use cota_smt::common::*;
 use cota_smt::molecule::prelude::*;
