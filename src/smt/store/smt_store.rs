@@ -6,7 +6,6 @@ use crate::smt::store::serde::leaf_key_to_vec;
 use crate::utils::error::Error;
 use crate::utils::helper::parse_vec_n;
 use cota_smt::smt::H256;
-use log::debug;
 use serde::{Deserialize, Serialize};
 use sparse_merkle_tree::{
     error::Error as SMTError,
@@ -74,7 +73,6 @@ impl<'a> SMTStore<'a> {
             .collect();
         let json = serde_json::to_string(&smt_leaves)
             .map_err(|err| Error::SMTError(format!("Leaves to json error {:?}", err)))?;
-        debug!("Leaves json: {}", json);
         self.store
             .insert_raw(self.leaves_col, &self.lock_hash, json.as_bytes())
             .map_err(|err| Error::SMTError(format!("insert error {:?}", err)))?;

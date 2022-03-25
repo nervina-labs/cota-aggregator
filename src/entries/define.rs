@@ -14,6 +14,7 @@ pub async fn generate_define_smt(define_req: DefineReq) -> Result<(String, Strin
     let mut smt = generate_history_smt(&db, define_req.lock_script.clone()).await?;
 
     let mut update_leaves: Vec<(H256, H256)> = Vec::with_capacity(1);
+    let mut previous_leaves: Vec<(H256, H256)> = Vec::with_capacity(1);
     let DefineReq {
         cota_id,
         total,
@@ -27,10 +28,11 @@ pub async fn generate_define_smt(define_req: DefineReq) -> Result<(String, Strin
     smt.update(key, value)
         .expect("define SMT update leave error");
     update_leaves.push((key, value));
+    previous_leaves.push((key, H256::from([0u8; 32])));
 
     let root_hash = hex::encode(smt.root().as_slice());
 
-    save_smt_root_and_leaves(&smt, "Define", Some(update_leaves.clone()))?;
+    save_smt_root_and_leaves(&smt, "Define", Some(previous_leaves.clone()))?;
     let define_merkle_proof = smt
         .merkle_proof(update_leaves.iter().map(|leave| leave.0).collect())
         .map_err(|e| {

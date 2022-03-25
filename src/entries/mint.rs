@@ -35,6 +35,7 @@ pub async fn generate_mint_smt(mint_req: MintReq) -> Result<(String, String), Er
     let db = CotaRocksDB::default();
     let mut smt = generate_history_smt(&db, mint_req.lock_script.clone()).await?;
     let mut update_leaves: Vec<(H256, H256)> = Vec::with_capacity(withdrawals_len + 1);
+    let mut previous_leaves: Vec<(H256, H256)> = Vec::with_capacity(withdrawals_len + 1);
     let DefineDb {
         cota_id,
         total,
@@ -44,7 +45,7 @@ pub async fn generate_mint_smt(mint_req: MintReq) -> Result<(String, String), Er
     let (define_key, key) = generate_define_key(cota_id);
     define_keys.push(define_key);
 
-    let (define_old_value, _) =
+    let (define_old_value, old_value) =
         generate_define_value(total.to_be_bytes(), issued.to_be_bytes(), configure);
     define_old_values.push(define_old_value);
 
@@ -53,6 +54,7 @@ pub async fn generate_mint_smt(mint_req: MintReq) -> Result<(String, String), Er
         generate_define_value(total.to_be_bytes(), new_issued.to_be_bytes(), configure);
     define_new_values.push(define_new_value);
 
+    previous_leaves.push((key, old_value));
     update_leaves.push((key, value));
     smt.update(key, value).expect("mint SMT update leave error");
 
@@ -81,6 +83,7 @@ pub async fn generate_mint_smt(mint_req: MintReq) -> Result<(String, String), Er
             generate_withdrawal_value_v1(configure, state, characteristic, to_lock_script);
         withdrawal_values.push(withdrawal_value);
 
+        previous_leaves.push((key, H256::from([0u8; 32])));
         update_leaves.push((key, value));
         smt.update(key, value).expect("mint SMT update leave error");
     }
@@ -89,7 +92,7 @@ pub async fn generate_mint_smt(mint_req: MintReq) -> Result<(String, String), Er
     let root_hash = hex::encode(smt.root().as_slice());
 
     let start_time = Local::now().timestamp_millis();
-    save_smt_root_and_leaves(&smt, "Mint", Some(update_leaves.clone()))?;
+    save_smt_root_and_leaves(&smt, "Mint", Some(previous_leaves.clone()))?;
     let mint_merkle_proof = smt
         .merkle_proof(update_leaves.iter().map(|leave| leave.0).collect())
         .map_err(|e| {
