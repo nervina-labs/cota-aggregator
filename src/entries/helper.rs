@@ -1,13 +1,9 @@
 use crate::entries::constants::{
     CLAIM_NFT_SMT_TYPE, DEFINE_NFT_SMT_TYPE, HOLD_NFT_SMT_TYPE, WITHDRAWAL_NFT_SMT_TYPE,
 };
-use crate::smt::db::db::RocksDB;
-use crate::smt::smt::CotaSMT;
-use crate::utils::error::Error;
 use cota_smt::common::{Uint16, Uint32, *};
 use cota_smt::molecule::prelude::*;
 use cota_smt::smt::{blake2b_256, H256};
-use log::debug;
 
 pub fn generate_define_key(cota_id: [u8; 20]) -> (DefineCotaNFTId, H256) {
     let cota_id = CotaId::from_slice(&cota_id).unwrap();
@@ -181,23 +177,4 @@ pub fn generate_cota_index(cota_id: [u8; 20], token_index: [u8; 4]) -> Vec<u8> {
     cota_id_index.extend(&cota_id);
     cota_id_index.extend(&token_index);
     cota_id_index
-}
-
-pub fn save_smt_root_and_keys(
-    smt: &CotaSMT,
-    msg: &str,
-    keys_opt: Option<Vec<H256>>,
-) -> Result<(), Error> {
-    smt.store()
-        .save_root(smt.root())
-        .map_err(|e| Error::RocksDBError("Save smt root error".to_owned()))?;
-    debug!("{} latest smt root: {:?}", msg, smt.root());
-
-    if let Some(keys) = keys_opt {
-        smt.store()
-            .batch_put_with_prefix(keys)
-            .map_err(|e| Error::RocksDBError("Save smt keys error".to_owned()))?;
-        debug!("Save smt update keys successfully");
-    }
-    Ok(())
 }

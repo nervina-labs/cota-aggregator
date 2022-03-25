@@ -1,9 +1,9 @@
-use crate::entries::helper::{generate_define_key, generate_define_value, save_smt_root_and_keys};
+use crate::entries::helper::{generate_define_key, generate_define_value};
 use crate::entries::helper::{generate_withdrawal_key_v1, generate_withdrawal_value_v1};
+use crate::entries::smt::{generate_history_smt, save_smt_root_and_keys};
 use crate::models::define::{get_define_cota_by_lock_hash_and_cota_id, DefineDb};
 use crate::request::mint::{MintReq, MintWithdrawal};
 use crate::smt::db::cota_db::CotaRocksDB;
-use crate::smt::smt::generate_history_smt;
 use crate::utils::error::Error;
 use crate::utils::helper::diff_time;
 use chrono::prelude::*;
@@ -92,7 +92,7 @@ pub async fn generate_mint_smt(mint_req: MintReq) -> Result<(String, String), Er
     let root_hash_hex = hex::encode(root_hash_bytes);
 
     let update_keys: Vec<H256> = update_leaves.iter().map(|leave| leave.0).collect();
-    save_smt_root_and_keys(&smt, "Mint", Some(update_keys.clone()));
+    save_smt_root_and_keys(&smt, "Mint", Some(update_keys.clone()))?;
     let start_time = Local::now().timestamp_millis();
     let mint_merkle_proof = smt.merkle_proof(update_keys).map_err(|e| {
         error!("Mint SMT proof error: {:?}", e.to_string());

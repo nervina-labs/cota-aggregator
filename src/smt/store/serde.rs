@@ -5,7 +5,7 @@ use sparse_merkle_tree::{
 };
 use std::convert::TryInto;
 
-pub const SMT_PREFIX: [u8; 36] = [90u8; 36];
+pub const SMT_PREFIX: [u8; 4] = [90u8; 4];
 
 pub fn branch_key_to_vec(lock_hash: [u8; 32], key: &BranchKey) -> Vec<u8> {
     let mut ret = Vec::with_capacity(65);
@@ -152,9 +152,10 @@ pub fn slice_to_branch_node(slice: &[u8]) -> BranchNode {
     }
 }
 
-pub fn generate_prefix_key(key: H256) -> Vec<u8> {
+pub fn generate_prefix_key(lock_hash: [u8; 32], key: H256) -> Vec<u8> {
     let mut ret = Vec::with_capacity(68);
     ret.extend_from_slice(&SMT_PREFIX);
+    ret.extend_from_slice(&lock_hash);
     ret.extend_from_slice(key.as_slice());
     ret
 }

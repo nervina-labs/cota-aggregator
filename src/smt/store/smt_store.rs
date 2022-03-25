@@ -7,7 +7,6 @@ use crate::smt::store::serde::{generate_prefix_key, leaf_key_to_vec, SMT_PREFIX}
 use crate::utils::error::Error;
 use crate::utils::helper::parse_vec_n;
 use cota_smt::smt::H256;
-use log::debug;
 use sparse_merkle_tree::{
     error::Error as SMTError,
     traits::Store,
@@ -53,17 +52,26 @@ impl<'a> SMTStore<'a> {
         }
     }
 
-    pub fn batch_put_with_prefix(&self, keys: Vec<H256>) -> Result<(), Error> {
+    pub fn batch_put(&self, keys: Vec<H256>) -> Result<(), Error> {
         let key_values: Vec<(Vec<u8>, Vec<u8>)> = keys
             .into_iter()
-            .map(|key| (generate_prefix_key(key), key.as_slice().to_vec()))
+            .map(|key| {
+                (
+                    generate_prefix_key(self.lock_hash, key),
+                    key.as_slice().to_vec(),
+                )
+            })
             .collect();
         self.store.batch_write(key_values)
     }
 
-    pub fn get_keys_with_prefix(&self) -> Vec<H256> {
+    pub fn get_leaf_keys(&self) -> Vec<H256> {
+        let mut ret = Vec::with_capacity(36);
+        ret.extend_from_slice(&SMT_PREFIX);
+        ret.extend_from_slice(&self.lock_hash);
+
         self.store
-            .get_with_prefix(&SMT_PREFIX)
+            .get_with_prefix(&ret)
             .into_iter()
             .map(|value| {
                 let mut temp_value = [0u8; 32];
@@ -73,8 +81,8 @@ impl<'a> SMTStore<'a> {
             .collect()
     }
 
-    pub fn batch_delete_with_prefix(&self) -> Result<(), Error> {
-        let keys = self.get_keys_with_prefix();
+    pub fn batch_delete(&self) -> Result<(), Error> {
+        let keys = self.get_leaf_keys();
         let temp_keys = keys
             .into_iter()
             .map(|key| key.as_slice().to_vec())

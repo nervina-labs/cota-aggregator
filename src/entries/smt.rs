@@ -1,3 +1,4 @@
+use crate::entries::constants::H256_ZEROS;
 use crate::entries::helper::{
     generate_claim_key, generate_claim_value, generate_cota_index, generate_define_key,
     generate_define_value, generate_empty_value, generate_hold_key, generate_hold_value,
@@ -13,16 +14,14 @@ use crate::models::withdrawal::WithdrawDb;
 use crate::smt::db::cota_db::CotaRocksDB;
 use crate::smt::db::schema::{COLUMN_SMT_BRANCH, COLUMN_SMT_LEAF, COLUMN_SMT_ROOT};
 use crate::smt::store::smt_store::SMTStore;
+use crate::smt::CotaSMT;
 use crate::utils::error::Error;
 use crate::utils::helper::diff_time;
 use chrono::prelude::*;
 use cota_smt::common::*;
-use cota_smt::smt::{blake2b_256, Blake2bHasher, H256};
+use cota_smt::smt::{blake2b_256, H256};
 use log::debug;
-use sparse_merkle_tree::SparseMerkleTree;
 use std::collections::HashMap;
-
-pub type CotaSMT<'a> = SparseMerkleTree<Blake2bHasher, H256, SMTStore<'a>>;
 
 pub async fn generate_history_smt<'a>(
     db: &'a CotaRocksDB,
@@ -45,7 +44,13 @@ pub async fn generate_history_smt<'a>(
         root,
         hex::encode(lock_hash)
     );
+
     let smt: CotaSMT = CotaSMT::new(root, smt_store);
+    // SMT root is zero when the rocksdb has no smt leaves/branches
+    if root.as_slice() == &H256_ZEROS {
+        return generate_mysql_smt(smt, lock_hash);
+    }
+
     let smt_root_opt = get_cota_smt_root(lock_script.clone()).await?;
     debug!(
         "cota cell smt root: {:?} of {:?}",
@@ -54,24 +59,28 @@ pub async fn generate_history_smt<'a>(
     );
     if let Some(smt_root) = smt_root_opt {
         if smt_root.as_slice() == root.as_slice() {
-            smt.store().batch_delete_with_prefix();
+            smt.store().batch_delete()?;
             return Ok(smt);
         }
     }
     generate_mysql_smt(smt, lock_hash)
 }
 
-fn generate_mysql_smt<'a>(mut smt: CotaSMT<'a>, lock_hash: [u8; 32]) -> Result<CotaSMT<'a>, Error> {
+fn reset_temp_smt<'a>(mut smt: CotaSMT<'a>) -> CotaSMT<'a> {
     let start_time = Local::now().timestamp_millis();
-    let temp_keys = smt.store().get_keys_with_prefix();
+    let temp_keys = smt.store().get_leaf_keys();
     for temp_key in temp_keys {
-        smt.update(temp_key, generate_empty_value().1);
+        smt.update(temp_key, generate_empty_value().1)
+            .expect("SMT update leaf error");
     }
     diff_time(
         start_time,
         "Push all temp smt leaves from rocks db to smt object",
     );
+    smt
+}
 
+fn generate_mysql_smt<'a>(mut smt: CotaSMT<'a>, lock_hash: [u8; 32]) -> Result<CotaSMT<'a>, Error> {
     let start_time = Local::now().timestamp_millis();
     let (defines, holds, withdrawals, claims) = get_all_cota_by_lock_hash(lock_hash)?;
     diff_time(
@@ -163,4 +172,23 @@ fn generate_mysql_smt<'a>(mut smt: CotaSMT<'a>, lock_hash: [u8; 32]) -> Result<C
     }
     diff_time(start_time, "Push claim history leaves to smt");
     Ok(smt)
+}
+
+pub fn save_smt_root_and_keys(
+    smt: &CotaSMT,
+    msg: &str,
+    keys_opt: Option<Vec<H256>>,
+) -> Result<(), Error> {
+    smt.store()
+        .save_root(smt.root())
+        .map_err(|_e| Error::RocksDBError("Save smt root error".to_owned()))?;
+    debug!("{} latest smt root: {:?}", msg, smt.root());
+
+    // if let Some(keys) = keys_opt {
+    //     smt.store()
+    //         .batch_put(keys)
+    //         .map_err(|_e| Error::RocksDBError("Save smt keys error".to_owned()))?;
+    //     debug!("Save smt update keys successfully");
+    // }
+    Ok(())
 }

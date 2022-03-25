@@ -4,7 +4,6 @@ use crate::utils::error::Error;
 use crate::utils::error::Error::RocksDBError;
 pub use rocksdb::DBPinnableSlice;
 use rocksdb::{ColumnFamily, ColumnFamilyDescriptor, Options, SliceTransform, WriteBatch, DB};
-use serde_json::to_vec;
 use std::sync::Arc;
 
 #[derive(Clone)]

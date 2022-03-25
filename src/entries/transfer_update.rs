@@ -1,11 +1,11 @@
 use crate::entries::helper::{
     generate_claim_key, generate_claim_value, generate_withdrawal_key, generate_withdrawal_key_v1,
-    generate_withdrawal_value, generate_withdrawal_value_v1, save_smt_root_and_keys,
+    generate_withdrawal_value, generate_withdrawal_value_v1,
 };
+use crate::entries::smt::{generate_history_smt, save_smt_root_and_keys};
 use crate::models::withdrawal::{get_withdrawal_cota_by_lock_hash, WithdrawDb};
 use crate::request::transfer::{TransferUpdate, TransferUpdateReq};
 use crate::smt::db::cota_db::CotaRocksDB;
-use crate::smt::smt::generate_history_smt;
 use crate::utils::error::Error;
 use cota_smt::common::*;
 use cota_smt::molecule::prelude::*;
@@ -150,7 +150,7 @@ pub async fn generate_transfer_update_smt(
         &transfer_update_smt,
         "Transfer_update",
         Some(update_keys.clone()),
-    );
+    )?;
     let transfer_update_merkle_proof =
         transfer_update_smt.merkle_proof(update_keys).map_err(|e| {
             error!("Transfer update SMT proof error: {:?}", e.to_string());
@@ -172,7 +172,7 @@ pub async fn generate_transfer_update_smt(
         )
         .build();
 
-    save_smt_root_and_keys(&withdrawal_smt, "Withdrawal of transfer_update", None);
+    save_smt_root_and_keys(&withdrawal_smt, "Withdrawal of transfer_update", None)?;
     let withdrawal_merkle_proof = withdrawal_smt
         .merkle_proof(
             withdrawal_update_leaves

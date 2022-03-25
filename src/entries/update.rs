@@ -1,8 +1,8 @@
-use crate::entries::helper::{generate_hold_key, generate_hold_value, save_smt_root_and_keys};
+use crate::entries::helper::{generate_hold_key, generate_hold_value};
+use crate::entries::smt::{generate_history_smt, save_smt_root_and_keys};
 use crate::models::hold::get_hold_cota_by_lock_hash;
 use crate::request::update::UpdateReq;
 use crate::smt::db::cota_db::CotaRocksDB;
-use crate::smt::smt::generate_history_smt;
 use crate::utils::error::Error;
 use cota_smt::common::*;
 use cota_smt::molecule::prelude::*;
@@ -53,7 +53,7 @@ pub async fn generate_update_smt(update_req: UpdateReq) -> Result<(String, Strin
     let root_hash_hex = hex::encode(root_hash_bytes);
 
     let update_keys: Vec<H256> = update_leaves.iter().map(|leave| leave.0).collect();
-    save_smt_root_and_keys(&smt, "Update", Some(update_keys.clone()));
+    save_smt_root_and_keys(&smt, "Update", Some(update_keys.clone()))?;
     let update_merkle_proof = smt.merkle_proof(update_keys).map_err(|e| {
         error!("Update SMT proof error: {:?}", e.to_string());
         Error::SMTProofError("Update".to_string())

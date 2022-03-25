@@ -4,6 +4,7 @@ mod constants;
 pub(crate) mod define;
 pub mod helper;
 pub(crate) mod mint;
+pub mod smt;
 pub(crate) mod transfer;
 pub(crate) mod transfer_update;
 pub(crate) mod update;
