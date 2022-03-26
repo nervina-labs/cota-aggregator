@@ -83,7 +83,7 @@ pub async fn generate_mint_smt(mint_req: MintReq) -> Result<(String, String), Er
             generate_withdrawal_value_v1(configure, state, characteristic, to_lock_script);
         withdrawal_values.push(withdrawal_value);
 
-        previous_leaves.push((key, H256::from([0u8; 32])));
+        previous_leaves.push((key, H256::zero()));
         update_leaves.push((key, value));
         smt.update(key, value).expect("mint SMT update leave error");
     }

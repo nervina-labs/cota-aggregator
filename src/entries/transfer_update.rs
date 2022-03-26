@@ -126,7 +126,7 @@ pub async fn generate_transfer_update_smt(
         withdrawal_keys.push(withdrawal_key);
         withdrawal_values.push(withdrawal_value);
         transfer_update_leaves.push((key, value));
-        previous_leaves.push((key, H256::from([0u8; 32])));
+        previous_leaves.push((key, H256::zero()));
 
         transfer_update_smt
             .update(key, value)
@@ -138,7 +138,7 @@ pub async fn generate_transfer_update_smt(
         let (claimed_value, value) = generate_claim_value(version);
         claimed_values.push(claimed_value);
         transfer_update_leaves.push((key, value));
-        previous_leaves.push((key, H256::from([0u8; 32])));
+        previous_leaves.push((key, H256::zero()));
         transfer_update_smt
             .update(key, value)
             .expect("transfer SMT update leave error");

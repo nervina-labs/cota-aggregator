@@ -108,7 +108,7 @@ pub async fn generate_claim_update_smt(
             .update(key, value)
             .expect("claim SMT update leave error");
         claim_update_leaves.push((key, value));
-        previous_leaves.push((key, H256::from([0u8; 32])));
+        previous_leaves.push((key, H256::zero()));
 
         let (claim_key, key) = generate_claim_key(cota_id, token_index, out_point);
         claim_keys.push(claim_key);
@@ -145,7 +145,7 @@ pub async fn generate_claim_update_smt(
             .update(key, value)
             .expect("claim SMT update leave error");
         claim_update_leaves.push((key, value));
-        previous_leaves.push((key, H256::from([0u8; 32])));
+        previous_leaves.push((key, H256::zero()));
     }
     let claim_update_root_hash = hex::encode(claim_smt.root().as_slice());
 

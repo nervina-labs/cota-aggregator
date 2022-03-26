@@ -168,7 +168,7 @@ pub fn generate_claim_value(version: u8) -> (Byte32, H256) {
 
 pub fn generate_empty_value() -> (Byte32, H256) {
     let empty_value = Byte32Builder::default().set([Byte::from(0u8); 32]).build();
-    let value = H256::from([0u8; 32]);
+    let value = H256::zero();
     (empty_value, value)
 }
 

@@ -28,7 +28,7 @@ pub async fn generate_define_smt(define_req: DefineReq) -> Result<(String, Strin
     smt.update(key, value)
         .expect("define SMT update leave error");
     update_leaves.push((key, value));
-    previous_leaves.push((key, H256::from([0u8; 32])));
+    previous_leaves.push((key, H256::zero()));
 
     let root_hash = hex::encode(smt.root().as_slice());
 

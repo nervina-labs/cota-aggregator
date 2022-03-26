@@ -84,7 +84,7 @@ pub async fn generate_claim_smt(claim_req: ClaimReq) -> Result<(String, String),
             )
         };
         withdrawal_update_leaves.push((key, value));
-        previous_leaves.push((key, H256::from([0u8; 32])));
+        previous_leaves.push((key, H256::zero()));
 
         let (hold_key, key) = generate_hold_key(cota_id, token_index);
         let (hold_value, value) = generate_hold_value(configure, state, characteristic);
@@ -94,7 +94,7 @@ pub async fn generate_claim_smt(claim_req: ClaimReq) -> Result<(String, String),
             .update(key, value)
             .expect("claim SMT update leave error");
         claim_update_leaves.push((key, value));
-        previous_leaves.push((key, H256::from([0u8; 32])));
+        previous_leaves.push((key, H256::zero()));
 
         let (claim_key, key) = generate_claim_key(cota_id, token_index, out_point);
         claim_keys.push(claim_key);

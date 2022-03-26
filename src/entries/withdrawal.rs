@@ -70,7 +70,7 @@ pub async fn generate_withdrawal_smt(
         );
         withdrawal_values.push(withdrawal_value);
         update_leaves.push((key, value));
-        previous_leaves.push((key, H256::from([0u8; 32])));
+        previous_leaves.push((key, H256::zero()));
         smt.update(key, value)
             .expect("withdraw SMT update leave error");
     }
