@@ -29,7 +29,7 @@ pub async fn generate_transfer_smt(transfer_req: TransferReq) -> Result<(String,
             .collect(),
     );
     let sender_withdrawals = get_withdrawal_cota_by_lock_hash(
-        blake2b_256(transfer_req.withdrawal_lock_script.clone()),
+        blake2b_256(transfer_req.withdrawal_lock_script.as_slice()),
         cota_id_and_token_index_pairs,
     )?
     .0;
