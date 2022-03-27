@@ -19,7 +19,7 @@ use crate::utils::error::Error;
 use crate::utils::helper::diff_time;
 use chrono::prelude::*;
 use cota_smt::common::*;
-use cota_smt::smt::{blake2b_256, H256};
+use cota_smt::smt::blake2b_256;
 use log::debug;
 use std::collections::HashMap;
 
@@ -157,24 +157,6 @@ fn generate_mysql_smt<'a>(mut smt: CotaSMT<'a>, lock_hash: [u8; 32]) -> Result<C
     }
     diff_time(start_time, "Push claim history leaves to smt");
     Ok(smt)
-}
-
-pub fn save_smt_root_and_leaves(
-    smt: &CotaSMT,
-    msg: &str,
-    leaves_opt: Option<Vec<(H256, H256)>>,
-) -> Result<(), Error> {
-    let start_time = Local::now().timestamp_millis();
-    smt.store()
-        .save_root(smt.root())
-        .expect("Save smt root error");
-    debug!("{} latest smt root: {:?}", msg, smt.root());
-
-    if let Some(leaves) = leaves_opt {
-        smt.store().insert_leaves(leaves)?;
-    }
-    diff_time(start_time, "Save smt root and leaves");
-    Ok(())
 }
 
 fn reset_smt_temp_leaves<'a>(mut smt: CotaSMT<'a>) -> Result<CotaSMT<'a>, Error> {

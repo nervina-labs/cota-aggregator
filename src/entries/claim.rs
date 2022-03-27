@@ -3,7 +3,7 @@ use crate::entries::helper::{
     generate_withdrawal_key, generate_withdrawal_key_v1, generate_withdrawal_value,
     generate_withdrawal_value_v1,
 };
-use crate::entries::smt::{generate_history_smt, save_smt_root_and_leaves};
+use crate::entries::smt::generate_history_smt;
 use crate::models::withdrawal::{get_withdrawal_cota_by_lock_hash, WithdrawDb};
 use crate::request::claim::ClaimReq;
 use crate::smt::db::cota_db::CotaRocksDB;
@@ -100,7 +100,9 @@ pub async fn generate_claim_smt(claim_req: ClaimReq) -> Result<(H256, ClaimCotaN
         claim_keys.push(claim_key);
         key_vec.push((key, version));
     }
-    save_smt_root_and_leaves(&withdrawal_smt, "Withdrawal of claim", None)?;
+    withdrawal_smt
+        .store()
+        .save_root_and_leaves(withdrawal_smt.root(), vec![])?;
     let withdraw_merkle_proof = withdrawal_smt
         .merkle_proof(
             withdrawal_update_leaves
@@ -132,7 +134,9 @@ pub async fn generate_claim_smt(claim_req: ClaimReq) -> Result<(H256, ClaimCotaN
             .expect("claim SMT update leave error");
         claim_update_leaves.push((key, value))
     }
-    save_smt_root_and_leaves(&claim_smt, "Claim", Some(previous_leaves))?;
+    claim_smt
+        .store()
+        .save_root_and_leaves(claim_smt.root(), previous_leaves)?;
     let claim_merkle_proof = claim_smt
         .merkle_proof(claim_update_leaves.iter().map(|leave| leave.0).collect())
         .map_err(|e| {
