@@ -58,7 +58,7 @@ echo '{
     "jsonrpc":"2.0",
     "method":"generate_define_cota_smt",
     "params":{
-        "lock_hash":"0x490000001000000030000000310000009bd7e06f3ecf4be0f2fcd2188b23f1b9fcc88e5d4b65a8637b17723bbda3cce80114000000e616d1460d634668b8ad81971c3a53e705f51e60",
+        "lock_script":"0x490000001000000030000000310000009bd7e06f3ecf4be0f2fcd2188b23f1b9fcc88e5d4b65a8637b17723bbda3cce80114000000e616d1460d634668b8ad81971c3a53e705f51e60",
         "cota_id":"0xea28c98f38b4a57aa81756b167bb37fa42daf67e",
         "total":"0x00000050",
         "issued":"0x00000000",
