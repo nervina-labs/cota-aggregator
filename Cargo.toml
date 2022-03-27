@@ -14,6 +14,7 @@ crc = "2.1.0"
 diesel = { version = "1.4.8", features = ["mysql", "r2d2", "numeric"] }
 dotenv = "0.15.0"
 chrono = "0.4"
+molecule = "0.7.2"
 lazy_static = "1.4"
 rocksdb = "0.18.0"
 sparse-merkle-tree = "0.5.3"

@@ -410,6 +410,7 @@ dependencies = [
  "jsonrpc-http-server",
  "lazy_static",
  "log",
+ "molecule",
  "openssl",
  "reqwest",
  "rocksdb",

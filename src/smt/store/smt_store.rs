@@ -3,11 +3,12 @@
 use crate::smt::db::cota_db::CotaRocksDB;
 use crate::smt::db::schema::Col;
 use crate::smt::store::serde::leaf_key_to_vec;
+use crate::smt::types::leaf::{Byte32, SMTLeaf, SMTLeafBuilder, SMTLeafVec, SMTLeafVecBuilder};
 use crate::utils::error::Error;
 use crate::utils::helper::parse_vec_n;
 use cota_smt::smt::H256;
 use log::debug;
-use serde::{Deserialize, Serialize};
+use molecule::prelude::{Builder, Entity};
 use sparse_merkle_tree::{
     error::Error as SMTError,
     traits::Store,
@@ -15,12 +16,6 @@ use sparse_merkle_tree::{
 };
 
 use super::serde::{branch_key_to_vec, branch_node_to_vec, slice_to_branch_node};
-
-#[derive(Clone, Eq, PartialEq, Serialize, Deserialize)]
-struct SMTLeaf {
-    key:   Vec<u8>,
-    value: Vec<u8>,
-}
 
 pub struct SMTStore<'a> {
     lock_hash:  [u8; 32],
@@ -65,17 +60,18 @@ impl<'a> SMTStore<'a> {
     }
 
     pub fn insert_leaves(&self, leaves: Vec<(H256, H256)>) -> Result<(), Error> {
-        let smt_leaves: Vec<SMTLeaf> = leaves
+        let smt_leaf_vec: Vec<SMTLeaf> = leaves
             .into_iter()
-            .map(|leaf| SMTLeaf {
-                key:   leaf.0.as_slice().to_vec(),
-                value: leaf.1.as_slice().to_vec(),
+            .map(|leaf| {
+                SMTLeafBuilder::default()
+                    .key(Byte32::from_slice(leaf.0.as_slice()).unwrap())
+                    .value(Byte32::from_slice(leaf.1.as_slice()).unwrap())
+                    .build()
             })
             .collect();
-        let json = serde_json::to_string(&smt_leaves)
-            .map_err(|err| Error::SMTError(format!("Leaves to json error {:?}", err)))?;
+        let smt_leaves: SMTLeafVec = SMTLeafVecBuilder::default().set(smt_leaf_vec).build();
         self.store
-            .insert_raw(self.leaves_col, &self.lock_hash, json.as_bytes())
+            .insert_raw(self.leaves_col, &self.lock_hash, smt_leaves.as_slice())
             .map_err(|err| Error::SMTError(format!("insert error {:?}", err)))?;
 
         Ok(())
@@ -84,17 +80,15 @@ impl<'a> SMTStore<'a> {
     pub fn get_leaves(&self) -> Result<Option<Vec<(H256, H256)>>, Error> {
         match self.store.get(self.leaves_col, &self.lock_hash) {
             Some(slice) => {
-                let smt_leaves = serde_json::from_slice::<Vec<SMTLeaf>>(&slice)
-                    .map_err(|err| Error::SMTError(format!("Json to leaves error {:?}", err)))?;
-                let leaves: Vec<(H256, H256)> = smt_leaves
-                    .into_iter()
-                    .map(|leaf| {
-                        (
-                            H256::from(parse_vec_n::<32>(leaf.key)),
-                            H256::from(parse_vec_n::<32>(leaf.value)),
-                        )
-                    })
-                    .collect();
+                let mut leaves = vec![];
+                let smt_leaves = SMTLeafVec::from_slice(&slice)
+                    .map_err(|_e| Error::SMTError("SMT Leaves parse error".to_owned()))?;
+                for smt_leaf in smt_leaves {
+                    leaves.push((
+                        H256::from(parse_vec_n::<32>(smt_leaf.key().as_slice().to_vec())),
+                        H256::from(parse_vec_n::<32>(smt_leaf.value().as_slice().to_vec())),
+                    ))
+                }
                 Ok(Some(leaves))
             }
             None => Ok(None),

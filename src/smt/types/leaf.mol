@@ -1,0 +1,8 @@
+array Byte32 [byte; 32];
+
+vector SMTLeafVec <SMTLeaf>;
+
+struct SMTLeaf {
+    key: Byte32,
+    value: Byte32,
+}
