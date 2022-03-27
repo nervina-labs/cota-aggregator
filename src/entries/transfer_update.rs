@@ -28,7 +28,7 @@ pub async fn generate_transfer_update_smt(
             .collect(),
     );
     let sender_withdrawals = get_withdrawal_cota_by_lock_hash(
-        blake2b_256(&transfer_update_req.withdrawal_lock_script),
+        blake2b_256(&transfer_update_req.withdrawal_lock_script.as_slice()),
         cota_id_and_token_index_pairs,
     )?
     .0;
@@ -59,9 +59,9 @@ pub async fn generate_transfer_update_smt(
     let mut withdrawal_update_leaves: Vec<(H256, H256)> = Vec::with_capacity(transfers_len);
     let db = CotaRocksDB::default();
     let mut transfer_update_smt =
-        generate_history_smt(&db, transfer_update_req.lock_script.clone()).await?;
+        generate_history_smt(&db, transfer_update_req.lock_script.as_slice()).await?;
     let withdrawal_smt =
-        generate_history_smt(&db, transfer_update_req.withdrawal_lock_script.clone()).await?;
+        generate_history_smt(&db, transfer_update_req.withdrawal_lock_script.as_slice()).await?;
     for (withdrawal_db, transfer) in sender_withdrawals.into_iter().zip(transfers.clone()) {
         let WithdrawDb {
             cota_id,
@@ -93,7 +93,7 @@ pub async fn generate_transfer_update_smt(
                     configure,
                     state,
                     characteristic,
-                    transfer_update_req.lock_script.clone(),
+                    &transfer_update_req.lock_script,
                     out_point,
                 )
                 .1,
@@ -105,7 +105,7 @@ pub async fn generate_transfer_update_smt(
                     configure,
                     state,
                     characteristic,
-                    transfer_update_req.lock_script.clone(),
+                    &transfer_update_req.lock_script,
                 )
                 .1,
             )
@@ -121,7 +121,7 @@ pub async fn generate_transfer_update_smt(
             configure,
             transfer.state,
             transfer.characteristic,
-            to_lock_script,
+            &to_lock_script,
         );
         withdrawal_keys.push(withdrawal_key);
         withdrawal_values.push(withdrawal_value);

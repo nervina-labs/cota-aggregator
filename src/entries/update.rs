@@ -12,7 +12,7 @@ use log::error;
 
 pub async fn generate_update_smt(update_req: UpdateReq) -> Result<(String, String), Error> {
     let db = CotaRocksDB::default();
-    let mut smt = generate_history_smt(&db, update_req.lock_script.clone()).await?;
+    let mut smt = generate_history_smt(&db, update_req.lock_script.as_slice()).await?;
     let nfts = update_req.nfts;
     if nfts.is_empty() {
         return Err(Error::RequestParamNotFound("nfts".to_string()));
@@ -23,7 +23,7 @@ pub async fn generate_update_smt(update_req: UpdateReq) -> Result<(String, Strin
             .collect(),
     );
     let db_holds = get_hold_cota_by_lock_hash(
-        blake2b_256(&update_req.lock_script.clone()),
+        blake2b_256(&update_req.lock_script.as_slice()),
         cota_id_and_token_index_pairs,
     )?
     .0;

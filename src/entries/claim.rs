@@ -27,7 +27,7 @@ pub async fn generate_claim_smt(claim_req: ClaimReq) -> Result<(String, String),
             .collect(),
     );
     let sender_withdrawals = get_withdrawal_cota_by_lock_hash(
-        blake2b_256(claim_req.withdrawal_lock_script.clone()),
+        blake2b_256(claim_req.withdrawal_lock_script.as_slice()),
         cota_id_and_token_index_pairs,
     )?
     .0;
@@ -39,13 +39,13 @@ pub async fn generate_claim_smt(claim_req: ClaimReq) -> Result<(String, String),
     let mut hold_values: Vec<CotaNFTInfo> = Vec::new();
     let db = CotaRocksDB::default();
     let withdrawal_smt =
-        generate_history_smt(&db, claim_req.withdrawal_lock_script.clone()).await?;
+        generate_history_smt(&db, claim_req.withdrawal_lock_script.as_slice()).await?;
     let mut withdrawal_update_leaves: Vec<(H256, H256)> = Vec::with_capacity(claims_len);
 
     let mut claim_keys: Vec<ClaimCotaNFTKey> = Vec::new();
     let mut key_vec: Vec<(H256, u8)> = Vec::new();
     let mut claim_values: Vec<Byte32> = Vec::new();
-    let mut claim_smt = generate_history_smt(&db, claim_req.lock_script.clone()).await?;
+    let mut claim_smt = generate_history_smt(&db, claim_req.lock_script.as_slice()).await?;
     let mut claim_update_leaves: Vec<(H256, H256)> = Vec::with_capacity(claims_len * 2);
     let mut previous_leaves: Vec<(H256, H256)> = Vec::with_capacity(claims_len * 2);
     for withdrawal in sender_withdrawals {
@@ -66,7 +66,7 @@ pub async fn generate_claim_smt(claim_req: ClaimReq) -> Result<(String, String),
                     configure,
                     state,
                     characteristic,
-                    claim_req.lock_script.clone(),
+                    &claim_req.lock_script,
                     out_point,
                 )
                 .1,
@@ -78,7 +78,7 @@ pub async fn generate_claim_smt(claim_req: ClaimReq) -> Result<(String, String),
                     configure,
                     state,
                     characteristic,
-                    claim_req.lock_script.clone(),
+                    &claim_req.lock_script,
                 )
                 .1,
             )

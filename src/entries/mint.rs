@@ -33,7 +33,7 @@ pub async fn generate_mint_smt(mint_req: MintReq) -> Result<(String, String), Er
     let mut withdrawal_keys: Vec<WithdrawalCotaNFTKeyV1> = Vec::new();
     let mut withdrawal_values: Vec<WithdrawalCotaNFTValueV1> = Vec::new();
     let db = CotaRocksDB::default();
-    let mut smt = generate_history_smt(&db, mint_req.lock_script.clone()).await?;
+    let mut smt = generate_history_smt(&db, mint_req.lock_script.as_slice()).await?;
     let mut update_leaves: Vec<(H256, H256)> = Vec::with_capacity(withdrawals_len + 1);
     let mut previous_leaves: Vec<(H256, H256)> = Vec::with_capacity(withdrawals_len + 1);
     let DefineDb {
@@ -80,7 +80,7 @@ pub async fn generate_mint_smt(mint_req: MintReq) -> Result<(String, String), Er
         withdrawal_keys.push(withdrawal_key);
 
         let (withdrawal_value, value) =
-            generate_withdrawal_value_v1(configure, state, characteristic, to_lock_script);
+            generate_withdrawal_value_v1(configure, state, characteristic, &to_lock_script);
         withdrawal_values.push(withdrawal_value);
 
         previous_leaves.push((key, H256::zero()));

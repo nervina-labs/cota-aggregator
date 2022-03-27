@@ -17,7 +17,7 @@ pub async fn generate_withdrawal_smt(
     withdrawal_req: WithdrawalReq,
 ) -> Result<(String, String), Error> {
     let db = CotaRocksDB::default();
-    let mut smt = generate_history_smt(&db, withdrawal_req.lock_script.clone()).await?;
+    let mut smt = generate_history_smt(&db, withdrawal_req.lock_script.as_slice()).await?;
     let withdrawals = withdrawal_req.withdrawals;
     if withdrawals.is_empty() {
         return Err(Error::RequestParamNotFound("withdrawals".to_string()));
@@ -66,7 +66,7 @@ pub async fn generate_withdrawal_smt(
             hold_db.configure,
             hold_db.state,
             hold_db.characteristic,
-            withdrawal.clone().to_lock_script,
+            &withdrawal.to_lock_script,
         );
         withdrawal_values.push(withdrawal_value);
         update_leaves.push((key, value));

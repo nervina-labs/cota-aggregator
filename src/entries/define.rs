@@ -11,7 +11,7 @@ use log::error;
 
 pub async fn generate_define_smt(define_req: DefineReq) -> Result<(String, String), Error> {
     let db = CotaRocksDB::default();
-    let mut smt = generate_history_smt(&db, define_req.lock_script.clone()).await?;
+    let mut smt = generate_history_smt(&db, define_req.lock_script.as_slice()).await?;
 
     let mut update_leaves: Vec<(H256, H256)> = Vec::with_capacity(1);
     let mut previous_leaves: Vec<(H256, H256)> = Vec::with_capacity(1);

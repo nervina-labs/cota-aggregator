@@ -57,9 +57,9 @@ pub async fn generate_transfer_smt(transfer_req: TransferReq) -> Result<(String,
     let mut previous_leaves: Vec<(H256, H256)> = Vec::with_capacity(transfers_len * 2);
     let mut withdrawal_update_leaves: Vec<(H256, H256)> = Vec::with_capacity(transfers_len);
     let db = CotaRocksDB::default();
-    let mut transfer_smt = generate_history_smt(&db, transfer_req.lock_script.clone()).await?;
+    let mut transfer_smt = generate_history_smt(&db, transfer_req.lock_script.as_slice()).await?;
     let withdrawal_smt =
-        generate_history_smt(&db, transfer_req.withdrawal_lock_script.clone()).await?;
+        generate_history_smt(&db, transfer_req.withdrawal_lock_script.as_slice()).await?;
     let start_time = Local::now().timestamp_millis();
     for (withdrawal_db, transfer) in sender_withdrawals.into_iter().zip(transfers.clone()) {
         let WithdrawDb {
@@ -81,7 +81,7 @@ pub async fn generate_transfer_smt(transfer_req: TransferReq) -> Result<(String,
                     configure,
                     state,
                     characteristic,
-                    transfer_req.lock_script.clone(),
+                    &transfer_req.lock_script,
                     out_point,
                 )
                 .1,
@@ -93,7 +93,7 @@ pub async fn generate_transfer_smt(transfer_req: TransferReq) -> Result<(String,
                     configure,
                     state,
                     characteristic,
-                    transfer_req.lock_script.clone(),
+                    &transfer_req.lock_script,
                 )
                 .1,
             )
@@ -103,7 +103,7 @@ pub async fn generate_transfer_smt(transfer_req: TransferReq) -> Result<(String,
         let (withdrawal_key, key) =
             generate_withdrawal_key_v1(cota_id, token_index, transfer_req.transfer_out_point);
         let (withdrawal_value, value) =
-            generate_withdrawal_value_v1(configure, state, characteristic, to_lock_script);
+            generate_withdrawal_value_v1(configure, state, characteristic, &to_lock_script);
         withdrawal_keys.push(withdrawal_key);
         withdrawal_values.push(withdrawal_value);
         transfer_update_leaves.push((key, value));

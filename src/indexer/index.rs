@@ -12,7 +12,7 @@ const TESTNET_COTA_CODE_HASH: &str =
 const MAINNET_COTA_CODE_HASH: &str =
     "0x1122a4fb54697cf2e6e3a96c9d80fd398a936559b90954c6e88eb7ba0cf652df";
 
-pub async fn get_cota_smt_root(lock_script: Vec<u8>) -> Result<Option<Vec<u8>>, Error> {
+pub async fn get_cota_smt_root(lock_script: &[u8]) -> Result<Option<Vec<u8>>, Error> {
     dotenv().ok();
 
     let ckb_indexer_url =
@@ -61,10 +61,10 @@ pub async fn get_cota_smt_root(lock_script: Vec<u8>) -> Result<Option<Vec<u8>>, 
     }
 }
 
-fn generate_params(lock_script: Vec<u8>) -> Result<Value, Error> {
+fn generate_params(lock_script: &[u8]) -> Result<Value, Error> {
     dotenv().ok();
 
-    let lock = Script::from_slice(&lock_script)
+    let lock = Script::from_slice(lock_script)
         .map_err(|_e| Error::Other("Lock script foramt error".to_owned()))?;
     let hash_type = match lock.hash_type().into() {
         0u8 => "data",

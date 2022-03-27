@@ -128,7 +128,7 @@ pub async fn fetch_hold_rpc(params: Params) -> Result<Value, Error> {
         page_size,
     } = FetchReq::from_map(&map).map_err(|err| err.into())?;
     let (holds, total, block_number) =
-        get_hold_cota(lock_script, page, page_size).map_err(|err| err.into())?;
+        get_hold_cota(&lock_script, page, page_size).map_err(|err| err.into())?;
     let response = parse_hold_response(holds, total, page_size, block_number);
     Ok(Value::Object(response))
 }
@@ -142,7 +142,7 @@ pub async fn fetch_withdrawal_rpc(params: Params) -> Result<Value, Error> {
         page_size,
     } = FetchReq::from_map(&map).map_err(|err| err.into())?;
     let (withdrawals, total, block_number) =
-        get_withdrawal_cota(lock_script, page, page_size).map_err(|err| err.into())?;
+        get_withdrawal_cota(&lock_script, page, page_size).map_err(|err| err.into())?;
     let response = parse_withdrawal_response(withdrawals, total, page_size, block_number);
     Ok(Value::Object(response))
 }
@@ -156,7 +156,7 @@ pub async fn fetch_mint_rpc(params: Params) -> Result<Value, Error> {
         page_size,
     } = FetchReq::from_map(&map).map_err(|err| err.into())?;
     let (withdrawals, total, block_number) =
-        get_mint_cota(lock_script, page, page_size).map_err(|err| err.into())?;
+        get_mint_cota(&lock_script, page, page_size).map_err(|err| err.into())?;
     let response = parse_mint_response(withdrawals, total, page_size, block_number);
     Ok(Value::Object(response))
 }
@@ -183,7 +183,7 @@ pub async fn get_sender_lock_hash(params: Params) -> Result<Value, Error> {
         cota_id,
         token_index,
     } = SenderLockReq::from_map(&map).map_err(|err| err.into())?;
-    let sender_lock_hash = get_sender_lock_hash_by_cota_nft(lock_script, cota_id, token_index)
+    let sender_lock_hash = get_sender_lock_hash_by_cota_nft(&lock_script, cota_id, token_index)
         .map_err(|err| err.into())?;
     let response = parse_sender_response(sender_lock_hash, get_block_number()?);
     Ok(Value::Object(response))

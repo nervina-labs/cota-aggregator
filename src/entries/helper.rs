@@ -98,7 +98,7 @@ pub fn generate_withdrawal_value(
     configure: u8,
     state: u8,
     characteristic: [u8; 20],
-    to_lock_script: Vec<u8>,
+    to_lock_script: &[u8],
     out_point: [u8; 24],
 ) -> (WithdrawalCotaNFTValue, H256) {
     let cota_info = CotaNFTInfoBuilder::default()
@@ -120,7 +120,7 @@ pub fn generate_withdrawal_value_v1(
     configure: u8,
     state: u8,
     characteristic: [u8; 20],
-    to_lock_script: Vec<u8>,
+    to_lock_script: &[u8],
 ) -> (WithdrawalCotaNFTValueV1, H256) {
     let cota_info = CotaNFTInfoBuilder::default()
         .configure(Byte::from(configure))

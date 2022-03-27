@@ -25,9 +25,9 @@ use std::collections::HashMap;
 
 pub async fn generate_history_smt<'a>(
     db: &'a CotaRocksDB,
-    lock_script: Vec<u8>,
+    lock_script: &[u8],
 ) -> Result<CotaSMT<'a>, Error> {
-    let lock_hash = blake2b_256(lock_script.clone());
+    let lock_hash = blake2b_256(lock_script);
     let smt_store = SMTStore::new(
         lock_hash,
         COLUMN_SMT_LEAF,
@@ -50,7 +50,7 @@ pub async fn generate_history_smt<'a>(
     if root.as_slice() == &[0u8; 32] {
         return generate_mysql_smt(smt, lock_hash);
     }
-    let smt_root_opt = get_cota_smt_root(lock_script.clone()).await?;
+    let smt_root_opt = get_cota_smt_root(lock_script).await?;
     debug!(
         "cota cell smt root: {:?} of {:?}",
         smt_root_opt,
@@ -121,7 +121,7 @@ fn generate_mysql_smt<'a>(mut smt: CotaSMT<'a>, lock_hash: [u8; 32]) -> Result<C
                     configure,
                     state,
                     characteristic,
-                    receiver_lock_script,
+                    &receiver_lock_script,
                     out_point,
                 )
                 .1,
@@ -133,7 +133,7 @@ fn generate_mysql_smt<'a>(mut smt: CotaSMT<'a>, lock_hash: [u8; 32]) -> Result<C
                     configure,
                     state,
                     characteristic,
-                    receiver_lock_script,
+                    &receiver_lock_script,
                 )
                 .1,
             )
