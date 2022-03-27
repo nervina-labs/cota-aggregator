@@ -4,12 +4,14 @@ use crate::request::define::DefineReq;
 use crate::smt::db::cota_db::CotaRocksDB;
 use crate::utils::error::Error;
 use cota_smt::common::*;
-use cota_smt::define::DefineCotaNFTEntriesBuilder;
+use cota_smt::define::{DefineCotaNFTEntries, DefineCotaNFTEntriesBuilder};
 use cota_smt::molecule::prelude::*;
 use cota_smt::smt::H256;
 use log::error;
 
-pub async fn generate_define_smt(define_req: DefineReq) -> Result<(String, String), Error> {
+pub async fn generate_define_smt(
+    define_req: DefineReq,
+) -> Result<(H256, DefineCotaNFTEntries), Error> {
     let db = CotaRocksDB::default();
     let mut smt = generate_history_smt(&db, define_req.lock_script.as_slice()).await?;
 
@@ -29,8 +31,6 @@ pub async fn generate_define_smt(define_req: DefineReq) -> Result<(String, Strin
         .expect("define SMT update leave error");
     update_leaves.push((key, value));
     previous_leaves.push((key, H256::zero()));
-
-    let root_hash = hex::encode(smt.root().as_slice());
 
     save_smt_root_and_leaves(&smt, "Define", Some(previous_leaves.clone()))?;
     let define_merkle_proof = smt
@@ -80,7 +80,5 @@ pub async fn generate_define_smt(define_req: DefineReq) -> Result<(String, Strin
         .action(action_bytes)
         .build();
 
-    let define_entry = hex::encode(define_entries.as_slice());
-
-    Ok((root_hash, define_entry))
+    Ok((*smt.root(), define_entries))
 }

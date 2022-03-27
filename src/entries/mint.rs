@@ -8,12 +8,12 @@ use crate::utils::error::Error;
 use crate::utils::helper::diff_time;
 use chrono::prelude::*;
 use cota_smt::common::*;
-use cota_smt::mint::MintCotaNFTV1EntriesBuilder;
+use cota_smt::mint::{MintCotaNFTV1Entries, MintCotaNFTV1EntriesBuilder};
 use cota_smt::molecule::prelude::*;
 use cota_smt::smt::{blake2b_256, H256};
 use log::error;
 
-pub async fn generate_mint_smt(mint_req: MintReq) -> Result<(String, String), Error> {
+pub async fn generate_mint_smt(mint_req: MintReq) -> Result<(H256, MintCotaNFTV1Entries), Error> {
     let withdrawals = mint_req.withdrawals.clone();
     let withdrawals_len = withdrawals.len();
     if withdrawals_len == 0 {
@@ -89,8 +89,6 @@ pub async fn generate_mint_smt(mint_req: MintReq) -> Result<(String, String), Er
     }
     diff_time(start_time, "Generate mint smt object with update leaves");
 
-    let root_hash = hex::encode(smt.root().as_slice());
-
     let start_time = Local::now().timestamp_millis();
     save_smt_root_and_leaves(&smt, "Mint", Some(previous_leaves.clone()))?;
     let mint_merkle_proof = smt
@@ -147,7 +145,5 @@ pub async fn generate_mint_smt(mint_req: MintReq) -> Result<(String, String), Er
         .action(action_bytes)
         .build();
 
-    let mint_entry = hex::encode(mint_entries.as_slice());
-
-    Ok((root_hash, mint_entry))
+    Ok((*smt.root(), mint_entries))
 }

@@ -10,12 +10,12 @@ use crate::utils::error::Error;
 use cota_smt::common::*;
 use cota_smt::molecule::prelude::*;
 use cota_smt::smt::{blake2b_256, H256};
-use cota_smt::transfer::WithdrawalCotaNFTV1EntriesBuilder;
+use cota_smt::transfer::{WithdrawalCotaNFTV1Entries, WithdrawalCotaNFTV1EntriesBuilder};
 use log::error;
 
 pub async fn generate_withdrawal_smt(
     withdrawal_req: WithdrawalReq,
-) -> Result<(String, String), Error> {
+) -> Result<(H256, WithdrawalCotaNFTV1Entries), Error> {
     let db = CotaRocksDB::default();
     let mut smt = generate_history_smt(&db, withdrawal_req.lock_script.as_slice()).await?;
     let withdrawals = withdrawal_req.withdrawals;
@@ -75,8 +75,6 @@ pub async fn generate_withdrawal_smt(
             .expect("withdraw SMT update leave error");
     }
 
-    let root_hash = hex::encode(smt.root().as_slice());
-
     save_smt_root_and_leaves(&smt, "Update", Some(previous_leaves))?;
     let withdrawal_merkle_proof = smt
         .merkle_proof(update_leaves.iter().map(|leave| leave.0).collect())
@@ -129,7 +127,5 @@ pub async fn generate_withdrawal_smt(
         .action(action_bytes)
         .build();
 
-    let withdrawal_entry = hex::encode(withdrawal_entries.as_slice());
-
-    Ok((root_hash, withdrawal_entry))
+    Ok((*smt.root(), withdrawal_entries))
 }

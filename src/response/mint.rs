@@ -1,5 +1,8 @@
 use super::helper::Inserter;
 use crate::models::withdrawal::WithdrawDb;
+use ckb_types::prelude::Entity;
+use cota_smt::mint::MintCotaNFTV1Entries;
+use cota_smt::smt::H256;
 use jsonrpc_http_server::jsonrpc_core::serde_json::Map;
 use jsonrpc_http_server::jsonrpc_core::Value;
 
@@ -30,12 +33,14 @@ fn parse_mint_value(withdrawal: WithdrawDb) -> Value {
 }
 
 pub fn parse_mint_smt(
-    (root_hash, smt_entry): (String, String),
+    (root_hash, mint_entries): (H256, MintCotaNFTV1Entries),
     block_number: u64,
 ) -> Map<String, Value> {
+    let mint_entry = hex::encode(mint_entries.as_slice());
+    let mint_root_hash = hex::encode(root_hash.as_slice());
     let mut map = Map::new();
-    map.insert_str("smt_root_hash", root_hash);
-    map.insert_str("mint_smt_entry", smt_entry);
+    map.insert_str("smt_root_hash", mint_root_hash);
+    map.insert_str("mint_smt_entry", mint_entry);
     map.insert_u64("block_number", block_number);
     map
 }

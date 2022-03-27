@@ -1,5 +1,8 @@
 use crate::models::withdrawal::WithdrawNFTDb;
 use crate::response::helper::Inserter;
+use ckb_types::prelude::Entity;
+use cota_smt::smt::H256;
+use cota_smt::transfer::WithdrawalCotaNFTV1Entries;
 use jsonrpc_http_server::jsonrpc_core::serde_json::Map;
 use jsonrpc_http_server::jsonrpc_core::Value;
 
@@ -32,12 +35,14 @@ fn parse_withdrawal_value(withdrawal: WithdrawNFTDb) -> Value {
 }
 
 pub fn parse_withdrawal_smt(
-    (root_hash, smt_entry): (String, String),
+    (root_hash, withdrawal_entries): (H256, WithdrawalCotaNFTV1Entries),
     block_number: u64,
 ) -> Map<String, Value> {
+    let withdrawal_entry = hex::encode(withdrawal_entries.as_slice());
+    let withdrawal_root_hash = hex::encode(root_hash.as_slice());
     let mut map = Map::new();
-    map.insert_str("smt_root_hash", root_hash);
-    map.insert_str("withdrawal_smt_entry", smt_entry);
+    map.insert_str("smt_root_hash", withdrawal_root_hash);
+    map.insert_str("withdrawal_smt_entry", withdrawal_entry);
     map.insert_u64("block_number", block_number);
     map
 }

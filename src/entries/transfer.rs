@@ -13,10 +13,12 @@ use chrono::prelude::*;
 use cota_smt::common::*;
 use cota_smt::molecule::prelude::*;
 use cota_smt::smt::{blake2b_256, H256};
-use cota_smt::transfer::TransferCotaNFTV1EntriesBuilder;
+use cota_smt::transfer::{TransferCotaNFTV1Entries, TransferCotaNFTV1EntriesBuilder};
 use log::error;
 
-pub async fn generate_transfer_smt(transfer_req: TransferReq) -> Result<(String, String), Error> {
+pub async fn generate_transfer_smt(
+    transfer_req: TransferReq,
+) -> Result<(H256, TransferCotaNFTV1Entries), Error> {
     let transfers = transfer_req.transfers.clone();
     let transfers_len = transfers.len();
     if transfers_len == 0 {
@@ -127,8 +129,6 @@ pub async fn generate_transfer_smt(transfer_req: TransferReq) -> Result<(String,
         "Generate transfer smt object with update leaves",
     );
 
-    let root_hash = hex::encode(transfer_smt.root().as_slice());
-
     let start_time = Local::now().timestamp_millis();
     save_smt_root_and_leaves(&transfer_smt, "Transfer", Some(previous_leaves))?;
     let transfer_merkle_proof = transfer_smt
@@ -202,7 +202,5 @@ pub async fn generate_transfer_smt(transfer_req: TransferReq) -> Result<(String,
         .action(action_bytes)
         .build();
 
-    let transfer_entry = hex::encode(transfer_entries.as_slice());
-
-    Ok((root_hash, transfer_entry))
+    Ok((*transfer_smt.root(), transfer_entries))
 }

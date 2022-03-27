@@ -11,12 +11,12 @@ use crate::utils::error::Error;
 use cota_smt::common::*;
 use cota_smt::molecule::prelude::*;
 use cota_smt::smt::{blake2b_256, H256};
-use cota_smt::transfer_update::ClaimUpdateCotaNFTEntriesBuilder;
+use cota_smt::transfer_update::{ClaimUpdateCotaNFTEntries, ClaimUpdateCotaNFTEntriesBuilder};
 use log::error;
 
 pub async fn generate_claim_update_smt(
     claim_update_req: ClaimUpdateReq,
-) -> Result<(String, String), Error> {
+) -> Result<(H256, ClaimUpdateCotaNFTEntries), Error> {
     let nfts = claim_update_req.nfts.clone();
     let nfts_len = nfts.len();
     if nfts_len == 0 {
@@ -147,7 +147,6 @@ pub async fn generate_claim_update_smt(
         claim_update_leaves.push((key, value));
         previous_leaves.push((key, H256::zero()));
     }
-    let claim_update_root_hash = hex::encode(claim_smt.root().as_slice());
 
     save_smt_root_and_leaves(&claim_smt, "Claim update", Some(previous_leaves))?;
     let claim_update_merkle_proof = claim_smt
@@ -194,7 +193,5 @@ pub async fn generate_claim_update_smt(
         .action(action_bytes)
         .build();
 
-    let claim_update_entry = hex::encode(claim_update_entries.as_slice());
-
-    Ok((claim_update_root_hash, claim_update_entry))
+    Ok((*claim_smt.root(), claim_update_entries))
 }

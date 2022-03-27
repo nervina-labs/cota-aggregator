@@ -7,10 +7,12 @@ use crate::utils::error::Error;
 use cota_smt::common::*;
 use cota_smt::molecule::prelude::*;
 use cota_smt::smt::{blake2b_256, H256};
-use cota_smt::update::UpdateCotaNFTEntriesBuilder;
+use cota_smt::update::{UpdateCotaNFTEntries, UpdateCotaNFTEntriesBuilder};
 use log::error;
 
-pub async fn generate_update_smt(update_req: UpdateReq) -> Result<(String, String), Error> {
+pub async fn generate_update_smt(
+    update_req: UpdateReq,
+) -> Result<(H256, UpdateCotaNFTEntries), Error> {
     let db = CotaRocksDB::default();
     let mut smt = generate_history_smt(&db, update_req.lock_script.as_slice()).await?;
     let nfts = update_req.nfts;
@@ -48,8 +50,6 @@ pub async fn generate_update_smt(update_req: UpdateReq) -> Result<(String, Strin
         previous_leaves.push((key, old_value));
         smt.update(key, value).expect("hold SMT update leave error");
     }
-
-    let root_hash = hex::encode(smt.root().as_slice());
 
     save_smt_root_and_leaves(&smt, "Update", Some(previous_leaves))?;
     let update_merkle_proof = smt
@@ -93,7 +93,5 @@ pub async fn generate_update_smt(update_req: UpdateReq) -> Result<(String, Strin
         .action(action_bytes)
         .build();
 
-    let update_entry = hex::encode(update_entries.as_slice());
-
-    Ok((root_hash, update_entry))
+    Ok((*smt.root(), update_entries))
 }

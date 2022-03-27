@@ -11,10 +11,10 @@ use crate::utils::error::Error;
 use cota_smt::common::*;
 use cota_smt::molecule::prelude::*;
 use cota_smt::smt::{blake2b_256, H256};
-use cota_smt::transfer::ClaimCotaNFTEntriesBuilder;
+use cota_smt::transfer::{ClaimCotaNFTEntries, ClaimCotaNFTEntriesBuilder};
 use log::error;
 
-pub async fn generate_claim_smt(claim_req: ClaimReq) -> Result<(String, String), Error> {
+pub async fn generate_claim_smt(claim_req: ClaimReq) -> Result<(H256, ClaimCotaNFTEntries), Error> {
     let claims = claim_req.claims.clone();
     let claims_len = claims.len();
     if claims_len == 0 {
@@ -132,8 +132,6 @@ pub async fn generate_claim_smt(claim_req: ClaimReq) -> Result<(String, String),
             .expect("claim SMT update leave error");
         claim_update_leaves.push((key, value))
     }
-    let claim_root_hash = hex::encode(claim_smt.root().as_slice());
-
     save_smt_root_and_leaves(&claim_smt, "Claim", Some(previous_leaves))?;
     let claim_merkle_proof = claim_smt
         .merkle_proof(claim_update_leaves.iter().map(|leave| leave.0).collect())
@@ -179,7 +177,5 @@ pub async fn generate_claim_smt(claim_req: ClaimReq) -> Result<(String, String),
         .action(action_bytes)
         .build();
 
-    let claim_entry = hex::encode(claim_entries.as_slice());
-
-    Ok((claim_root_hash, claim_entry))
+    Ok((*claim_smt.root(), claim_entries))
 }

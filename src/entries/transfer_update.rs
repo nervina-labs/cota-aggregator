@@ -10,12 +10,14 @@ use crate::utils::error::Error;
 use cota_smt::common::*;
 use cota_smt::molecule::prelude::*;
 use cota_smt::smt::{blake2b_256, H256};
-use cota_smt::transfer_update::TransferUpdateCotaNFTV1EntriesBuilder;
+use cota_smt::transfer_update::{
+    TransferUpdateCotaNFTV1Entries, TransferUpdateCotaNFTV1EntriesBuilder,
+};
 use log::error;
 
 pub async fn generate_transfer_update_smt(
     transfer_update_req: TransferUpdateReq,
-) -> Result<(String, String), Error> {
+) -> Result<(H256, TransferUpdateCotaNFTV1Entries), Error> {
     let transfers = transfer_update_req.transfers.clone();
     let transfers_len = transfers.len();
     if transfers_len == 0 {
@@ -144,8 +146,6 @@ pub async fn generate_transfer_update_smt(
             .expect("transfer SMT update leave error");
     }
 
-    let root_hash = hex::encode(transfer_update_smt.root().as_slice());
-
     save_smt_root_and_leaves(
         &transfer_update_smt,
         "Transfer update",
@@ -223,7 +223,5 @@ pub async fn generate_transfer_update_smt(
         .action(action_bytes)
         .build();
 
-    let transfer_update_entry = hex::encode(transfer_update_entries.as_slice());
-
-    Ok((root_hash, transfer_update_entry))
+    Ok((*transfer_update_smt.root(), transfer_update_entries))
 }
