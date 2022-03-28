@@ -14,6 +14,10 @@ test:
 	cargo fmt
 	cargo test --all
 
+test-smt:
+	cargo fmt
+	cargo test -- --nocapture --ignored
+
 run:
 	cargo fmt
 	RUST_LOG=debug cargo run

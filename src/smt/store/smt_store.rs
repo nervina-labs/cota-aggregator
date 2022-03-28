@@ -1,5 +1,4 @@
-//! Implement SMTStore trait
-
+use super::serde::{branch_key_to_vec, branch_node_to_vec, slice_to_branch_node};
 use crate::smt::db::cota_db::CotaRocksDB;
 use crate::smt::db::schema::Col;
 use crate::smt::store::serde::leaf_key_to_vec;
@@ -14,8 +13,6 @@ use sparse_merkle_tree::{
     traits::Store,
     tree::{BranchKey, BranchNode},
 };
-
-use super::serde::{branch_key_to_vec, branch_node_to_vec, slice_to_branch_node};
 
 pub struct SMTStore<'a> {
     lock_hash:  [u8; 32],

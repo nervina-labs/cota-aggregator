@@ -13,8 +13,10 @@ pub struct RocksDB {
 
 impl RocksDB {
     pub fn default() -> Result<Self, Error> {
-        let path = "./store.db";
+        Self::new_with_path("./store.db")
+    }
 
+    pub fn new_with_path(path: &str) -> Result<Self, Error> {
         let mut opts = Options::default();
         opts.create_if_missing(true);
         opts.create_missing_column_families(true);

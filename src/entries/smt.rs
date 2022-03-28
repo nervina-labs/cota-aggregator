@@ -19,7 +19,7 @@ use crate::utils::error::Error;
 use crate::utils::helper::diff_time;
 use chrono::prelude::*;
 use cota_smt::common::*;
-use cota_smt::smt::blake2b_256;
+use cota_smt::smt::{blake2b_256, H256};
 use log::debug;
 use std::collections::HashMap;
 
@@ -47,7 +47,7 @@ pub async fn generate_history_smt<'a>(
     );
     let mut smt: CotaSMT = CotaSMT::new(root, smt_store);
 
-    if root.as_slice() == &[0u8; 32] {
+    if root == H256::zero() {
         return generate_mysql_smt(smt, lock_hash);
     }
     let smt_root_opt = get_cota_smt_root(lock_script).await?;

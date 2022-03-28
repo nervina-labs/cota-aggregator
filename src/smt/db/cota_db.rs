@@ -13,6 +13,12 @@ impl CotaRocksDB {
         }
     }
 
+    pub fn new_with_path(path: &str) -> Self {
+        CotaRocksDB {
+            inner: RocksDB::new_with_path(path).expect("RocksDB create error"),
+        }
+    }
+
     pub fn get(&self, col: Col, key: &[u8]) -> Option<Box<[u8]>> {
         self.inner
             .get(col, key)
