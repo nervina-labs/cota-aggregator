@@ -7,6 +7,7 @@ use crate::entries::smt::generate_history_smt;
 use crate::models::withdrawal::{get_withdrawal_cota_by_lock_hash, WithdrawDb};
 use crate::request::claim::ClaimUpdateReq;
 use crate::smt::db::cota_db::CotaRocksDB;
+use crate::smt::RootSaver;
 use crate::utils::error::Error;
 use cota_smt::common::*;
 use cota_smt::molecule::prelude::*;
@@ -114,9 +115,7 @@ pub async fn generate_claim_update_smt(
         claim_keys.push(claim_key);
         key_vec.push((key, version));
     }
-    withdrawal_smt
-        .store()
-        .save_root_and_leaves(withdrawal_smt.root(), vec![])?;
+    withdrawal_smt.save_root_and_leaves(vec![])?;
     let withdraw_merkle_proof = withdrawal_smt
         .merkle_proof(
             withdrawal_update_leaves
@@ -150,9 +149,7 @@ pub async fn generate_claim_update_smt(
         previous_leaves.push((key, H256::zero()));
     }
 
-    claim_smt
-        .store()
-        .save_root_and_leaves(claim_smt.root(), previous_leaves)?;
+    claim_smt.save_root_and_leaves(previous_leaves)?;
     let claim_update_merkle_proof = claim_smt
         .merkle_proof(claim_update_leaves.iter().map(|leave| leave.0).collect())
         .map_err(|e| {

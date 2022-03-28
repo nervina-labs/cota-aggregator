@@ -13,6 +13,7 @@ impl CotaRocksDB {
         }
     }
 
+    #[allow(dead_code)]
     pub fn new_with_path(path: &str) -> Self {
         CotaRocksDB {
             inner: RocksDB::new_with_path(path).expect("RocksDB create error"),

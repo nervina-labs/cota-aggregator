@@ -2,6 +2,7 @@ use crate::entries::helper::{generate_define_key, generate_define_value};
 use crate::entries::smt::generate_history_smt;
 use crate::request::define::DefineReq;
 use crate::smt::db::cota_db::CotaRocksDB;
+use crate::smt::RootSaver;
 use crate::utils::error::Error;
 use cota_smt::common::*;
 use cota_smt::define::{DefineCotaNFTEntries, DefineCotaNFTEntriesBuilder};
@@ -32,8 +33,7 @@ pub async fn generate_define_smt(
     update_leaves.push((key, value));
     previous_leaves.push((key, H256::zero()));
 
-    smt.store()
-        .save_root_and_leaves(smt.root(), previous_leaves)?;
+    smt.save_root_and_leaves(previous_leaves)?;
     let define_merkle_proof = smt
         .merkle_proof(update_leaves.iter().map(|leave| leave.0).collect())
         .map_err(|e| {

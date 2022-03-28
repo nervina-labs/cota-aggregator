@@ -3,6 +3,7 @@ use crate::entries::smt::generate_history_smt;
 use crate::models::hold::get_hold_cota_by_lock_hash;
 use crate::request::update::UpdateReq;
 use crate::smt::db::cota_db::CotaRocksDB;
+use crate::smt::RootSaver;
 use crate::utils::error::Error;
 use cota_smt::common::*;
 use cota_smt::molecule::prelude::*;
@@ -51,8 +52,7 @@ pub async fn generate_update_smt(
         smt.update(key, value).expect("hold SMT update leave error");
     }
 
-    smt.store()
-        .save_root_and_leaves(smt.root(), previous_leaves)?;
+    smt.save_root_and_leaves(previous_leaves)?;
     let update_merkle_proof = smt
         .merkle_proof(update_leaves.iter().map(|leave| leave.0).collect())
         .map_err(|e| {

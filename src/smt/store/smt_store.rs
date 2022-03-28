@@ -6,7 +6,6 @@ use crate::smt::types::leaf::{Byte32, SMTLeaf, SMTLeafBuilder, SMTLeafVec, SMTLe
 use crate::utils::error::Error;
 use crate::utils::helper::parse_vec_n;
 use cota_smt::smt::H256;
-use log::debug;
 use molecule::prelude::{Builder, Entity};
 use sparse_merkle_tree::{
     error::Error as SMTError,
@@ -90,19 +89,6 @@ impl<'a> SMTStore<'a> {
             }
             None => Ok(None),
         }
-    }
-
-    pub fn save_root_and_leaves(
-        &self,
-        root: &H256,
-        leaves: Vec<(H256, H256)>,
-    ) -> Result<(), Error> {
-        self.save_root(root).expect("Save smt root error");
-        if !leaves.is_empty() {
-            self.insert_leaves(leaves)?;
-        }
-        debug!("Save latest smt root: {:?} and leaves", root);
-        Ok(())
     }
 }
 

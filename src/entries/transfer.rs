@@ -7,6 +7,7 @@ use crate::models::withdrawal::{get_withdrawal_cota_by_lock_hash, WithdrawDb};
 use crate::request::transfer::TransferReq;
 use crate::request::withdrawal::TransferWithdrawal;
 use crate::smt::db::cota_db::CotaRocksDB;
+use crate::smt::RootSaver;
 use crate::utils::error::Error;
 use crate::utils::helper::diff_time;
 use chrono::prelude::*;
@@ -130,9 +131,7 @@ pub async fn generate_transfer_smt(
     );
 
     let start_time = Local::now().timestamp_millis();
-    transfer_smt
-        .store()
-        .save_root_and_leaves(transfer_smt.root(), previous_leaves)?;
+    transfer_smt.save_root_and_leaves(previous_leaves)?;
     let transfer_merkle_proof = transfer_smt
         .merkle_proof(transfer_update_leaves.iter().map(|leave| leave.0).collect())
         .map_err(|e| {
@@ -153,9 +152,7 @@ pub async fn generate_transfer_smt(
         .build();
 
     let start_time = Local::now().timestamp_millis();
-    withdrawal_smt
-        .store()
-        .save_root_and_leaves(withdrawal_smt.root(), vec![])?;
+    withdrawal_smt.save_root_and_leaves(vec![])?;
     let withdrawal_merkle_proof = withdrawal_smt
         .merkle_proof(
             withdrawal_update_leaves
