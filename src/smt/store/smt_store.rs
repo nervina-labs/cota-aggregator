@@ -79,15 +79,16 @@ impl<'a> SMTStore<'a> {
     pub fn get_leaves(&self) -> Result<Option<Vec<(H256, H256)>>, Error> {
         match self.store.get(self.leaves_col, &self.lock_hash) {
             Some(slice) => {
-                let mut leaves = vec![];
                 let smt_leaves = SMTLeafVec::from_slice(&slice)
                     .map_err(|_e| Error::SMTError("SMT Leaves parse error".to_owned()))?;
-                for smt_leaf in smt_leaves {
-                    leaves.push((
-                        H256::from(parse_vec_n::<32>(smt_leaf.key().as_slice().to_vec())),
-                        H256::from(parse_vec_n::<32>(smt_leaf.value().as_slice().to_vec())),
-                    ))
-                }
+                let leaves = smt_leaves.into_iter().map(|smt_leaf| {
+                    let key: [u8; 32] = smt_leaf.key().as_slice().try_into().expect("stored SMTLeaf should be valid");
+                    let value: [u8; 32] = smt_leaf.value().as_slice().try_into().expect("stored SMTLeaf should be valid");
+                    (
+                        key.into(),
+                        value.into(),
+                    )
+                }).collect();
                 Ok(Some(leaves))
             }
             None => Ok(None),
