@@ -1,11 +1,12 @@
 [package]
 name = "cota-aggregator"
-version = "0.3.1"
+version = "0.4.0"
 edition = "2018"
 
 [dependencies]
 jsonrpc-http-server = "18.0.0"
-log = {version = "0.4", features = ["release_max_level_info", "max_level_debug"]}
+jsonrpc-core = "18.0.0"
+log = {version = "0.4", features = ["release_max_level_debug", "max_level_debug"]}
 env_logger = "0.9"
 hex = "0.4"
 failure = "0.1.8"
@@ -13,7 +14,16 @@ crc = "2.1.0"
 diesel = { version = "1.4.8", features = ["mysql", "r2d2", "numeric"] }
 dotenv = "0.15.0"
 chrono = "0.4"
+molecule = "0.7.2"
 lazy_static = "1.4"
+rocksdb = "0.18.0"
+sparse-merkle-tree = "0.5.3"
+ckb-types = "=0.101.3"
+ckb-jsonrpc-types = ">=0.100.0"
+reqwest = { version = "0.11", features = ["json"] }
+tokio = { version = "1", features = ["full"] }
 serde = { version = "1.0", features = [ "derive" ] }
+serde_json = "1.0"
+rand = "0.7"
 openssl = { version = "0.10", features = ["vendored"] }
 cota-smt = {package = "cota-smt", git = "https://github.com/nervina-labs/cota-smt", tag = "0.1.0"}

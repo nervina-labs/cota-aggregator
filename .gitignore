@@ -1,3 +1,5 @@
 /target
 .idea
 .env
+/store.db
+/test_db_*

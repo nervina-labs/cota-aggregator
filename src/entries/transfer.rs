@@ -1,21 +1,26 @@
+use crate::entries::helper::{
+    generate_claim_key, generate_claim_value, generate_withdrawal_key, generate_withdrawal_key_v1,
+    generate_withdrawal_value, generate_withdrawal_value_v1,
+};
+use crate::entries::smt::generate_history_smt;
 use crate::models::withdrawal::{get_withdrawal_cota_by_lock_hash, WithdrawDb};
 use crate::request::transfer::TransferReq;
 use crate::request::withdrawal::TransferWithdrawal;
-use crate::smt::common::{
-    generate_claim_key, generate_claim_value, generate_history_smt, generate_withdrawal_key,
-    generate_withdrawal_key_v1, generate_withdrawal_value, generate_withdrawal_value_v1,
-};
+use crate::smt::db::cota_db::CotaRocksDB;
+use crate::smt::RootSaver;
 use crate::utils::error::Error;
 use crate::utils::helper::diff_time;
 use chrono::prelude::*;
 use cota_smt::common::*;
 use cota_smt::molecule::prelude::*;
 use cota_smt::smt::{blake2b_256, H256};
-use cota_smt::transfer::TransferCotaNFTV1EntriesBuilder;
+use cota_smt::transfer::{TransferCotaNFTV1Entries, TransferCotaNFTV1EntriesBuilder};
 use log::error;
 
-pub fn generate_transfer_smt(transfer_req: TransferReq) -> Result<(String, String), Error> {
-    let transfers = transfer_req.clone().transfers;
+pub async fn generate_transfer_smt(
+    transfer_req: TransferReq,
+) -> Result<(H256, TransferCotaNFTV1Entries), Error> {
+    let transfers = transfer_req.transfers;
     let transfers_len = transfers.len();
     if transfers_len == 0 {
         return Err(Error::RequestParamNotFound("transfers".to_string()));
@@ -27,7 +32,7 @@ pub fn generate_transfer_smt(transfer_req: TransferReq) -> Result<(String, Strin
             .collect(),
     );
     let sender_withdrawals = get_withdrawal_cota_by_lock_hash(
-        transfer_req.withdrawal_lock_hash,
+        blake2b_256(transfer_req.withdrawal_lock_script.as_slice()),
         cota_id_and_token_index_pairs,
     )?
     .0;
@@ -52,9 +57,12 @@ pub fn generate_transfer_smt(transfer_req: TransferReq) -> Result<(String, Strin
     let mut withdrawal_keys: Vec<WithdrawalCotaNFTKeyV1> = Vec::new();
     let mut withdrawal_values: Vec<WithdrawalCotaNFTValueV1> = Vec::new();
     let mut transfer_update_leaves: Vec<(H256, H256)> = Vec::with_capacity(transfers_len * 2);
+    let mut previous_leaves: Vec<(H256, H256)> = Vec::with_capacity(transfers_len * 2);
     let mut withdrawal_update_leaves: Vec<(H256, H256)> = Vec::with_capacity(transfers_len);
-    let mut transfer_smt = generate_history_smt(blake2b_256(&transfer_req.lock_script))?;
-    let withdrawal_smt = generate_history_smt(transfer_req.withdrawal_lock_hash)?;
+    let db = CotaRocksDB::default();
+    let mut transfer_smt = generate_history_smt(&db, transfer_req.lock_script.as_slice()).await?;
+    let withdrawal_smt =
+        generate_history_smt(&db, transfer_req.withdrawal_lock_script.as_slice()).await?;
     let start_time = Local::now().timestamp_millis();
     for (withdrawal_db, transfer) in sender_withdrawals.into_iter().zip(transfers.clone()) {
         let WithdrawDb {
@@ -76,7 +84,7 @@ pub fn generate_transfer_smt(transfer_req: TransferReq) -> Result<(String, Strin
                     configure,
                     state,
                     characteristic,
-                    transfer_req.lock_script.clone(),
+                    &transfer_req.lock_script,
                     out_point,
                 )
                 .1,
@@ -88,7 +96,7 @@ pub fn generate_transfer_smt(transfer_req: TransferReq) -> Result<(String, Strin
                     configure,
                     state,
                     characteristic,
-                    transfer_req.lock_script.clone(),
+                    &transfer_req.lock_script,
                 )
                 .1,
             )
@@ -98,19 +106,21 @@ pub fn generate_transfer_smt(transfer_req: TransferReq) -> Result<(String, Strin
         let (withdrawal_key, key) =
             generate_withdrawal_key_v1(cota_id, token_index, transfer_req.transfer_out_point);
         let (withdrawal_value, value) =
-            generate_withdrawal_value_v1(configure, state, characteristic, to_lock_script);
+            generate_withdrawal_value_v1(configure, state, characteristic, &to_lock_script);
         withdrawal_keys.push(withdrawal_key);
         withdrawal_values.push(withdrawal_value);
         transfer_update_leaves.push((key, value));
+        previous_leaves.push((key, H256::zero()));
         transfer_smt
             .update(key, value)
             .expect("transfer SMT update leave error");
 
         let (claimed_key, key) = generate_claim_key(cota_id, token_index, out_point);
-        claimed_keys.push(claimed_key);
         let (claimed_value, value) = generate_claim_value(version);
+        claimed_keys.push(claimed_key);
         claimed_values.push(claimed_value);
         transfer_update_leaves.push((key, value));
+        previous_leaves.push((key, H256::zero()));
         transfer_smt
             .update(key, value)
             .expect("transfer SMT update leave error");
@@ -120,12 +130,8 @@ pub fn generate_transfer_smt(transfer_req: TransferReq) -> Result<(String, Strin
         "Generate transfer smt object with update leaves",
     );
 
-    let root_hash = transfer_smt.root().clone();
-    let mut root_hash_bytes = [0u8; 32];
-    root_hash_bytes.copy_from_slice(root_hash.as_slice());
-    let transfer_root_hash_hex = hex::encode(root_hash_bytes);
-
     let start_time = Local::now().timestamp_millis();
+    transfer_smt.save_root_and_leaves(previous_leaves)?;
     let transfer_merkle_proof = transfer_smt
         .merkle_proof(transfer_update_leaves.iter().map(|leave| leave.0).collect())
         .map_err(|e| {
@@ -146,6 +152,7 @@ pub fn generate_transfer_smt(transfer_req: TransferReq) -> Result<(String, Strin
         .build();
 
     let start_time = Local::now().timestamp_millis();
+    withdrawal_smt.save_root_and_leaves(vec![])?;
     let withdrawal_merkle_proof = withdrawal_smt
         .merkle_proof(
             withdrawal_update_leaves
@@ -196,7 +203,5 @@ pub fn generate_transfer_smt(transfer_req: TransferReq) -> Result<(String, Strin
         .action(action_bytes)
         .build();
 
-    let transfer_entry = hex::encode(transfer_entries.as_slice());
-
-    Ok((transfer_root_hash_hex, transfer_entry))
+    Ok((*transfer_smt.root(), transfer_entries))
 }

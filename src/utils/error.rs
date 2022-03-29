@@ -40,6 +40,15 @@ pub enum Error {
     #[fail(display = "'{}' SMT proof error", _0)]
     SMTProofError(String),
 
+    #[fail(display = "'{}' SMT error", _0)]
+    SMTError(String),
+
+    #[fail(display = "'{}' RocksDB error", _0)]
+    RocksDBError(String),
+
+    #[fail(display = "CKB Indexer error: {}", _0)]
+    CKBIndexerError(String),
+
     #[fail(display = "Other error: {}", _0)]
     Other(String),
 }
@@ -78,7 +87,10 @@ impl Error {
             }
             Self::DatabaseQueryError(_) => "Internal error".into(),
             Self::SMTProofError(msg) => format!("'{}' SMT proof error", msg),
-            Self::Other(_) => "Internal error".into(),
+            Self::CKBIndexerError(msg) => format!("CKB Indexer error: {}", msg),
+            Self::SMTError(_) => "Internal error".into(),
+            Self::RocksDBError(_) => "Internal error".into(),
+            Self::Other(msg) => format!("Internal error: {:}", msg),
         }
     }
 }

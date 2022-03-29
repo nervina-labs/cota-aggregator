@@ -1,3 +1,4 @@
+#![feature(test)]
 #[macro_use]
 extern crate diesel;
 extern crate dotenv;
@@ -10,6 +11,8 @@ use log::info;
 use std::env;
 
 pub mod api;
+mod entries;
+mod indexer;
 mod models;
 mod request;
 mod response;

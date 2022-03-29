@@ -1,25 +1,29 @@
+use crate::entries::helper::{generate_define_key, generate_define_value};
+use crate::entries::helper::{generate_withdrawal_key_v1, generate_withdrawal_value_v1};
+use crate::entries::smt::generate_history_smt;
 use crate::models::define::{get_define_cota_by_lock_hash_and_cota_id, DefineDb};
 use crate::request::mint::{MintReq, MintWithdrawal};
-use crate::smt::common::{generate_define_key, generate_define_value};
-use crate::smt::common::{
-    generate_history_smt, generate_withdrawal_key_v1, generate_withdrawal_value_v1,
-};
+use crate::smt::db::cota_db::CotaRocksDB;
+use crate::smt::RootSaver;
 use crate::utils::error::Error;
 use crate::utils::helper::diff_time;
 use chrono::prelude::*;
 use cota_smt::common::*;
-use cota_smt::mint::MintCotaNFTV1EntriesBuilder;
+use cota_smt::mint::{MintCotaNFTV1Entries, MintCotaNFTV1EntriesBuilder};
 use cota_smt::molecule::prelude::*;
-use cota_smt::smt::H256;
+use cota_smt::smt::{blake2b_256, H256};
 use log::error;
 
-pub fn generate_mint_smt(mint_req: MintReq) -> Result<(String, String), Error> {
+pub async fn generate_mint_smt(mint_req: MintReq) -> Result<(H256, MintCotaNFTV1Entries), Error> {
     let withdrawals = mint_req.withdrawals;
     let withdrawals_len = withdrawals.len();
     if withdrawals_len == 0 {
         return Err(Error::RequestParamNotFound("withdrawals".to_string()));
     }
-    let db_define = get_define_cota_by_lock_hash_and_cota_id(mint_req.lock_hash, mint_req.cota_id)?;
+    let db_define = get_define_cota_by_lock_hash_and_cota_id(
+        blake2b_256(&mint_req.lock_script),
+        mint_req.cota_id,
+    )?;
     if db_define.is_none() {
         let cota_id_hex = hex::encode(mint_req.cota_id);
         return Err(Error::CotaIdHasNotDefined(cota_id_hex));
@@ -29,8 +33,10 @@ pub fn generate_mint_smt(mint_req: MintReq) -> Result<(String, String), Error> {
     let mut define_new_values: Vec<DefineCotaNFTValue> = Vec::new();
     let mut withdrawal_keys: Vec<WithdrawalCotaNFTKeyV1> = Vec::new();
     let mut withdrawal_values: Vec<WithdrawalCotaNFTValueV1> = Vec::new();
-    let mut smt = generate_history_smt(mint_req.lock_hash)?;
+    let db = CotaRocksDB::default();
+    let mut smt = generate_history_smt(&db, mint_req.lock_script.as_slice()).await?;
     let mut update_leaves: Vec<(H256, H256)> = Vec::with_capacity(withdrawals_len + 1);
+    let mut previous_leaves: Vec<(H256, H256)> = Vec::with_capacity(withdrawals_len + 1);
     let DefineDb {
         cota_id,
         total,
@@ -40,7 +46,7 @@ pub fn generate_mint_smt(mint_req: MintReq) -> Result<(String, String), Error> {
     let (define_key, key) = generate_define_key(cota_id);
     define_keys.push(define_key);
 
-    let (define_old_value, _) =
+    let (define_old_value, old_value) =
         generate_define_value(total.to_be_bytes(), issued.to_be_bytes(), configure);
     define_old_values.push(define_old_value);
 
@@ -49,6 +55,7 @@ pub fn generate_mint_smt(mint_req: MintReq) -> Result<(String, String), Error> {
         generate_define_value(total.to_be_bytes(), new_issued.to_be_bytes(), configure);
     define_new_values.push(define_new_value);
 
+    previous_leaves.push((key, old_value));
     update_leaves.push((key, value));
     smt.update(key, value).expect("mint SMT update leave error");
 
@@ -74,20 +81,17 @@ pub fn generate_mint_smt(mint_req: MintReq) -> Result<(String, String), Error> {
         withdrawal_keys.push(withdrawal_key);
 
         let (withdrawal_value, value) =
-            generate_withdrawal_value_v1(configure, state, characteristic, to_lock_script);
+            generate_withdrawal_value_v1(configure, state, characteristic, &to_lock_script);
         withdrawal_values.push(withdrawal_value);
 
+        previous_leaves.push((key, H256::zero()));
         update_leaves.push((key, value));
         smt.update(key, value).expect("mint SMT update leave error");
     }
     diff_time(start_time, "Generate mint smt object with update leaves");
 
-    let root_hash = smt.root().clone();
-    let mut root_hash_bytes = [0u8; 32];
-    root_hash_bytes.copy_from_slice(root_hash.as_slice());
-    let root_hash_hex = hex::encode(root_hash_bytes);
-
     let start_time = Local::now().timestamp_millis();
+    smt.save_root_and_leaves(previous_leaves)?;
     let mint_merkle_proof = smt
         .merkle_proof(update_leaves.iter().map(|leave| leave.0).collect())
         .map_err(|e| {
@@ -142,7 +146,5 @@ pub fn generate_mint_smt(mint_req: MintReq) -> Result<(String, String), Error> {
         .action(action_bytes)
         .build();
 
-    let mint_entry = hex::encode(mint_entries.as_slice());
-
-    Ok((root_hash_hex, mint_entry))
+    Ok((*smt.root(), mint_entries))
 }

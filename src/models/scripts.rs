@@ -1,5 +1,5 @@
 use super::helper::SqlConnection;
-use crate::models::helper::generate_crc;
+use crate::models::helper::{generate_crc, PAGE_SIZE};
 use crate::schema::scripts::dsl::scripts;
 use crate::schema::scripts::*;
 use crate::schema::scripts::{args, code_hash, hash_type};
@@ -35,18 +35,23 @@ pub fn get_script_map_by_ids(
     script_ids: Vec<i64>,
 ) -> Result<HashMap<i64, Vec<u8>>, Error> {
     let start_time = Local::now().timestamp_millis();
-    let scripts_db = scripts
-        .select((id, code_hash, hash_type, args))
-        .filter(id.eq_any(script_ids))
-        .load::<Script>(conn)
-        .map_or_else(
-            |e| {
-                error!("Query script error: {}", e.to_string());
-                Err(Error::DatabaseQueryError(e.to_string()))
-            },
-            |scripts_| Ok(parse_script(scripts_)),
-        )?;
-    let scripts_: Vec<(i64, Vec<u8>)> = scripts_db
+    let mut scripts_dbs: Vec<ScriptDb> = vec![];
+    let script_ids_subs: Vec<&[i64]> = script_ids.chunks(PAGE_SIZE as usize).collect();
+    for script_ids_sub in script_ids_subs.into_iter() {
+        let scripts_db = scripts
+            .select((id, code_hash, hash_type, args))
+            .filter(id.eq_any(script_ids_sub))
+            .load::<Script>(conn)
+            .map_or_else(
+                |e| {
+                    error!("Query script error: {}", e.to_string());
+                    Err(Error::DatabaseQueryError(e.to_string()))
+                },
+                |scripts_| Ok(parse_script(scripts_)),
+            )?;
+        scripts_dbs.extend(scripts_db);
+    }
+    let scripts_: Vec<(i64, Vec<u8>)> = scripts_dbs
         .iter()
         .map(|script_db| (script_db.id, generate_script_vec(script_db)))
         .collect();

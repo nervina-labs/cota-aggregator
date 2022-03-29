@@ -1,15 +1,21 @@
+use crate::entries::helper::{generate_hold_key, generate_hold_value};
+use crate::entries::smt::generate_history_smt;
 use crate::models::hold::get_hold_cota_by_lock_hash;
 use crate::request::update::UpdateReq;
-use crate::smt::common::{generate_history_smt, generate_hold_key, generate_hold_value};
+use crate::smt::db::cota_db::CotaRocksDB;
+use crate::smt::RootSaver;
 use crate::utils::error::Error;
 use cota_smt::common::*;
 use cota_smt::molecule::prelude::*;
-use cota_smt::smt::H256;
-use cota_smt::update::UpdateCotaNFTEntriesBuilder;
+use cota_smt::smt::{blake2b_256, H256};
+use cota_smt::update::{UpdateCotaNFTEntries, UpdateCotaNFTEntriesBuilder};
 use log::error;
 
-pub fn generate_update_smt(update_req: UpdateReq) -> Result<(String, String), Error> {
-    let mut smt = generate_history_smt(update_req.lock_hash)?;
+pub async fn generate_update_smt(
+    update_req: UpdateReq,
+) -> Result<(H256, UpdateCotaNFTEntries), Error> {
+    let db = CotaRocksDB::default();
+    let mut smt = generate_history_smt(&db, update_req.lock_script.as_slice()).await?;
     let nfts = update_req.nfts;
     if nfts.is_empty() {
         return Err(Error::RequestParamNotFound("nfts".to_string()));
@@ -19,8 +25,11 @@ pub fn generate_update_smt(update_req: UpdateReq) -> Result<(String, String), Er
             .map(|nft| (nft.cota_id, nft.token_index))
             .collect(),
     );
-    let db_holds =
-        get_hold_cota_by_lock_hash(update_req.lock_hash, cota_id_and_token_index_pairs)?.0;
+    let db_holds = get_hold_cota_by_lock_hash(
+        blake2b_256(&update_req.lock_script.as_slice()),
+        cota_id_and_token_index_pairs,
+    )?
+    .0;
     if db_holds.is_empty() || db_holds.len() != nfts.len() {
         return Err(Error::CotaIdAndTokenIndexHasNotHeld);
     }
@@ -28,24 +37,22 @@ pub fn generate_update_smt(update_req: UpdateReq) -> Result<(String, String), Er
     let mut hold_old_values: Vec<CotaNFTInfo> = Vec::new();
     let mut hold_values: Vec<CotaNFTInfo> = Vec::new();
     let mut update_leaves: Vec<(H256, H256)> = Vec::with_capacity(nfts.len());
+    let mut previous_leaves: Vec<(H256, H256)> = Vec::with_capacity(nfts.len());
     for (hold_db, nft) in db_holds.iter().zip(nfts.iter()) {
         let (hold_key, key) = generate_hold_key(hold_db.cota_id, hold_db.token_index);
-        hold_keys.push(hold_key);
-        let (hold_old_value, _) =
+        let (hold_old_value, old_value) =
             generate_hold_value(hold_db.configure, hold_db.state, hold_db.characteristic);
-        hold_old_values.push(hold_old_value);
         let (hold_value, value) =
             generate_hold_value(hold_db.configure, nft.state, nft.characteristic);
+        hold_keys.push(hold_key);
+        hold_old_values.push(hold_old_value);
         hold_values.push(hold_value);
         update_leaves.push((key, value));
+        previous_leaves.push((key, old_value));
         smt.update(key, value).expect("hold SMT update leave error");
     }
 
-    let root_hash = smt.root().clone();
-    let mut root_hash_bytes = [0u8; 32];
-    root_hash_bytes.copy_from_slice(root_hash.as_slice());
-    let root_hash_hex = hex::encode(root_hash_bytes);
-
+    smt.save_root_and_leaves(previous_leaves)?;
     let update_merkle_proof = smt
         .merkle_proof(update_leaves.iter().map(|leave| leave.0).collect())
         .map_err(|e| {
@@ -87,7 +94,5 @@ pub fn generate_update_smt(update_req: UpdateReq) -> Result<(String, String), Er
         .action(action_bytes)
         .build();
 
-    let update_entry = hex::encode(update_entries.as_slice());
-
-    Ok((root_hash_hex, update_entry))
+    Ok((*smt.root(), update_entries))
 }

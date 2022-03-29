@@ -25,15 +25,15 @@ impl ReqParser for Nft {
 
 #[derive(Clone, Eq, PartialEq)]
 pub struct UpdateReq {
-    pub lock_hash: [u8; 32],
-    pub nfts:      Vec<Nft>,
+    pub lock_script: Vec<u8>,
+    pub nfts:        Vec<Nft>,
 }
 
 impl UpdateReq {
     pub fn from_map(map: &Map<String, Value>) -> Result<Self, Error> {
         Ok(UpdateReq {
-            lock_hash: map.get_hex_bytes_filed::<32>("lock_hash")?,
-            nfts:      parse_vec_map::<Nft>(map, "nfts")?,
+            lock_script: map.get_hex_vec_filed("lock_script")?,
+            nfts:        parse_vec_map::<Nft>(map, "nfts")?,
         })
     }
 }
