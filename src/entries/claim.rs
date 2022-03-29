@@ -16,7 +16,7 @@ use cota_smt::transfer::{ClaimCotaNFTEntries, ClaimCotaNFTEntriesBuilder};
 use log::error;
 
 pub async fn generate_claim_smt(claim_req: ClaimReq) -> Result<(H256, ClaimCotaNFTEntries), Error> {
-    let claims = claim_req.claims.clone();
+    let claims = claim_req.claims;
     let claims_len = claims.len();
     if claims_len == 0 {
         return Err(Error::RequestParamNotFound("claims".to_string()));

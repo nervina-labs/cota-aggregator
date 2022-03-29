@@ -15,7 +15,7 @@ use cota_smt::smt::{blake2b_256, H256};
 use log::error;
 
 pub async fn generate_mint_smt(mint_req: MintReq) -> Result<(H256, MintCotaNFTV1Entries), Error> {
-    let withdrawals = mint_req.withdrawals.clone();
+    let withdrawals = mint_req.withdrawals;
     let withdrawals_len = withdrawals.len();
     if withdrawals_len == 0 {
         return Err(Error::RequestParamNotFound("withdrawals".to_string()));
