@@ -1,34 +1,23 @@
-use crate::models::define::{get_define_cota_by_lock_hash, DefineDb};
+use crate::entries::helper::{generate_define_key, generate_define_value};
+use crate::entries::smt::generate_history_smt;
 use crate::request::define::DefineReq;
-use crate::smt::common::generate_history_smt;
-use crate::smt::common::{generate_define_key, generate_define_value};
+use crate::smt::db::cota_db::CotaRocksDB;
+use crate::smt::RootSaver;
 use crate::utils::error::Error;
 use cota_smt::common::*;
-use cota_smt::define::DefineCotaNFTEntriesBuilder;
+use cota_smt::define::{DefineCotaNFTEntries, DefineCotaNFTEntriesBuilder};
 use cota_smt::molecule::prelude::*;
 use cota_smt::smt::H256;
 use log::error;
 
-pub fn generate_define_smt(define_req: DefineReq) -> Result<(String, String), Error> {
-    let mut smt = generate_history_smt(define_req.lock_hash)?;
-    let db_defines = get_define_cota_by_lock_hash(define_req.lock_hash)?.0;
-    if !db_defines.is_empty() {
-        for DefineDb {
-            cota_id,
-            total,
-            issued,
-            configure,
-        } in db_defines
-        {
-            let (_, key) = generate_define_key(cota_id);
-            let (_, value) =
-                generate_define_value(total.to_be_bytes(), issued.to_be_bytes(), configure);
-            smt.update(key, value)
-                .expect("define SMT update leave error");
-        }
-    }
+pub async fn generate_define_smt(
+    define_req: DefineReq,
+) -> Result<(H256, DefineCotaNFTEntries), Error> {
+    let db = CotaRocksDB::default();
+    let mut smt = generate_history_smt(&db, define_req.lock_script.as_slice()).await?;
 
     let mut update_leaves: Vec<(H256, H256)> = Vec::with_capacity(1);
+    let mut previous_leaves: Vec<(H256, H256)> = Vec::with_capacity(1);
     let DefineReq {
         cota_id,
         total,
@@ -42,12 +31,9 @@ pub fn generate_define_smt(define_req: DefineReq) -> Result<(String, String), Er
     smt.update(key, value)
         .expect("define SMT update leave error");
     update_leaves.push((key, value));
+    previous_leaves.push((key, H256::zero()));
 
-    let root_hash = smt.root().clone();
-    let mut root_hash_bytes = [0u8; 32];
-    root_hash_bytes.copy_from_slice(root_hash.as_slice());
-    let root_hash_hex = hex::encode(root_hash_bytes);
-
+    smt.save_root_and_leaves(previous_leaves)?;
     let define_merkle_proof = smt
         .merkle_proof(update_leaves.iter().map(|leave| leave.0).collect())
         .map_err(|e| {
@@ -95,7 +81,5 @@ pub fn generate_define_smt(define_req: DefineReq) -> Result<(String, String), Er
         .action(action_bytes)
         .build();
 
-    let define_entry = hex::encode(define_entries.as_slice());
-
-    Ok((root_hash_hex, define_entry))
+    Ok((*smt.root(), define_entries))
 }

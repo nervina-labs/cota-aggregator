@@ -61,10 +61,6 @@ pub fn get_define_cota_by_lock_hash_with_conn(
     Ok((defines, block_height))
 }
 
-pub fn get_define_cota_by_lock_hash(lock_hash_: [u8; 32]) -> DBResult<DefineDb> {
-    get_define_cota_by_lock_hash_with_conn(&establish_connection(), lock_hash_)
-}
-
 pub fn get_define_cota_by_lock_hash_and_cota_id(
     lock_hash_: [u8; 32],
     cota_id_: [u8; 20],

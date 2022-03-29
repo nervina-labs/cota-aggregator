@@ -1,19 +1,22 @@
+use crate::entries::helper::{
+    generate_claim_key, generate_claim_value, generate_hold_key, generate_hold_value,
+    generate_withdrawal_key, generate_withdrawal_key_v1, generate_withdrawal_value,
+    generate_withdrawal_value_v1,
+};
+use crate::entries::smt::generate_history_smt;
 use crate::models::withdrawal::{get_withdrawal_cota_by_lock_hash, WithdrawDb};
 use crate::request::claim::ClaimReq;
-use crate::smt::common::{
-    generate_claim_key, generate_claim_value, generate_history_smt, generate_hold_key,
-    generate_hold_value, generate_withdrawal_key, generate_withdrawal_key_v1,
-    generate_withdrawal_value, generate_withdrawal_value_v1,
-};
+use crate::smt::db::cota_db::CotaRocksDB;
+use crate::smt::RootSaver;
 use crate::utils::error::Error;
 use cota_smt::common::*;
 use cota_smt::molecule::prelude::*;
 use cota_smt::smt::{blake2b_256, H256};
-use cota_smt::transfer::ClaimCotaNFTEntriesBuilder;
+use cota_smt::transfer::{ClaimCotaNFTEntries, ClaimCotaNFTEntriesBuilder};
 use log::error;
 
-pub fn generate_claim_smt(claim_req: ClaimReq) -> Result<(String, String), Error> {
-    let claims = claim_req.clone().claims;
+pub async fn generate_claim_smt(claim_req: ClaimReq) -> Result<(H256, ClaimCotaNFTEntries), Error> {
+    let claims = claim_req.claims;
     let claims_len = claims.len();
     if claims_len == 0 {
         return Err(Error::RequestParamNotFound("claims".to_string()));
@@ -25,7 +28,7 @@ pub fn generate_claim_smt(claim_req: ClaimReq) -> Result<(String, String), Error
             .collect(),
     );
     let sender_withdrawals = get_withdrawal_cota_by_lock_hash(
-        claim_req.withdrawal_lock_hash,
+        blake2b_256(claim_req.withdrawal_lock_script.as_slice()),
         cota_id_and_token_index_pairs,
     )?
     .0;
@@ -35,14 +38,17 @@ pub fn generate_claim_smt(claim_req: ClaimReq) -> Result<(String, String), Error
 
     let mut hold_keys: Vec<CotaNFTId> = Vec::new();
     let mut hold_values: Vec<CotaNFTInfo> = Vec::new();
-    let withdrawal_smt = generate_history_smt((&claim_req).withdrawal_lock_hash)?;
+    let db = CotaRocksDB::default();
+    let withdrawal_smt =
+        generate_history_smt(&db, claim_req.withdrawal_lock_script.as_slice()).await?;
     let mut withdrawal_update_leaves: Vec<(H256, H256)> = Vec::with_capacity(claims_len);
 
     let mut claim_keys: Vec<ClaimCotaNFTKey> = Vec::new();
     let mut key_vec: Vec<(H256, u8)> = Vec::new();
     let mut claim_values: Vec<Byte32> = Vec::new();
-    let mut claim_smt = generate_history_smt(blake2b_256(&claim_req.lock_script))?;
+    let mut claim_smt = generate_history_smt(&db, claim_req.lock_script.as_slice()).await?;
     let mut claim_update_leaves: Vec<(H256, H256)> = Vec::with_capacity(claims_len * 2);
+    let mut previous_leaves: Vec<(H256, H256)> = Vec::with_capacity(claims_len * 2);
     for withdrawal in sender_withdrawals {
         let WithdrawDb {
             cota_id,
@@ -61,7 +67,7 @@ pub fn generate_claim_smt(claim_req: ClaimReq) -> Result<(String, String), Error
                     configure,
                     state,
                     characteristic,
-                    claim_req.clone().lock_script,
+                    &claim_req.lock_script,
                     out_point,
                 )
                 .1,
@@ -73,12 +79,13 @@ pub fn generate_claim_smt(claim_req: ClaimReq) -> Result<(String, String), Error
                     configure,
                     state,
                     characteristic,
-                    claim_req.clone().lock_script,
+                    &claim_req.lock_script,
                 )
                 .1,
             )
         };
         withdrawal_update_leaves.push((key, value));
+        previous_leaves.push((key, H256::zero()));
 
         let (hold_key, key) = generate_hold_key(cota_id, token_index);
         let (hold_value, value) = generate_hold_value(configure, state, characteristic);
@@ -88,11 +95,13 @@ pub fn generate_claim_smt(claim_req: ClaimReq) -> Result<(String, String), Error
             .update(key, value)
             .expect("claim SMT update leave error");
         claim_update_leaves.push((key, value));
+        previous_leaves.push((key, H256::zero()));
 
         let (claim_key, key) = generate_claim_key(cota_id, token_index, out_point);
         claim_keys.push(claim_key);
         key_vec.push((key, version));
     }
+    withdrawal_smt.save_root_and_leaves(vec![])?;
     let withdraw_merkle_proof = withdrawal_smt
         .merkle_proof(
             withdrawal_update_leaves
@@ -124,11 +133,7 @@ pub fn generate_claim_smt(claim_req: ClaimReq) -> Result<(String, String), Error
             .expect("claim SMT update leave error");
         claim_update_leaves.push((key, value))
     }
-    let claim_root_hash = claim_smt.root().clone();
-    let mut root_hash_bytes = [0u8; 32];
-    root_hash_bytes.copy_from_slice(claim_root_hash.as_slice());
-    let claim_root_hash_hex = hex::encode(root_hash_bytes);
-
+    claim_smt.save_root_and_leaves(previous_leaves)?;
     let claim_merkle_proof = claim_smt
         .merkle_proof(claim_update_leaves.iter().map(|leave| leave.0).collect())
         .map_err(|e| {
@@ -173,7 +178,5 @@ pub fn generate_claim_smt(claim_req: ClaimReq) -> Result<(String, String), Error
         .action(action_bytes)
         .build();
 
-    let claim_entry = hex::encode(claim_entries.as_slice());
-
-    Ok((claim_root_hash_hex, claim_entry))
+    Ok((*claim_smt.root(), claim_entries))
 }

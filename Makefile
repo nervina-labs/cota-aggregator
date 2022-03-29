@@ -14,13 +14,17 @@ test:
 	cargo fmt
 	cargo test --all
 
+bench:
+	cargo fmt
+	cargo bench -- --nocapture --ignored
+
 run:
 	cargo fmt
-	RUST_LOG=info cargo run
+	RUST_LOG=debug cargo run
 
 run-mac:
 	cargo fmt
-	RUST_LOG=info RUSTFLAGS='-L/opt/homebrew/opt/mysql-client/lib' cargo run
+	RUST_LOG=debug RUSTFLAGS='-L/opt/homebrew/opt/mysql-client/lib' cargo run
 
 run-release:
 	RUST_LOG=info ./target/release/cota-aggregator

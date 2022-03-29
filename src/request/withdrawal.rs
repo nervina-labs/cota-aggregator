@@ -23,7 +23,7 @@ impl ReqParser for TransferWithdrawal {
 
 #[derive(Clone, Eq, PartialEq)]
 pub struct WithdrawalReq {
-    pub lock_hash:   [u8; 32],
+    pub lock_script: Vec<u8>,
     pub out_point:   [u8; 24],
     pub withdrawals: Vec<TransferWithdrawal>,
 }
@@ -31,7 +31,7 @@ pub struct WithdrawalReq {
 impl WithdrawalReq {
     pub fn from_map(map: &Map<String, Value>) -> Result<Self, Error> {
         Ok(WithdrawalReq {
-            lock_hash:   map.get_hex_bytes_filed::<32>("lock_hash")?,
+            lock_script: map.get_hex_vec_filed("lock_script")?,
             out_point:   map.get_hex_bytes_filed::<24>("out_point")?,
             withdrawals: parse_vec_map::<TransferWithdrawal>(map, "withdrawals")?,
         })
