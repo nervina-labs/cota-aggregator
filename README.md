@@ -309,7 +309,7 @@ http://127.0.0.1:3030
     "jsonrpc":"2.0",
     "method":"is_claimed",
     "params":{
-        "lock_hash":"0x3162711f5048d416c62c4ee5483a9c289dbe607fb00790b14ad7dc7edf1c21d9",
+        "lock_script":"0x490000001000000030000000310000009bd7e06f3ecf4be0f2fcd2188b23f1b9fcc88e5d4b65a8637b17723bbda3cce801140000005b600202aa2e99d61b1bbfc3daf2d0cc7b849800",
         "cota_id":"0x2dd97617e685c0cd44b87cba7e8756ea67a721cd",
         "token_index":"0x00000000"
     }

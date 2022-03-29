@@ -165,12 +165,12 @@ pub async fn is_claimed_rpc(params: Params) -> Result<Value, Error> {
     info!("Is claimed request: {:?}", params);
     let map: Map<String, Value> = Params::parse(params)?;
     let IsClaimedReq {
-        lock_hash,
+        lock_script,
         cota_id,
         token_index,
     } = IsClaimedReq::from_map(&map).map_err(|err| err.into())?;
     let (claimed, block_number) =
-        check_cota_claimed(lock_hash, cota_id, token_index).map_err(|err| err.into())?;
+        check_cota_claimed(&lock_script, cota_id, token_index).map_err(|err| err.into())?;
     let response = parse_claimed_response(claimed, block_number);
     Ok(Value::Object(response))
 }

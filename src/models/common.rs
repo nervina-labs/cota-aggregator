@@ -55,10 +55,11 @@ pub fn get_mint_cota(lock_script: &[u8], page: i64, page_size: i64) -> DBTotalRe
 }
 
 pub fn check_cota_claimed(
-    lock_hash: [u8; 32],
+    lock_script: &[u8],
     cota_id: [u8; 20],
     index: [u8; 4],
 ) -> Result<(bool, u64), Error> {
+    let lock_hash = blake2b_256(lock_script);
     check_hold_cota_by_lock_hash(lock_hash, (cota_id, index))
 }
 
