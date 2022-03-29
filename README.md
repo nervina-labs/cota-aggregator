@@ -27,7 +27,10 @@ Then put the `RUSTFLAGS='-L/opt/homebrew/opt/mysql-client/lib' ` before `cargo b
 
 ### Manual
 
-- Rename `.env.example` to `.env` and update the database connection string in `DATABASE_URL` key.
+- Rename `.env.example` to `.env` 
+  - Update the database connection string in `DATABASE_URL` key 
+  - Update the ckb-indexer url string in `CKB_INDEXER`
+  - Update the miannet or testnet in `IS_MAINNET`
 - Build with release profile: `make build-release`
 - Run with release profile: `make run-release`
 
