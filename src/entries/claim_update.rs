@@ -18,7 +18,7 @@ use log::error;
 pub async fn generate_claim_update_smt(
     claim_update_req: ClaimUpdateReq,
 ) -> Result<(H256, ClaimUpdateCotaNFTEntries), Error> {
-    let nfts = claim_update_req.nfts.clone();
+    let nfts = claim_update_req.nfts;
     let nfts_len = nfts.len();
     if nfts_len == 0 {
         return Err(Error::RequestParamNotFound("nfts".to_string()));

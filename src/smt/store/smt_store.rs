@@ -4,7 +4,6 @@ use crate::smt::db::schema::Col;
 use crate::smt::store::serde::leaf_key_to_vec;
 use crate::smt::types::leaf::{Byte32, SMTLeaf, SMTLeafBuilder, SMTLeafVec, SMTLeafVecBuilder};
 use crate::utils::error::Error;
-use crate::utils::helper::parse_vec_n;
 use cota_smt::smt::H256;
 use molecule::prelude::{Builder, Entity};
 use sparse_merkle_tree::{
@@ -12,6 +11,7 @@ use sparse_merkle_tree::{
     traits::Store,
     tree::{BranchKey, BranchNode},
 };
+use std::convert::TryInto;
 
 pub struct SMTStore<'a> {
     lock_hash:  [u8; 32],
@@ -50,7 +50,13 @@ impl<'a> SMTStore<'a> {
 
     pub fn get_root(&self) -> Result<Option<H256>, SMTError> {
         match self.store.get(self.root_col, &self.lock_hash) {
-            Some(slice) => Ok(Some(H256::from(parse_vec_n(slice.to_vec())))),
+            Some(slice) => {
+                let v: [u8; 32] = slice
+                    .as_ref()
+                    .try_into()
+                    .expect("stored H256 should be valid");
+                Ok(Some(v.into()))
+            }
             None => Ok(None),
         }
     }
@@ -76,15 +82,24 @@ impl<'a> SMTStore<'a> {
     pub fn get_leaves(&self) -> Result<Option<Vec<(H256, H256)>>, Error> {
         match self.store.get(self.leaves_col, &self.lock_hash) {
             Some(slice) => {
-                let mut leaves = vec![];
                 let smt_leaves = SMTLeafVec::from_slice(&slice)
                     .map_err(|_e| Error::SMTError("SMT Leaves parse error".to_owned()))?;
-                for smt_leaf in smt_leaves {
-                    leaves.push((
-                        H256::from(parse_vec_n::<32>(smt_leaf.key().as_slice().to_vec())),
-                        H256::from(parse_vec_n::<32>(smt_leaf.value().as_slice().to_vec())),
-                    ))
-                }
+                let leaves = smt_leaves
+                    .into_iter()
+                    .map(|smt_leaf| {
+                        let key: [u8; 32] = smt_leaf
+                            .key()
+                            .as_slice()
+                            .try_into()
+                            .expect("stored SMTLeaf should be valid");
+                        let value: [u8; 32] = smt_leaf
+                            .value()
+                            .as_slice()
+                            .try_into()
+                            .expect("stored SMTLeaf should be valid");
+                        (key.into(), value.into())
+                    })
+                    .collect();
                 Ok(Some(leaves))
             }
             None => Ok(None),

@@ -19,7 +19,7 @@ use log::error;
 pub async fn generate_transfer_update_smt(
     transfer_update_req: TransferUpdateReq,
 ) -> Result<(H256, TransferUpdateCotaNFTV1Entries), Error> {
-    let transfers = transfer_update_req.transfers.clone();
+    let transfers = transfer_update_req.transfers;
     let transfers_len = transfers.len();
     if transfers_len == 0 {
         return Err(Error::RequestParamNotFound("transfers".to_string()));
