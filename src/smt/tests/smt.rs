@@ -1,3 +1,5 @@
+extern crate test;
+
 use crate::smt::db::cota_db::CotaRocksDB;
 use crate::smt::db::schema::{
     COLUMN_SMT_BRANCH, COLUMN_SMT_LEAF, COLUMN_SMT_ROOT, COLUMN_SMT_TEMP_LEAVES,
@@ -80,22 +82,20 @@ fn generate_smt(history_leaf_count: u32, update_leaf_count: u32) {
 #[cfg(test)]
 mod tests {
     use super::*;
+    use test::Bencher;
 
-    #[test]
-    #[ignore]
-    pub fn test_smt_with_1000_leaves() {
-        generate_smt(1000, 5);
+    #[bench]
+    pub fn test_smt_with_1000_leaves(b: &mut Bencher) {
+        b.iter(|| generate_smt(1000, 100));
     }
 
-    #[test]
-    #[ignore]
-    pub fn test_smt_with_5000_leaves() {
-        generate_smt(5000, 5);
+    #[bench]
+    pub fn test_smt_with_5000_leaves(b: &mut Bencher) {
+        b.iter(|| generate_smt(5000, 100));
     }
 
-    #[test]
-    #[ignore]
-    pub fn test_smt_with_10000_leaves() {
-        generate_smt(10000, 5);
+    #[bench]
+    pub fn test_smt_with_10000_leaves(b: &mut Bencher) {
+        b.iter(|| generate_smt(10000, 100));
     }
 }

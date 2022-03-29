@@ -14,9 +14,9 @@ test:
 	cargo fmt
 	cargo test --all
 
-test-smt:
+bench:
 	cargo fmt
-	cargo test -- --nocapture --ignored
+	cargo bench -- --nocapture
 
 run:
 	cargo fmt
