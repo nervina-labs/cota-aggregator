@@ -85,16 +85,19 @@ mod tests {
     use test::Bencher;
 
     #[bench]
+    #[ignore]
     pub fn test_smt_with_5000_leaves(b: &mut Bencher) {
         b.iter(|| generate_smt(5000, 100));
     }
 
     #[bench]
+    #[ignore]
     pub fn test_smt_with_10000_leaves(b: &mut Bencher) {
         b.iter(|| generate_smt(10000, 100));
     }
 
     #[bench]
+    #[ignore]
     pub fn test_smt_with_50000_leaves(b: &mut Bencher) {
         b.iter(|| generate_smt(50000, 100));
     }

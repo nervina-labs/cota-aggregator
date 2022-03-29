@@ -16,7 +16,7 @@ test:
 
 bench:
 	cargo fmt
-	cargo bench -- --nocapture
+	cargo bench -- --nocapture --ignored
 
 run:
 	cargo fmt
