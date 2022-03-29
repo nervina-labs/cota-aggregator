@@ -50,7 +50,10 @@ impl<'a> SMTStore<'a> {
 
     pub fn get_root(&self) -> Result<Option<H256>, SMTError> {
         match self.store.get(self.root_col, &self.lock_hash) {
-            Some(slice) => Ok(Some(H256::from(parse_vec_n(slice.to_vec())))),
+            Some(slice) => {
+                let v: [u8; 32] = slice.as_ref().try_into().expect("stored H256 should be valid");
+                Ok(Some(v.into()))
+            }
             None => Ok(None),
         }
     }
