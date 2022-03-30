@@ -1,7 +1,7 @@
 use super::helper::SqlConnection;
 use crate::schema::class_infos::dsl::class_infos;
 use crate::schema::class_infos::{
-    audio, cota_id, description, image, model, name, properties, schema, symbol, video,
+    audio, characteristic, cota_id, description, image, model, name, properties, symbol, video,
 };
 use crate::utils::error::Error;
 use diesel::*;
@@ -10,15 +10,15 @@ use serde::{Deserialize, Serialize};
 
 #[derive(Serialize, Deserialize, Queryable, Debug, Clone, Eq, PartialEq)]
 pub struct ClassInfoDb {
-    pub name:        String,
-    pub symbol:      String,
-    pub description: String,
-    pub image:       String,
-    pub audio:       String,
-    pub video:       String,
-    pub model:       String,
-    pub schema:      String,
-    pub properties:  String,
+    pub name:           String,
+    pub symbol:         String,
+    pub description:    String,
+    pub image:          String,
+    pub audio:          String,
+    pub video:          String,
+    pub model:          String,
+    pub characteristic: String,
+    pub properties:     String,
 }
 
 pub fn get_class_info_by_cota_id(
@@ -35,7 +35,7 @@ pub fn get_class_info_by_cota_id(
             audio,
             video,
             model,
-            schema,
+            characteristic,
             properties,
         ))
         .filter(cota_id.eq(cota_id_hex))
