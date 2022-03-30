@@ -1,4 +1,3 @@
-use super::helper::SqlConnection;
 use crate::models::helper::establish_connection;
 use crate::schema::issuer_infos::dsl::issuer_infos;
 use crate::schema::issuer_infos::{avatar, description, lock_hash, name};

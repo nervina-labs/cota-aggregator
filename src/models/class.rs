@@ -1,4 +1,4 @@
-use super::helper::SqlConnection;
+use crate::models::helper::SqlConnection;
 use crate::schema::class_infos::dsl::class_infos;
 use crate::schema::class_infos::{
     audio, characteristic, cota_id, description, image, model, name, properties, symbol, video,

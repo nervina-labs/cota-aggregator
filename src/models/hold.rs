@@ -132,12 +132,12 @@ pub fn check_hold_cota_by_lock_hash(
 }
 
 pub fn get_hold_cota_by_lock_hash_and_page(
+    conn: &SqlConnection,
     lock_hash_: [u8; 32],
     page: i64,
     page_size: i64,
 ) -> DBTotalResult<HoldDb> {
     let start_time = Local::now().timestamp_millis();
-    let conn = &establish_connection();
     let (lock_hash_hex, lock_hash_crc_) = parse_lock_hash(lock_hash_);
     let total: i64 = hold_cota_nft_kv_pairs
         .filter(lock_hash_crc.eq(lock_hash_crc_))
