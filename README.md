@@ -397,3 +397,32 @@ http://127.0.0.1:3030
     "id":2
 }
 ```
+
+- get_issuer_info
+
+```shell
+echo '{
+    "id":2,
+    "jsonrpc":"2.0",
+    "method":"get_issuer_info",
+    "params":{
+        "lock_script":"0x490000001000000030000000310000009bd7e06f3ecf4be0f2fcd2188b23f1b9fcc88e5d4b65a8637b17723bbda3cce80114000000d5f13ab18e9f6b55eae6535b6ec141865437854d"
+    }
+}' \
+| tr -d '\n' \
+| curl -H 'content-type: application/json' -d @- \
+http://127.0.0.1:3030
+```
+
+```shell
+{
+    "jsonrpc":"2.0",
+    "result":{
+        "avatar":"https://i.loli.net/2021/04/29/IigbpOWP8fw9qDn.png",
+        "block_number":4872987,
+        "description":"Community building protocol",
+        "name":"Rostra"
+    },
+    "id":2
+}
+```

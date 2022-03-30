@@ -39,13 +39,14 @@ pub fn get_class_info_by_cota_id(
             properties,
         ))
         .filter(cota_id.eq(cota_id_hex))
+        .limit(1)
         .load::<ClassInfoDb>(conn)
         .map_or_else(
             |e| {
                 error!("Query class info error: {}", e.to_string());
                 Err(Error::DatabaseQueryError(e.to_string()))
             },
-            |classes_| Ok(classes_),
+            Ok,
         )?;
     Ok(classes.get(0).cloned())
 }
