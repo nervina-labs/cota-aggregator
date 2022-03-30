@@ -54,6 +54,13 @@ docker run -d -p 3030:3030 cota-aggregator:latest
 docker-compose up -d --build
 ```
 
+### Public cota aggregator rpc url as blow can be used to develop and test
+
+```
+testnet:
+https://cota.nervina.dev/aggregator
+```
+
 ### APIs
 
 - generate_define_cota_smt
