@@ -40,7 +40,7 @@ Then put the `RUSTFLAGS='-L/opt/homebrew/opt/mysql-client/lib' ` before `cargo b
 ### Release
 
 ```shell
-RUST_LOG=info DATABASE_URL=mysql://root:passport@localhost:3306/db_name ./target/release/cota-aggregator
+RUST_LOG=info DATABASE_URL=mysql://root:passport@localhost:3306/db_name CKB_INDEXER=http://localhost:8116 ./target/release/cota-aggregator
 ```
 
 ### docker
