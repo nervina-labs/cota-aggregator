@@ -174,17 +174,6 @@ dependencies = [
 ]
 
 [[package]]
-name = "bzip2-sys"
-version = "0.1.11+1.0.8"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "736a955f3fa7875102d57c82b8cac37ec45224a07fd32d58f9f7a186b6cd4cdc"
-dependencies = [
- "cc",
- "libc",
- "pkg-config",
-]
-
-[[package]]
 name = "cc"
 version = "1.0.72"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -304,6 +293,18 @@ dependencies = [
 ]
 
 [[package]]
+name = "ckb-librocksdb-sys"
+version = "6.20.4"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "302b396464eba5ef2e728f1e242096d411d9aa4be81da59f6a761046a6695e6b"
+dependencies = [
+ "bindgen",
+ "cc",
+ "glob 0.2.11",
+ "libc",
+]
+
+[[package]]
 name = "ckb-occupied-capacity"
 version = "0.101.7"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -344,6 +345,17 @@ dependencies = [
 ]
 
 [[package]]
+name = "ckb-rocksdb"
+version = "0.16.2"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "e90b46230931cded2acd34e389ab459c096c883de28319cb2cd2acc313edef7c"
+dependencies = [
+ "ckb-librocksdb-sys",
+ "libc",
+ "tempfile",
+]
+
+[[package]]
 name = "ckb-types"
 version = "0.101.7"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -371,7 +383,7 @@ version = "1.3.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "4cc00842eed744b858222c4c9faf7243aafc6d33f92f96935263ef4d8a41ce21"
 dependencies = [
- "glob",
+ "glob 0.3.0",
  "libc",
  "libloading",
 ]
@@ -398,6 +410,7 @@ version = "0.4.1"
 dependencies = [
  "chrono",
  "ckb-jsonrpc-types",
+ "ckb-rocksdb",
  "ckb-types",
  "cota-smt",
  "crc",
@@ -414,7 +427,6 @@ dependencies = [
  "openssl",
  "rand 0.8.5",
  "reqwest",
- "rocksdb",
  "serde",
  "serde_json",
  "sparse-merkle-tree",
@@ -727,6 +739,12 @@ checksum = "78cc372d058dcf6d5ecd98510e7fbc9e5aec4d21de70f65fea8fecebcd881bd4"
 
 [[package]]
 name = "glob"
+version = "0.2.11"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "8be18de09a56b60ed0edf84bc9df007e30040691af7acd1c41874faac5895bfb"
+
+[[package]]
+name = "glob"
 version = "0.3.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "9b919933a397b79c37e33b77bb2aa3dc8eb6e165ad809e58ff75bc7db2e34574"
@@ -1022,32 +1040,6 @@ checksum = "efbc0f03f9a775e9f6aed295c6a1ba2253c5757a9e03d55c6caa46a681abcddd"
 dependencies = [
  "cfg-if 1.0.0",
  "winapi",
-]
-
-[[package]]
-name = "librocksdb-sys"
-version = "0.6.1+6.28.2"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "81bc587013734dadb7cf23468e531aa120788b87243648be42e2d3a072186291"
-dependencies = [
- "bindgen",
- "bzip2-sys",
- "cc",
- "glob",
- "libc",
- "libz-sys",
- "zstd-sys",
-]
-
-[[package]]
-name = "libz-sys"
-version = "1.1.5"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "6f35facd4a5673cb5a48822be2be1d4236c1c99cb4113cab7061ac720d5bf859"
-dependencies = [
- "cc",
- "pkg-config",
- "vcpkg",
 ]
 
 [[package]]
@@ -1582,16 +1574,6 @@ dependencies = [
  "wasm-bindgen-futures",
  "web-sys",
  "winreg",
-]
-
-[[package]]
-name = "rocksdb"
-version = "0.18.0"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "620f4129485ff1a7128d184bc687470c21c7951b64779ebc9cfdad3dcd920290"
-dependencies = [
- "libc",
- "librocksdb-sys",
 ]
 
 [[package]]
@@ -2141,14 +2123,4 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "80d0f4e272c85def139476380b12f9ac60926689dd2e01d4923222f40580869d"
 dependencies = [
  "winapi",
-]
-
-[[package]]
-name = "zstd-sys"
-version = "1.6.3+zstd.1.5.2"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "fc49afa5c8d634e75761feda8c592051e7eeb4683ba827211eb0d731d3402ea8"
-dependencies = [
- "cc",
- "libc",
 ]

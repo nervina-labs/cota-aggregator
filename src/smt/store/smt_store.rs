@@ -1,7 +1,7 @@
 use super::serde::{branch_key_to_vec, branch_node_to_vec, slice_to_branch_node};
-use crate::smt::db::cota_db::CotaRocksDB;
 use crate::smt::db::schema::Col;
 use crate::smt::store::serde::leaf_key_to_vec;
+use crate::smt::transaction::store_transaction::StoreTransaction;
 use crate::smt::types::leaf::{Byte32, SMTLeaf, SMTLeafBuilder, SMTLeafVec, SMTLeafVecBuilder};
 use crate::utils::error::Error;
 use cota_smt::smt::H256;
@@ -19,7 +19,7 @@ pub struct SMTStore<'a> {
     branch_col: Col,
     root_col:   Col,
     leaves_col: Col,
-    store:      &'a CotaRocksDB,
+    store:      &'a StoreTransaction,
 }
 
 impl<'a> SMTStore<'a> {
@@ -29,7 +29,7 @@ impl<'a> SMTStore<'a> {
         branch_col: Col,
         root_col: Col,
         leaves_col: Col,
-        store: &'a CotaRocksDB,
+        store: &'a StoreTransaction,
     ) -> Self {
         SMTStore {
             lock_hash,

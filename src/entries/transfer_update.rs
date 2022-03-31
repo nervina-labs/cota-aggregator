@@ -5,7 +5,8 @@ use crate::entries::helper::{
 use crate::entries::smt::generate_history_smt;
 use crate::models::withdrawal::{get_withdrawal_cota_by_lock_hash, WithdrawDb};
 use crate::request::transfer::{TransferUpdate, TransferUpdateReq};
-use crate::smt::db::cota_db::CotaRocksDB;
+use crate::smt::db::db::RocksDB;
+use crate::smt::transaction::store_transaction::StoreTransaction;
 use crate::smt::RootSaver;
 use crate::utils::error::Error;
 use cota_smt::common::*;
@@ -17,7 +18,7 @@ use cota_smt::transfer_update::{
 use log::error;
 
 pub async fn generate_transfer_update_smt(
-    db: &CotaRocksDB,
+    db: &RocksDB,
     transfer_update_req: TransferUpdateReq,
 ) -> Result<(H256, TransferUpdateCotaNFTV1Entries), Error> {
     let transfers = transfer_update_req.transfers;
@@ -61,10 +62,14 @@ pub async fn generate_transfer_update_smt(
     let mut transfer_update_leaves: Vec<(H256, H256)> = Vec::with_capacity(transfers_len * 2);
     let mut previous_leaves: Vec<(H256, H256)> = Vec::with_capacity(transfers_len * 2);
     let mut withdrawal_update_leaves: Vec<(H256, H256)> = Vec::with_capacity(transfers_len);
+    let transaction = &StoreTransaction::new(db.transaction());
     let mut transfer_update_smt =
-        generate_history_smt(db, transfer_update_req.lock_script.as_slice()).await?;
-    let withdrawal_smt =
-        generate_history_smt(db, transfer_update_req.withdrawal_lock_script.as_slice()).await?;
+        generate_history_smt(transaction, transfer_update_req.lock_script.as_slice()).await?;
+    let withdrawal_smt = generate_history_smt(
+        transaction,
+        transfer_update_req.withdrawal_lock_script.as_slice(),
+    )
+    .await?;
     for (withdrawal_db, transfer) in sender_withdrawals.into_iter().zip(transfers.clone()) {
         let WithdrawDb {
             cota_id,

@@ -6,7 +6,8 @@ use crate::entries::helper::{
 use crate::entries::smt::generate_history_smt;
 use crate::models::withdrawal::{get_withdrawal_cota_by_lock_hash, WithdrawDb};
 use crate::request::claim::ClaimReq;
-use crate::smt::db::cota_db::CotaRocksDB;
+use crate::smt::db::db::RocksDB;
+use crate::smt::transaction::store_transaction::StoreTransaction;
 use crate::smt::RootSaver;
 use crate::utils::error::Error;
 use cota_smt::common::*;
@@ -16,7 +17,7 @@ use cota_smt::transfer::{ClaimCotaNFTEntries, ClaimCotaNFTEntriesBuilder};
 use log::error;
 
 pub async fn generate_claim_smt(
-    db: &CotaRocksDB,
+    db: &RocksDB,
     claim_req: ClaimReq,
 ) -> Result<(H256, ClaimCotaNFTEntries), Error> {
     let claims = claim_req.claims;
@@ -41,14 +42,15 @@ pub async fn generate_claim_smt(
 
     let mut hold_keys: Vec<CotaNFTId> = Vec::new();
     let mut hold_values: Vec<CotaNFTInfo> = Vec::new();
+    let transaction = &StoreTransaction::new(db.transaction());
     let withdrawal_smt =
-        generate_history_smt(db, claim_req.withdrawal_lock_script.as_slice()).await?;
+        generate_history_smt(transaction, claim_req.withdrawal_lock_script.as_slice()).await?;
     let mut withdrawal_update_leaves: Vec<(H256, H256)> = Vec::with_capacity(claims_len);
 
     let mut claim_keys: Vec<ClaimCotaNFTKey> = Vec::new();
     let mut key_vec: Vec<(H256, u8)> = Vec::new();
     let mut claim_values: Vec<Byte32> = Vec::new();
-    let mut claim_smt = generate_history_smt(db, claim_req.lock_script.as_slice()).await?;
+    let mut claim_smt = generate_history_smt(transaction, claim_req.lock_script.as_slice()).await?;
     let mut claim_update_leaves: Vec<(H256, H256)> = Vec::with_capacity(claims_len * 2);
     let mut previous_leaves: Vec<(H256, H256)> = Vec::with_capacity(claims_len * 2);
     for withdrawal in sender_withdrawals {

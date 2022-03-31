@@ -4,7 +4,7 @@ extern crate diesel;
 extern crate dotenv;
 
 use crate::api::*;
-use crate::smt::db::cota_db::CotaRocksDB;
+use crate::smt::db::db::RocksDB;
 use jsonrpc_http_server::jsonrpc_core::serde_json::from_str;
 use jsonrpc_http_server::jsonrpc_core::IoHandler;
 use jsonrpc_http_server::ServerBuilder;
@@ -23,7 +23,7 @@ mod smt;
 mod utils;
 
 lazy_static! {
-    static ref DB: CotaRocksDB = CotaRocksDB::default();
+    static ref DB: RocksDB = RocksDB::default().expect("RocksDB open error");
 }
 
 fn main() {

@@ -27,12 +27,12 @@ use crate::response::update::parse_update_smt;
 use crate::response::withdrawal::{
     parse_sender_response, parse_withdrawal_response, parse_withdrawal_smt,
 };
-use crate::CotaRocksDB;
+use crate::smt::db::db::RocksDB;
 use jsonrpc_http_server::jsonrpc_core::serde_json::Map;
 use jsonrpc_http_server::jsonrpc_core::{Error, Params, Value};
 use log::info;
 
-pub async fn define_rpc(params: Params, db: &CotaRocksDB) -> Result<Value, Error> {
+pub async fn define_rpc(params: Params, db: &RocksDB) -> Result<Value, Error> {
     info!("Define request: {:?}", params);
     let map: Map<String, Value> = Params::parse(params)?;
     let define_req = DefineReq::from_map(&map).map_err(|err| err.into())?;
@@ -43,7 +43,7 @@ pub async fn define_rpc(params: Params, db: &CotaRocksDB) -> Result<Value, Error
     Ok(Value::Object(response))
 }
 
-pub async fn mint_rpc(params: Params, db: &CotaRocksDB) -> Result<Value, Error> {
+pub async fn mint_rpc(params: Params, db: &RocksDB) -> Result<Value, Error> {
     info!("Mint request: {:?}", params);
     let map: Map<String, Value> = Params::parse(params)?;
     let mint_req = MintReq::from_map(&map).map_err(|err| err.into())?;
@@ -54,7 +54,7 @@ pub async fn mint_rpc(params: Params, db: &CotaRocksDB) -> Result<Value, Error> 
     Ok(Value::Object(response))
 }
 
-pub async fn withdrawal_rpc(params: Params, db: &CotaRocksDB) -> Result<Value, Error> {
+pub async fn withdrawal_rpc(params: Params, db: &RocksDB) -> Result<Value, Error> {
     info!("Withdrawal request: {:?}", params);
     let map: Map<String, Value> = Params::parse(params)?;
     let withdrawal_req = WithdrawalReq::from_map(&map).map_err(|err| err.into())?;
@@ -65,7 +65,7 @@ pub async fn withdrawal_rpc(params: Params, db: &CotaRocksDB) -> Result<Value, E
     Ok(Value::Object(response))
 }
 
-pub async fn claim_rpc(params: Params, db: &CotaRocksDB) -> Result<Value, Error> {
+pub async fn claim_rpc(params: Params, db: &RocksDB) -> Result<Value, Error> {
     info!("Claim request: {:?}", params);
     let map: Map<String, Value> = Params::parse(params)?;
     let claim_req = ClaimReq::from_map(&map).map_err(|err| err.into())?;
@@ -76,7 +76,7 @@ pub async fn claim_rpc(params: Params, db: &CotaRocksDB) -> Result<Value, Error>
     Ok(Value::Object(response))
 }
 
-pub async fn update_rpc(params: Params, db: &CotaRocksDB) -> Result<Value, Error> {
+pub async fn update_rpc(params: Params, db: &RocksDB) -> Result<Value, Error> {
     info!("Update request: {:?}", params);
     let map: Map<String, Value> = Params::parse(params)?;
     let update_req = UpdateReq::from_map(&map).map_err(|err| err.into())?;
@@ -87,7 +87,7 @@ pub async fn update_rpc(params: Params, db: &CotaRocksDB) -> Result<Value, Error
     Ok(Value::Object(response))
 }
 
-pub async fn transfer_rpc(params: Params, db: &CotaRocksDB) -> Result<Value, Error> {
+pub async fn transfer_rpc(params: Params, db: &RocksDB) -> Result<Value, Error> {
     info!("Transfer request: {:?}", params);
     let map: Map<String, Value> = Params::parse(params)?;
     let transfer_req = TransferReq::from_map(&map).map_err(|err| err.into())?;
@@ -98,7 +98,7 @@ pub async fn transfer_rpc(params: Params, db: &CotaRocksDB) -> Result<Value, Err
     Ok(Value::Object(response))
 }
 
-pub async fn claim_update_rpc(params: Params, db: &CotaRocksDB) -> Result<Value, Error> {
+pub async fn claim_update_rpc(params: Params, db: &RocksDB) -> Result<Value, Error> {
     info!("Claim & Update request: {:?}", params);
     let map: Map<String, Value> = Params::parse(params)?;
     let claim_update_req = ClaimUpdateReq::from_map(&map).map_err(|err| err.into())?;
@@ -109,7 +109,7 @@ pub async fn claim_update_rpc(params: Params, db: &CotaRocksDB) -> Result<Value,
     Ok(Value::Object(response))
 }
 
-pub async fn transfer_update_rpc(params: Params, db: &CotaRocksDB) -> Result<Value, Error> {
+pub async fn transfer_update_rpc(params: Params, db: &RocksDB) -> Result<Value, Error> {
     info!("Transfer & Update request: {:?}", params);
     let map: Map<String, Value> = Params::parse(params)?;
     let transfer_update_req = TransferUpdateReq::from_map(&map).map_err(|err| err.into())?;

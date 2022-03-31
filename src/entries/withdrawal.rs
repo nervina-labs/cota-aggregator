@@ -5,7 +5,8 @@ use crate::entries::helper::{
 use crate::entries::smt::generate_history_smt;
 use crate::models::hold::get_hold_cota_by_lock_hash;
 use crate::request::withdrawal::WithdrawalReq;
-use crate::smt::db::cota_db::CotaRocksDB;
+use crate::smt::db::db::RocksDB;
+use crate::smt::transaction::store_transaction::StoreTransaction;
 use crate::smt::RootSaver;
 use crate::utils::error::Error;
 use cota_smt::common::*;
@@ -15,10 +16,11 @@ use cota_smt::transfer::{WithdrawalCotaNFTV1Entries, WithdrawalCotaNFTV1EntriesB
 use log::error;
 
 pub async fn generate_withdrawal_smt(
-    db: &CotaRocksDB,
+    db: &RocksDB,
     withdrawal_req: WithdrawalReq,
 ) -> Result<(H256, WithdrawalCotaNFTV1Entries), Error> {
-    let mut smt = generate_history_smt(db, withdrawal_req.lock_script.as_slice()).await?;
+    let transaction = &StoreTransaction::new(db.transaction());
+    let mut smt = generate_history_smt(transaction, withdrawal_req.lock_script.as_slice()).await?;
     let withdrawals = withdrawal_req.withdrawals;
     if withdrawals.is_empty() {
         return Err(Error::RequestParamNotFound("withdrawals".to_string()));

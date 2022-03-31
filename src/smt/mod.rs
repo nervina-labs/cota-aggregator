@@ -7,6 +7,7 @@ use sparse_merkle_tree::SparseMerkleTree;
 pub mod db;
 pub mod store;
 mod tests;
+pub mod transaction;
 mod types;
 
 pub type CotaSMT<'a> = SparseMerkleTree<Blake2bHasher, H256, SMTStore<'a>>;
