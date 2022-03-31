@@ -17,6 +17,7 @@ use cota_smt::transfer_update::{
 use log::error;
 
 pub async fn generate_transfer_update_smt(
+    db: &CotaRocksDB,
     transfer_update_req: TransferUpdateReq,
 ) -> Result<(H256, TransferUpdateCotaNFTV1Entries), Error> {
     let transfers = transfer_update_req.transfers;
@@ -60,11 +61,10 @@ pub async fn generate_transfer_update_smt(
     let mut transfer_update_leaves: Vec<(H256, H256)> = Vec::with_capacity(transfers_len * 2);
     let mut previous_leaves: Vec<(H256, H256)> = Vec::with_capacity(transfers_len * 2);
     let mut withdrawal_update_leaves: Vec<(H256, H256)> = Vec::with_capacity(transfers_len);
-    let db = CotaRocksDB::default();
     let mut transfer_update_smt =
-        generate_history_smt(&db, transfer_update_req.lock_script.as_slice()).await?;
+        generate_history_smt(db, transfer_update_req.lock_script.as_slice()).await?;
     let withdrawal_smt =
-        generate_history_smt(&db, transfer_update_req.withdrawal_lock_script.as_slice()).await?;
+        generate_history_smt(db, transfer_update_req.withdrawal_lock_script.as_slice()).await?;
     for (withdrawal_db, transfer) in sender_withdrawals.into_iter().zip(transfers.clone()) {
         let WithdrawDb {
             cota_id,

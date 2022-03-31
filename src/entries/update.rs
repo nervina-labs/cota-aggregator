@@ -12,10 +12,10 @@ use cota_smt::update::{UpdateCotaNFTEntries, UpdateCotaNFTEntriesBuilder};
 use log::error;
 
 pub async fn generate_update_smt(
+    db: &CotaRocksDB,
     update_req: UpdateReq,
 ) -> Result<(H256, UpdateCotaNFTEntries), Error> {
-    let db = CotaRocksDB::default();
-    let mut smt = generate_history_smt(&db, update_req.lock_script.as_slice()).await?;
+    let mut smt = generate_history_smt(db, update_req.lock_script.as_slice()).await?;
     let nfts = update_req.nfts;
     if nfts.is_empty() {
         return Err(Error::RequestParamNotFound("nfts".to_string()));

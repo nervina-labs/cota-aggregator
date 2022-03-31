@@ -16,6 +16,7 @@ use cota_smt::transfer_update::{ClaimUpdateCotaNFTEntries, ClaimUpdateCotaNFTEnt
 use log::error;
 
 pub async fn generate_claim_update_smt(
+    db: &CotaRocksDB,
     claim_update_req: ClaimUpdateReq,
 ) -> Result<(H256, ClaimUpdateCotaNFTEntries), Error> {
     let nfts = claim_update_req.nfts;
@@ -39,16 +40,15 @@ pub async fn generate_claim_update_smt(
 
     let mut hold_keys: Vec<CotaNFTId> = Vec::new();
     let mut hold_values: Vec<CotaNFTInfo> = Vec::new();
-    let db = CotaRocksDB::default();
     let withdrawal_smt =
-        generate_history_smt(&db, claim_update_req.withdrawal_lock_script.as_slice()).await?;
+        generate_history_smt(db, claim_update_req.withdrawal_lock_script.as_slice()).await?;
     let mut withdrawal_update_leaves: Vec<(H256, H256)> = Vec::with_capacity(nfts_len);
 
     let mut claim_keys: Vec<ClaimCotaNFTKey> = Vec::new();
     let mut key_vec: Vec<(H256, u8)> = Vec::new();
     let mut claim_values: Vec<Byte32> = Vec::new();
     let mut claim_infos: Vec<ClaimCotaNFTInfo> = Vec::new();
-    let mut claim_smt = generate_history_smt(&db, claim_update_req.lock_script.as_slice()).await?;
+    let mut claim_smt = generate_history_smt(db, claim_update_req.lock_script.as_slice()).await?;
     let mut claim_update_leaves: Vec<(H256, H256)> = Vec::with_capacity(nfts_len * 2);
     let mut previous_leaves: Vec<(H256, H256)> = Vec::with_capacity(nfts_len * 2);
     for (index, withdrawal) in sender_withdrawals.into_iter().enumerate() {

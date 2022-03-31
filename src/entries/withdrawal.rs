@@ -15,10 +15,10 @@ use cota_smt::transfer::{WithdrawalCotaNFTV1Entries, WithdrawalCotaNFTV1EntriesB
 use log::error;
 
 pub async fn generate_withdrawal_smt(
+    db: &CotaRocksDB,
     withdrawal_req: WithdrawalReq,
 ) -> Result<(H256, WithdrawalCotaNFTV1Entries), Error> {
-    let db = CotaRocksDB::default();
-    let mut smt = generate_history_smt(&db, withdrawal_req.lock_script.as_slice()).await?;
+    let mut smt = generate_history_smt(db, withdrawal_req.lock_script.as_slice()).await?;
     let withdrawals = withdrawal_req.withdrawals;
     if withdrawals.is_empty() {
         return Err(Error::RequestParamNotFound("withdrawals".to_string()));
