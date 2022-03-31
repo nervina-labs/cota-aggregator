@@ -1,8 +1,8 @@
 use crate::smt::db::db::cf_handle;
 use crate::smt::db::schema::Col;
 use crate::utils::error::Error;
-use ckb_rocksdb::ops::{DeleteCF, GetCF, PutCF};
-use ckb_rocksdb::{DBVector, OptimisticTransaction, OptimisticTransactionDB};
+use rocksdb::ops::{DeleteCF, GetCF, PutCF};
+use rocksdb::{DBVector, OptimisticTransaction, OptimisticTransactionDB};
 use std::sync::Arc;
 
 pub struct RocksDBTransaction {
@@ -30,5 +30,17 @@ impl RocksDBTransaction {
         self.inner
             .delete_cf(cf, key)
             .map_err(|_e| Error::RocksDBError("transaction delete_cf".to_owned()))
+    }
+
+    pub fn commit(&self) -> Result<(), Error> {
+        self.inner
+            .commit()
+            .map_err(|e| Error::RocksDBError(format!("transaction commit: {:?}", e.to_string())))
+    }
+
+    pub fn rollback(&self) -> Result<(), Error> {
+        self.inner
+            .rollback()
+            .map_err(|_e| Error::RocksDBError("transaction rollback".to_owned()))
     }
 }

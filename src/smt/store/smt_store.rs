@@ -41,10 +41,15 @@ impl<'a> SMTStore<'a> {
         }
     }
 
-    pub fn save_root(&self, root: &H256) -> Result<(), SMTError> {
+    pub fn commit(&self) -> Result<(), Error> {
+        self.store.commit()
+    }
+
+    pub fn save_root(&self, root: &H256) -> Result<(), Error> {
         self.store
             .insert_raw(self.root_col, &self.lock_hash, root.as_slice())
-            .map_err(|err| SMTError::Store(format!("insert error {:?}", err)))?;
+            .map_err(|err| Error::SMTError(format!("insert error {:?}", err)))?;
+
         Ok(())
     }
 
@@ -75,7 +80,7 @@ impl<'a> SMTStore<'a> {
         self.store
             .insert_raw(self.leaves_col, &self.lock_hash, smt_leaves.as_slice())
             .map_err(|err| Error::SMTError(format!("insert error {:?}", err)))?;
-
+        self.store.commit()?;
         Ok(())
     }
 

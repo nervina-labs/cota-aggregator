@@ -25,4 +25,8 @@ impl StoreTransaction {
     pub fn delete(&self, col: Col, key: &[u8]) -> Result<(), Error> {
         self.inner.delete(col, key)
     }
+
+    pub fn commit(&self) -> Result<(), Error> {
+        self.inner.commit()
+    }
 }

@@ -2,8 +2,8 @@ use super::schema::Col;
 use crate::smt::db::schema::COLUMNS;
 use crate::smt::db::transaction::RocksDBTransaction;
 use crate::utils::error::Error;
-use ckb_rocksdb::ops::{GetColumnFamilys, OpenCF};
-use ckb_rocksdb::{
+use rocksdb::ops::{GetColumnFamilys, OpenCF};
+use rocksdb::{
     ColumnFamily, ColumnFamilyDescriptor, OptimisticTransactionDB, OptimisticTransactionOptions,
     Options, WriteOptions,
 };

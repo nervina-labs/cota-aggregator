@@ -24,6 +24,7 @@ impl<'a> RootSaver for CotaSMT<'a> {
         if !leaves.is_empty() {
             self.store().insert_leaves(leaves)?;
         }
+        self.store().commit()?;
         debug!("Save latest smt root: {:?} and leaves", self.root());
         Ok(())
     }
