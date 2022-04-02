@@ -23,8 +23,8 @@ impl<'a> RootSaver for CotaSMT<'a> {
             .expect("Save smt root error");
         if !leaves.is_empty() {
             self.store().insert_leaves(leaves)?;
+            self.store().commit()?;
         }
-        self.store().commit()?;
         debug!("Save latest smt root: {:?} and leaves", self.root());
         Ok(())
     }
