@@ -346,9 +346,9 @@ dependencies = [
 
 [[package]]
 name = "ckb-rocksdb"
-version = "0.16.1"
+version = "0.16.2"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "635a60810185d2903461565ca8e177ee480c41dd63a294b662fd7ea242ce3033"
+checksum = "e90b46230931cded2acd34e389ab459c096c883de28319cb2cd2acc313edef7c"
 dependencies = [
  "ckb-librocksdb-sys",
  "libc",
