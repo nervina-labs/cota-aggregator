@@ -7,6 +7,7 @@ use sparse_merkle_tree::SparseMerkleTree;
 pub mod db;
 pub mod store;
 mod tests;
+pub mod transaction;
 mod types;
 
 pub type CotaSMT<'a> = SparseMerkleTree<Blake2bHasher, H256, SMTStore<'a>>;
@@ -22,6 +23,7 @@ impl<'a> RootSaver for CotaSMT<'a> {
             .expect("Save smt root error");
         if !leaves.is_empty() {
             self.store().insert_leaves(leaves)?;
+            self.store().commit()?;
         }
         debug!("Save latest smt root: {:?} and leaves", self.root());
         Ok(())

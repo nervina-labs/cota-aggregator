@@ -6,7 +6,8 @@ use crate::entries::smt::generate_history_smt;
 use crate::models::withdrawal::{get_withdrawal_cota_by_lock_hash, WithdrawDb};
 use crate::request::transfer::TransferReq;
 use crate::request::withdrawal::TransferWithdrawal;
-use crate::smt::db::cota_db::CotaRocksDB;
+use crate::smt::db::db::RocksDB;
+use crate::smt::transaction::store_transaction::StoreTransaction;
 use crate::smt::RootSaver;
 use crate::utils::error::Error;
 use crate::utils::helper::diff_time;
@@ -18,6 +19,7 @@ use cota_smt::transfer::{TransferCotaNFTV1Entries, TransferCotaNFTV1EntriesBuild
 use log::error;
 
 pub async fn generate_transfer_smt(
+    db: &RocksDB,
     transfer_req: TransferReq,
 ) -> Result<(H256, TransferCotaNFTV1Entries), Error> {
     let transfers = transfer_req.transfers;
@@ -59,10 +61,11 @@ pub async fn generate_transfer_smt(
     let mut transfer_update_leaves: Vec<(H256, H256)> = Vec::with_capacity(transfers_len * 2);
     let mut previous_leaves: Vec<(H256, H256)> = Vec::with_capacity(transfers_len * 2);
     let mut withdrawal_update_leaves: Vec<(H256, H256)> = Vec::with_capacity(transfers_len);
-    let db = CotaRocksDB::default();
-    let mut transfer_smt = generate_history_smt(&db, transfer_req.lock_script.as_slice()).await?;
+    let transaction = &StoreTransaction::new(db.transaction());
+    let mut transfer_smt =
+        generate_history_smt(transaction, transfer_req.lock_script.as_slice()).await?;
     let withdrawal_smt =
-        generate_history_smt(&db, transfer_req.withdrawal_lock_script.as_slice()).await?;
+        generate_history_smt(transaction, transfer_req.withdrawal_lock_script.as_slice()).await?;
     let start_time = Local::now().timestamp_millis();
     for (withdrawal_db, transfer) in sender_withdrawals.into_iter().zip(transfers.clone()) {
         let WithdrawDb {
@@ -131,27 +134,6 @@ pub async fn generate_transfer_smt(
     );
 
     let start_time = Local::now().timestamp_millis();
-    transfer_smt.save_root_and_leaves(previous_leaves)?;
-    let transfer_merkle_proof = transfer_smt
-        .merkle_proof(transfer_update_leaves.iter().map(|leave| leave.0).collect())
-        .map_err(|e| {
-            error!("Transfer SMT proof error: {:?}", e.to_string());
-            Error::SMTProofError("Transfer".to_string())
-        })?;
-    let transfer_merkle_proof_compiled = transfer_merkle_proof
-        .compile(transfer_update_leaves.clone())
-        .map_err(|e| {
-            error!("Transfer SMT proof error: {:?}", e.to_string());
-            Error::SMTProofError("Transfer".to_string())
-        })?;
-    diff_time(start_time, "Generate transfer smt proof");
-
-    let transfer_merkel_proof_vec: Vec<u8> = transfer_merkle_proof_compiled.into();
-    let transfer_merkel_proof_bytes = BytesBuilder::default()
-        .extend(transfer_merkel_proof_vec.iter().map(|v| Byte::from(*v)))
-        .build();
-
-    let start_time = Local::now().timestamp_millis();
     withdrawal_smt.save_root_and_leaves(vec![])?;
     let withdrawal_merkle_proof = withdrawal_smt
         .merkle_proof(
@@ -175,6 +157,27 @@ pub async fn generate_transfer_smt(
     let withdrawal_merkel_proof_vec: Vec<u8> = withdrawal_merkle_proof_compiled.into();
     let withdrawal_merkel_proof_bytes = BytesBuilder::default()
         .extend(withdrawal_merkel_proof_vec.iter().map(|v| Byte::from(*v)))
+        .build();
+
+    let start_time = Local::now().timestamp_millis();
+    transfer_smt.save_root_and_leaves(previous_leaves)?;
+    let transfer_merkle_proof = transfer_smt
+        .merkle_proof(transfer_update_leaves.iter().map(|leave| leave.0).collect())
+        .map_err(|e| {
+            error!("Transfer SMT proof error: {:?}", e.to_string());
+            Error::SMTProofError("Transfer".to_string())
+        })?;
+    let transfer_merkle_proof_compiled = transfer_merkle_proof
+        .compile(transfer_update_leaves.clone())
+        .map_err(|e| {
+            error!("Transfer SMT proof error: {:?}", e.to_string());
+            Error::SMTProofError("Transfer".to_string())
+        })?;
+    diff_time(start_time, "Generate transfer smt proof");
+
+    let transfer_merkel_proof_vec: Vec<u8> = transfer_merkle_proof_compiled.into();
+    let transfer_merkel_proof_bytes = BytesBuilder::default()
+        .extend(transfer_merkel_proof_vec.iter().map(|v| Byte::from(*v)))
         .build();
 
     let transfer_entries = TransferCotaNFTV1EntriesBuilder::default()

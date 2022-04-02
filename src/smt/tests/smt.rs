@@ -1,11 +1,12 @@
 extern crate test;
 
-use crate::smt::db::cota_db::CotaRocksDB;
 use crate::smt::db::schema::{
     COLUMN_SMT_BRANCH, COLUMN_SMT_LEAF, COLUMN_SMT_ROOT, COLUMN_SMT_TEMP_LEAVES,
 };
 use crate::smt::store::smt_store::SMTStore;
+use crate::smt::transaction::store_transaction::StoreTransaction;
 use crate::smt::CotaSMT;
+use crate::RocksDB;
 use chrono::prelude::*;
 use cota_smt::smt::{H256, SMT};
 use rand::{thread_rng, Rng};
@@ -19,14 +20,16 @@ fn generate_smt(history_leaf_count: u32, update_leaf_count: u32) {
         let value: H256 = rng.gen::<[u8; 32]>().into();
         leaves.push((key, value));
     }
-    let db = CotaRocksDB::new_with_path(&format!("test_db_{}", history_leaf_count));
+    let db = RocksDB::new_with_path(&format!("test_db_{}", history_leaf_count))
+        .expect("rocksdb open error");
+    let transaction = StoreTransaction::new(db.transaction());
     let smt_store = SMTStore::new(
         lock_hash,
         COLUMN_SMT_LEAF,
         COLUMN_SMT_BRANCH,
         COLUMN_SMT_ROOT,
         COLUMN_SMT_TEMP_LEAVES,
-        &db,
+        &transaction,
     );
     let mut history_smt = CotaSMT::new(H256::zero(), smt_store);
     history_smt
@@ -60,7 +63,7 @@ fn generate_smt(history_leaf_count: u32, update_leaf_count: u32) {
         COLUMN_SMT_BRANCH,
         COLUMN_SMT_ROOT,
         COLUMN_SMT_TEMP_LEAVES,
-        &db,
+        &transaction,
     );
     let mut store_smt = CotaSMT::new(H256::zero(), smt_store);
     store_smt

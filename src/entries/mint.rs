@@ -3,7 +3,8 @@ use crate::entries::helper::{generate_withdrawal_key_v1, generate_withdrawal_val
 use crate::entries::smt::generate_history_smt;
 use crate::models::define::{get_define_cota_by_lock_hash_and_cota_id, DefineDb};
 use crate::request::mint::{MintReq, MintWithdrawal};
-use crate::smt::db::cota_db::CotaRocksDB;
+use crate::smt::db::db::RocksDB;
+use crate::smt::transaction::store_transaction::StoreTransaction;
 use crate::smt::RootSaver;
 use crate::utils::error::Error;
 use crate::utils::helper::diff_time;
@@ -14,7 +15,10 @@ use cota_smt::molecule::prelude::*;
 use cota_smt::smt::{blake2b_256, H256};
 use log::error;
 
-pub async fn generate_mint_smt(mint_req: MintReq) -> Result<(H256, MintCotaNFTV1Entries), Error> {
+pub async fn generate_mint_smt(
+    db: &RocksDB,
+    mint_req: MintReq,
+) -> Result<(H256, MintCotaNFTV1Entries), Error> {
     let withdrawals = mint_req.withdrawals;
     let withdrawals_len = withdrawals.len();
     if withdrawals_len == 0 {
@@ -33,8 +37,8 @@ pub async fn generate_mint_smt(mint_req: MintReq) -> Result<(H256, MintCotaNFTV1
     let mut define_new_values: Vec<DefineCotaNFTValue> = Vec::new();
     let mut withdrawal_keys: Vec<WithdrawalCotaNFTKeyV1> = Vec::new();
     let mut withdrawal_values: Vec<WithdrawalCotaNFTValueV1> = Vec::new();
-    let db = CotaRocksDB::default();
-    let mut smt = generate_history_smt(&db, mint_req.lock_script.as_slice()).await?;
+    let transaction = &StoreTransaction::new(db.transaction());
+    let mut smt = generate_history_smt(transaction, mint_req.lock_script.as_slice()).await?;
     let mut update_leaves: Vec<(H256, H256)> = Vec::with_capacity(withdrawals_len + 1);
     let mut previous_leaves: Vec<(H256, H256)> = Vec::with_capacity(withdrawals_len + 1);
     let DefineDb {
