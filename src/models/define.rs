@@ -104,7 +104,7 @@ pub fn get_define_cota_by_cota_id(cota_id_: [u8; 20]) -> Result<Option<DefineDb>
             |defines| Ok(parse_define_cota_nft(defines)),
         )?;
     diff_time(start_time, "SQL get_define_cota_by_cota_id");
-    Ok(defines.get(0).map(|v| *v))
+    Ok(defines.get(0).cloned())
 }
 
 fn parse_define_cota_nft(defines: Vec<DefineCotaNft>) -> Vec<DefineDb> {

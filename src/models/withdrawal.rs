@@ -216,8 +216,7 @@ pub fn get_sender_lock_by_script_id(
             Error::DatabaseQueryError(e.to_string())
         })?;
     diff_time(start_time, "SQL get_sender_lock_by_script_id");
-    let lock_hash_opt: Option<String> = lock_hashes.get(0).map(|hash| (*hash).clone());
-    Ok(lock_hash_opt)
+    Ok(lock_hashes.get(0).cloned())
 }
 
 fn parse_withdraw_db(

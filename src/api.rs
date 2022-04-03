@@ -11,9 +11,10 @@ use crate::models::common::{
     check_cota_claimed, get_define_info_by_cota_id, get_hold_cota, get_mint_cota,
     get_sender_lock_hash_by_cota_nft, get_withdrawal_cota,
 };
+use crate::models::issuer::get_issuer_info_by_lock_hash;
 use crate::request::claim::{ClaimReq, ClaimUpdateReq, IsClaimedReq};
 use crate::request::define::{DefineInfoReq, DefineReq};
-use crate::request::fetch::FetchReq;
+use crate::request::fetch::{FetchIssuerReq, FetchReq};
 use crate::request::mint::MintReq;
 use crate::request::transfer::{TransferReq, TransferUpdateReq};
 use crate::request::update::UpdateReq;
@@ -21,6 +22,7 @@ use crate::request::withdrawal::{SenderLockReq, WithdrawalReq};
 use crate::response::claim::{parse_claimed_response, parse_claimed_smt, parse_claimed_update_smt};
 use crate::response::define::{parse_define_info, parse_define_smt};
 use crate::response::hold::parse_hold_response;
+use crate::response::issuer::parse_issuer_response;
 use crate::response::mint::{parse_mint_response, parse_mint_smt};
 use crate::response::transfer::{parse_transfer_smt, parse_transfer_update_smt};
 use crate::response::update::parse_update_smt;
@@ -28,6 +30,7 @@ use crate::response::withdrawal::{
     parse_sender_response, parse_withdrawal_response, parse_withdrawal_smt,
 };
 use crate::smt::db::db::RocksDB;
+use cota_smt::smt::blake2b_256;
 use jsonrpc_http_server::jsonrpc_core::serde_json::Map;
 use jsonrpc_http_server::jsonrpc_core::{Error, Params, Value};
 use log::info;
@@ -196,6 +199,17 @@ pub async fn get_define_info(params: Params) -> Result<Value, Error> {
     let DefineInfoReq { cota_id } = DefineInfoReq::from_map(&map).map_err(|err| err.into())?;
     let define_info_opt = get_define_info_by_cota_id(cota_id).map_err(|err| err.into())?;
     let response = parse_define_info(define_info_opt, get_block_number()?);
+    Ok(Value::Object(response))
+}
+
+pub async fn get_issuer_info(params: Params) -> Result<Value, Error> {
+    info!("Get issuer info request: {:?}", params);
+    let map: Map<String, Value> = Params::parse(params)?;
+    let FetchIssuerReq { lock_script } =
+        FetchIssuerReq::from_map(&map).map_err(|err| err.into())?;
+    let lock_hash = blake2b_256(&lock_script);
+    let issuer_info_opt = get_issuer_info_by_lock_hash(lock_hash).map_err(|err| err.into())?;
+    let response = parse_issuer_response(issuer_info_opt, get_block_number()?);
     Ok(Value::Object(response))
 }
 
