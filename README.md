@@ -1,5 +1,8 @@
 # cota-aggregator
 
+[![License](https://img.shields.io/badge/license-MIT-green)](https://github.com/nervina-labs/cota-aggregator/blob/develop/LICENSE)
+[![CI](https://github.com/nervina-labs/cota-aggregator/actions/workflows/ci.yml/badge.svg?branch=develop)](https://github.com/nervina-labs/cota-aggregator/actions)
+
 The aggregator service of [CoTA](https://talk.nervos.org/t/rfc-cota-a-compact-token-aggregator-standard-for-extremely-low-cost-nfts-and-fts/6338)
 
 [CoTA Docs](https://developer.mibao.net/docs/develop/cota/overview)
@@ -37,7 +40,7 @@ Then put the `RUSTFLAGS='-L/opt/homebrew/opt/mysql-client/lib' ` before `cargo b
 ### Release
 
 ```shell
-RUST_LOG=info DATABASE_URL=mysql://root:passport@localhost:3306/db_name ./target/release/cota-aggregator
+RUST_LOG=info DATABASE_URL=mysql://root:passport@localhost:3306/db_name CKB_INDEXER=http://localhost:8116 ./target/release/cota-aggregator
 ```
 
 ### docker
@@ -49,6 +52,13 @@ docker run -d -p 3030:3030 cota-aggregator:latest
 
 # or
 docker-compose up -d --build
+```
+
+### Public cota aggregator rpc url as blow can be used to develop and test
+
+```
+testnet:
+https://cota.nervina.dev/aggregator
 ```
 
 ### APIs
@@ -185,25 +195,41 @@ http://127.0.0.1:3030
 {
     "jsonrpc":"2.0",
     "result":{
-        "block_number":4427822,
+        "block_number":4875330,
         "nfts":[
             {
-                "characteristic":"0x2525250505050505050505050505050505050505",
+                "audio":"",
+                "characteristic":"0xa5a5a50505050505050505050505050505050505",
                 "configure":"0x00",
-                "cota_id":"0xb22585a8053af3fed0fd39127f5b1487ce08b756",
+                "cota_id":"0x780ae7e2eb39ce4985f632567224ccdd1dccfefe",
+                "description":"First step to Blockchain mass adoption. NFT platform launch memento.\n\n-- Nervina Labs & Lay2 Tech, 4/30/2021.",
+                "image":"https://i.loli.net/2021/04/29/qyJNSE4iHAas7GL.png",
+                "meta_characteristic":"",
+                "model":"",
+                "name":"First Step",
+                "properties":"",
                 "state":"0x00",
-                "token_index":"0x00000002"
+                "token_index":"0x00000001",
+                "video":""
             },
             {
-                "characteristic":"0xa505050505050505050505050505050505050505",
+                "audio":"",
+                "characteristic":"0xa5a5a50505050505050505050505050505050505",
                 "configure":"0x00",
-                "cota_id":"0xc7801a1d8ff707d2076b85de002160cf92ec7b65",
+                "cota_id":"0x2d1ac02ac52548c9b002067e3fed31ad9981b027",
+                "description":"First step to Blockchain mass adoption. NFT platform launch memento.\n\n-- Nervina Labs & Lay2 Tech, 4/30/2021.",
+                "image":"https://i.loli.net/2021/04/29/qyJNSE4iHAas7GL.png",
+                "meta_characteristic":"",
+                "model":"",
+                "name":"First Step",
+                "properties":"",
                 "state":"0x00",
-                "token_index":"0x00000050"
+                "token_index":"0x00000001",
+                "video":""
             }
         ],
         "page_size":2,
-        "total":241
+        "total":250
     },
     "id":2
 }
@@ -230,25 +256,41 @@ http://127.0.0.1:3030
 {
     "jsonrpc":"2.0",
     "result":{
-        "block_number":4427822,
+        "block_number":4875334,
         "nfts":[
             {
-                "characteristic":"0xa505050505050505050505050505050505050505",
+                "audio":"",
+                "characteristic":"0x0505050505050505050505050505050505050505",
                 "configure":"0x00",
-                "cota_id":"0x1deb31f603652bf59ff5027b522e1d81c288b72f",
+                "cota_id":"0x780ae7e2eb39ce4985f632567224ccdd1dccfefe",
+                "description":"First step to Blockchain mass adoption. NFT platform launch memento.\n\n-- Nervina Labs & Lay2 Tech, 4/30/2021.",
+                "image":"https://i.loli.net/2021/04/29/qyJNSE4iHAas7GL.png",
+                "meta_characteristic":"",
+                "model":"",
+                "name":"First Step",
+                "properties":"",
                 "state":"0x00",
-                "token_index":"0x00000000"
+                "token_index":"0x00000001",
+                "video":""
             },
             {
-                "characteristic":"0xa505050505050505050505050505050505050505",
+                "audio":"",
+                "characteristic":"0x0505050505050505050505050505050505050505",
                 "configure":"0x00",
-                "cota_id":"0x1deb31f603652bf59ff5027b522e1d81c288b72f",
+                "cota_id":"0x780ae7e2eb39ce4985f632567224ccdd1dccfefe",
+                "description":"First step to Blockchain mass adoption. NFT platform launch memento.\n\n-- Nervina Labs & Lay2 Tech, 4/30/2021.",
+                "image":"https://i.loli.net/2021/04/29/qyJNSE4iHAas7GL.png",
+                "meta_characteristic":"",
+                "model":"",
+                "name":"First Step",
+                "properties":"",
                 "state":"0x00",
-                "token_index":"0x00000001"
+                "token_index":"0x00000000",
+                "video":""
             }
         ],
         "page_size":2,
-        "total":616
+        "total":1123
     },
     "id":2
 }
@@ -256,12 +298,12 @@ http://127.0.0.1:3030
 
 - get_mint_cota_nft
 ```shell
- echo '{
+echo '{
     "id":2,
     "jsonrpc":"2.0",
     "method":"get_mint_cota_nft",
     "params":{
-        "lock_script":"0x490000001000000030000000310000009bd7e06f3ecf4be0f2fcd2188b23f1b9fcc88e5d4b65a8637b17723bbda3cce80114000000e616d1460d634668b8ad81971c3a53e705f51e60",
+        "lock_script":"0x490000001000000030000000310000009bd7e06f3ecf4be0f2fcd2188b23f1b9fcc88e5d4b65a8637b17723bbda3cce80114000000f86332ab26fe5baa89f7a8f458cffd8de379f255",
         "page":"0",
         "page_size":"2"
     }
@@ -275,27 +317,43 @@ http://127.0.0.1:3030
 {
     "jsonrpc":"2.0",
     "result":{
-        "block_number":4427822,
+        "block_number":4875342,
         "nfts":[
             {
-                "characteristic":"0xa505050505050505050505050505050505050505",
+                "audio":"",
+                "characteristic":"0x0000000000000000000000000000000000000000",
                 "configure":"0x00",
-                "cota_id":"0xb22585a8053af3fed0fd39127f5b1487ce08b756",
-                "receiver_lock":"0x490000001000000030000000310000009bd7e06f3ecf4be0f2fcd2188b23f1b9fcc88e5d4b65a8637b17723bbda3cce80114000000dc70f33de86fdf381b4fc5bf092bb23d02774801",
+                "cota_id":"0xd3b2bc022b52ce7282b354d97f9e5e5baf6698d7",
+                "description":"Test 1 desc",
+                "image":"ipfs://bafyreidq5eujpiq5fkygqtmiy7ansuyeujsvpnwieagekmr4y6gllzdsq4/metadata.json",
+                "meta_characteristic":"",
+                "model":"",
+                "name":"Test 1",
+                "properties":"",
+                "receiver_lock":"0x49000000100000003000000031000000081dbffa88dab54ba426d231ca64eb760cea2fe9e16761a1da400da1b2cbe1280114000000657d0af440ef3804e01f9250b57b8eae1c3cf60d",
                 "state":"0x00",
-                "token_index":"0x00000000"
+                "token_index":"0x0000000d",
+                "video":""
             },
             {
-                "characteristic":"0xa505050505050505050505050505050505050505",
+                "audio":"",
+                "characteristic":"0x0000000000000000000000000000000000000000",
                 "configure":"0x00",
-                "cota_id":"0xb22585a8053af3fed0fd39127f5b1487ce08b756",
-                "receiver_lock":"0x490000001000000030000000310000009bd7e06f3ecf4be0f2fcd2188b23f1b9fcc88e5d4b65a8637b17723bbda3cce80114000000dc70f33de86fdf381b4fc5bf092bb23d02774801",
+                "cota_id":"0xd3b2bc022b52ce7282b354d97f9e5e5baf6698d7",
+                "description":"Test 1 desc",
+                "image":"ipfs://bafyreidq5eujpiq5fkygqtmiy7ansuyeujsvpnwieagekmr4y6gllzdsq4/metadata.json",
+                "meta_characteristic":"",
+                "model":"",
+                "name":"Test 1",
+                "properties":"",
+                "receiver_lock":"0x490000001000000030000000310000009bd7e06f3ecf4be0f2fcd2188b23f1b9fcc88e5d4b65a8637b17723bbda3cce80114000000971117321898d14ac238b0f403e109140388b444",
                 "state":"0x00",
-                "token_index":"0x00000001"
+                "token_index":"0x0000000b",
+                "video":""
             }
         ],
         "page_size":2,
-        "total":616
+        "total":55
     },
     "id":2
 }
@@ -383,6 +441,35 @@ http://127.0.0.1:3030
         "configure":"0x0",
         "issued":3,
         "total":306
+    },
+    "id":2
+}
+```
+
+- get_issuer_info
+
+```shell
+echo '{
+    "id":2,
+    "jsonrpc":"2.0",
+    "method":"get_issuer_info",
+    "params":{
+        "lock_script":"0x490000001000000030000000310000009bd7e06f3ecf4be0f2fcd2188b23f1b9fcc88e5d4b65a8637b17723bbda3cce80114000000d5f13ab18e9f6b55eae6535b6ec141865437854d"
+    }
+}' \
+| tr -d '\n' \
+| curl -H 'content-type: application/json' -d @- \
+http://127.0.0.1:3030
+```
+
+```shell
+{
+    "jsonrpc":"2.0",
+    "result":{
+        "avatar":"https://i.loli.net/2021/04/29/IigbpOWP8fw9qDn.png",
+        "block_number":4872987,
+        "description":"Community building protocol",
+        "name":"Rostra"
     },
     "id":2
 }

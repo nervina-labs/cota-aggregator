@@ -9,11 +9,11 @@ use crate::models::common::get_all_cota_by_lock_hash;
 use crate::models::define::DefineDb;
 use crate::models::hold::HoldDb;
 use crate::models::withdrawal::WithdrawDb;
-use crate::smt::db::cota_db::CotaRocksDB;
 use crate::smt::db::schema::{
     COLUMN_SMT_BRANCH, COLUMN_SMT_LEAF, COLUMN_SMT_ROOT, COLUMN_SMT_TEMP_LEAVES,
 };
 use crate::smt::store::smt_store::SMTStore;
+use crate::smt::transaction::store_transaction::StoreTransaction;
 use crate::smt::CotaSMT;
 use crate::utils::error::Error;
 use crate::utils::helper::diff_time;
@@ -24,7 +24,7 @@ use log::debug;
 use std::collections::HashMap;
 
 pub async fn generate_history_smt<'a>(
-    db: &'a CotaRocksDB,
+    transaction: &'a StoreTransaction,
     lock_script: &[u8],
 ) -> Result<CotaSMT<'a>, Error> {
     let lock_hash = blake2b_256(lock_script);
@@ -34,7 +34,7 @@ pub async fn generate_history_smt<'a>(
         COLUMN_SMT_BRANCH,
         COLUMN_SMT_ROOT,
         COLUMN_SMT_TEMP_LEAVES,
-        db,
+        &transaction,
     );
     let root = smt_store
         .get_root()
