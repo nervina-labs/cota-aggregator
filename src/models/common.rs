@@ -106,7 +106,11 @@ pub fn get_sender_lock_hash_by_cota_nft(
     get_sender_lock_by_script_id(conn, lock_script_id_opt.unwrap(), cota_id, token_index)
 }
 
-pub fn get_define_info_by_cota_id(cota_id: [u8; 20]) -> Result<Option<(u32, u32, u8)>, Error> {
-    let define_opt: Option<DefineDb> = get_define_cota_by_cota_id(cota_id)?;
-    Ok(define_opt.map(|define: DefineDb| (define.total, define.issued, define.configure)))
+pub fn get_define_info_by_cota_id(
+    cota_id: [u8; 20],
+) -> Result<(Option<DefineDb>, Option<ClassInfoDb>), Error> {
+    let conn = &establish_connection();
+    let define_opt: Option<DefineDb> = get_define_cota_by_cota_id(conn, cota_id)?;
+    let class_info_opt = get_class_info_by_cota_id(conn, cota_id)?;
+    Ok((define_opt, class_info_opt))
 }

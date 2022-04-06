@@ -425,7 +425,7 @@ echo '{
     "jsonrpc":"2.0",
     "method":"get_define_info",
     "params":{
-        "cota_id":"0xb22585a8053af3fed0fd39127f5b1487ce08b756"
+        "cota_id":"0xd3b2bc022b52ce7282b354d97f9e5e5baf6698d7"
     }
 }' \
 | tr -d '\n' \
@@ -437,10 +437,18 @@ http://127.0.0.1:3030
 {
     "jsonrpc":"2.0",
     "result":{
-        "block_number":4735284,
-        "configure":"0x0",
-        "issued":3,
-        "total":306
+        "audio":"",
+        "block_number":4948295,
+        "configure":"0x00",
+        "description":"Test 1 desc",
+        "image":"ipfs://bafyreidq5eujpiq5fkygqtmiy7ansuyeujsvpnwieagekmr4y6gllzdsq4/metadata.json",
+        "issued":26,
+        "meta_characteristic":"",
+        "model":"",
+        "name":"Test 1",
+        "properties":"",
+        "total":100,
+        "video":""
     },
     "id":2
 }
