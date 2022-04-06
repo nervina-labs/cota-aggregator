@@ -61,9 +61,9 @@ testnet:
 https://cota.nervina.dev/aggregator
 ```
 
-### APIs
+## APIs
 
-- generate_define_cota_smt
+### generate_define_cota_smt
 
 ```shell
 echo '{
@@ -95,7 +95,7 @@ http://127.0.0.1:3030
 }
 ```
 
-- generate_mint_cota_smt
+### generate_mint_cota_smt
 ```shell
 echo '{
     "id":2,
@@ -138,7 +138,7 @@ http://127.0.0.1:3030
 }
 ```
 
-- generate_transfer_cota_smt
+### generate_transfer_cota_smt
 ```shell
 echo '{
     "id":2,
@@ -174,7 +174,10 @@ http://127.0.0.1:3030
 }
 ```
 
-- get_hold_cota_nft
+### get_hold_cota_nft
+
+- Without `cota_id` parameter
+
 ```shell
  echo '{
     "id":2,
@@ -235,6 +238,8 @@ http://127.0.0.1:3030
 }
 ```
 
+- With `cota_id` parameter
+
 ```shell
 echo '{
     "id":2,
@@ -282,7 +287,10 @@ http://127.0.0.1:3030
 }
 ```
 
-- get_withdrawal_cota_nft
+### get_withdrawal_cota_nft
+
+- Without `cota_id` parameter
+
 ```shell
  echo '{
     "id":2,
@@ -358,6 +366,8 @@ http://127.0.0.1:3030
 }
 ```
 
+- With `cota_id` parameter
+
 ```shell
  echo '{
     "id":2,
@@ -420,9 +430,7 @@ http://127.0.0.1:3030
 }
 ```
 
-
-
-- get_mint_cota_nft
+### get_mint_cota_nft
 ```shell
 echo '{
     "id":2,
@@ -485,7 +493,7 @@ http://127.0.0.1:3030
 }
 ```
 
-- is_claimed
+### is_claimed
 
 ```shell
  echo '{
@@ -514,7 +522,7 @@ http://127.0.0.1:3030
 }
 ```
 
-- get_cota_nft_sender
+### get_cota_nft_sender
 
 ```shell
 echo '{
@@ -543,7 +551,7 @@ http://127.0.0.1:3030
 }
 ```
 
-- get_define_info
+### get_define_info
 
 ```shell
 echo '{
@@ -580,7 +588,7 @@ http://127.0.0.1:3030
 }
 ```
 
-- get_issuer_info
+### get_issuer_info
 
 ```shell
 echo '{
