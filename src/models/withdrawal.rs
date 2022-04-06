@@ -164,28 +164,47 @@ pub fn get_withdrawal_cota_by_script_id(
     script_id: i64,
     page: i64,
     page_size: i64,
+    cota_id_opt: Option<[u8; 20]>,
 ) -> DBTotalResult<WithdrawNFTDb> {
     let start_time = Local::now().timestamp_millis();
-    let total: i64 = withdraw_cota_nft_kv_pairs
-        .filter(receiver_lock_script_id.eq(script_id))
-        .count()
-        .get_result::<i64>(conn)
-        .map_err(|e| {
-            error!("Query withdraw error: {}", e.to_string());
-            Error::DatabaseQueryError(e.to_string())
-        })?;
+    let total_result = match cota_id_opt {
+        Some(cota_id_) => withdraw_cota_nft_kv_pairs
+            .filter(receiver_lock_script_id.eq(script_id))
+            .filter(cota_id.eq(hex::encode(&cota_id_)))
+            .count()
+            .get_result::<i64>(conn),
+        None => withdraw_cota_nft_kv_pairs
+            .filter(receiver_lock_script_id.eq(script_id))
+            .count()
+            .get_result::<i64>(conn),
+    };
+    let total: i64 = total_result.map_err(|e| {
+        error!("Query withdraw error: {}", e.to_string());
+        Error::DatabaseQueryError(e.to_string())
+    })?;
 
-    let withdraw_cota_nfts: Vec<WithdrawCotaNft> = withdraw_cota_nft_kv_pairs
-        .select(get_selection())
-        .filter(receiver_lock_script_id.eq(script_id))
-        .order(updated_at.desc())
-        .limit(page_size)
-        .offset(page_size * page)
-        .load::<WithdrawCotaNft>(conn)
-        .map_err(|e| {
-            error!("Query withdraw error: {}", e.to_string());
-            Error::DatabaseQueryError(e.to_string())
-        })?;
+    let withdraw_cota_nfts_result = match cota_id_opt {
+        Some(cota_id_) => withdraw_cota_nft_kv_pairs
+            .select(get_selection())
+            .filter(receiver_lock_script_id.eq(script_id))
+            .filter(cota_id.eq(hex::encode(&cota_id_)))
+            .order(updated_at.desc())
+            .limit(page_size)
+            .offset(page_size * page)
+            .load::<WithdrawCotaNft>(conn),
+        None => withdraw_cota_nft_kv_pairs
+            .select(get_selection())
+            .filter(receiver_lock_script_id.eq(script_id))
+            .order(updated_at.desc())
+            .limit(page_size)
+            .offset(page_size * page)
+            .load::<WithdrawCotaNft>(conn),
+    };
+
+    let withdraw_cota_nfts: Vec<WithdrawCotaNft> = withdraw_cota_nfts_result.map_err(|e| {
+        error!("Query withdraw error: {}", e.to_string());
+        Error::DatabaseQueryError(e.to_string())
+    })?;
     let withdrawals = parse_withdraw_cota_nft(withdraw_cota_nfts);
     let block_height = get_syncer_tip_block_number_with_conn(conn)?;
     diff_time(start_time, "SQL get_withdrawal_cota_by_script_id");
