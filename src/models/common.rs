@@ -33,11 +33,12 @@ pub fn get_hold_cota(
     lock_script: &[u8],
     page: i64,
     page_size: i64,
+    cota_id_opt: Option<[u8; 20]>,
 ) -> DBTotalResult<(HoldDb, Option<ClassInfoDb>)> {
     let lock_hash = blake2b_256(lock_script);
     let conn = &establish_connection();
     let (hold_nfts, total, block_height) =
-        get_hold_cota_by_lock_hash_and_page(conn, lock_hash, page, page_size)?;
+        get_hold_cota_by_lock_hash_and_page(conn, lock_hash, page, page_size, cota_id_opt)?;
     let mut nfts: Vec<(HoldDb, Option<ClassInfoDb>)> = vec![];
     for hold in hold_nfts {
         let class_info = get_class_info_by_cota_id(conn, hold.cota_id)?;
@@ -50,11 +51,14 @@ pub fn get_withdrawal_cota(
     lock_script: &[u8],
     page: i64,
     page_size: i64,
+    cota_id_opt: Option<[u8; 20]>,
 ) -> DBTotalResult<(WithdrawNFTDb, Option<ClassInfoDb>)> {
     let conn = &establish_connection();
     let script_id_opt = get_script_id_by_lock_script(conn, lock_script)?;
     let (withdrawal_nfts, total, block_height) = match script_id_opt {
-        Some(script_id) => get_withdrawal_cota_by_script_id(conn, script_id, page, page_size),
+        Some(script_id) => {
+            get_withdrawal_cota_by_script_id(conn, script_id, page, page_size, cota_id_opt)
+        }
         None => Ok((vec![], 0, 0)),
     }?;
     let mut nfts: Vec<(WithdrawNFTDb, Option<ClassInfoDb>)> = vec![];
@@ -106,7 +110,11 @@ pub fn get_sender_lock_hash_by_cota_nft(
     get_sender_lock_by_script_id(conn, lock_script_id_opt.unwrap(), cota_id, token_index)
 }
 
-pub fn get_define_info_by_cota_id(cota_id: [u8; 20]) -> Result<Option<(u32, u32, u8)>, Error> {
-    let define_opt: Option<DefineDb> = get_define_cota_by_cota_id(cota_id)?;
-    Ok(define_opt.map(|define: DefineDb| (define.total, define.issued, define.configure)))
+pub fn get_define_info_by_cota_id(
+    cota_id: [u8; 20],
+) -> Result<(Option<DefineDb>, Option<ClassInfoDb>), Error> {
+    let conn = &establish_connection();
+    let define_opt: Option<DefineDb> = get_define_cota_by_cota_id(conn, cota_id)?;
+    let class_info_opt = get_class_info_by_cota_id(conn, cota_id)?;
+    Ok((define_opt, class_info_opt))
 }
