@@ -61,9 +61,9 @@ testnet:
 https://cota.nervina.dev/aggregator
 ```
 
-### APIs
+## APIs
 
-- generate_define_cota_smt
+### generate_define_cota_smt
 
 ```shell
 echo '{
@@ -95,7 +95,7 @@ http://127.0.0.1:3030
 }
 ```
 
-- generate_mint_cota_smt
+### generate_mint_cota_smt
 ```shell
 echo '{
     "id":2,
@@ -138,7 +138,7 @@ http://127.0.0.1:3030
 }
 ```
 
-- generate_transfer_cota_smt
+### generate_transfer_cota_smt
 ```shell
 echo '{
     "id":2,
@@ -174,7 +174,10 @@ http://127.0.0.1:3030
 }
 ```
 
-- get_hold_cota_nft
+### get_hold_cota_nft
+
+- Without `cota_id` parameter
+
 ```shell
  echo '{
     "id":2,
@@ -235,7 +238,59 @@ http://127.0.0.1:3030
 }
 ```
 
-- get_withdrawal_cota_nft
+- With `cota_id` parameter
+
+```shell
+echo '{
+    "id":2,
+    "jsonrpc":"2.0",
+    "method":"get_hold_cota_nft",
+    "params":{
+        "lock_script":"0x490000001000000030000000310000009bd7e06f3ecf4be0f2fcd2188b23f1b9fcc88e5d4b65a8637b17723bbda3cce80114000000dc70f33de86fdf381b4fc5bf092bb23d02774801",
+        "page":"0",
+        "page_size":"2",
+        "cota_id": "0x780ae7e2eb39ce4985f632567224ccdd1dccfefe"
+    }
+}' \
+| tr -d '\n' \
+| curl -H 'content-type: application/json' -d @- \
+http://127.0.0.1:3030
+
+```
+
+```shell
+{
+    "jsonrpc":"2.0",
+    "result":{
+        "block_number":4949226,
+        "nfts":[
+            {
+                "audio":"",
+                "characteristic":"0xa5a5a50505050505050505050505050505050505",
+                "configure":"0x00",
+                "cota_id":"0x780ae7e2eb39ce4985f632567224ccdd1dccfefe",
+                "description":"First step to Blockchain mass adoption. NFT platform launch memento.\n\n-- Nervina Labs & Lay2 Tech, 4/30/2021.",
+                "image":"https://i.loli.net/2021/04/29/qyJNSE4iHAas7GL.png",
+                "meta_characteristic":"",
+                "model":"",
+                "name":"First Step",
+                "properties":"",
+                "state":"0x00",
+                "token_index":"0x00000001",
+                "video":""
+            }
+        ],
+        "page_size":2,
+        "total":1
+    },
+    "id":2
+}
+```
+
+### get_withdrawal_cota_nft
+
+- Without `cota_id` parameter
+
 ```shell
  echo '{
     "id":2,
@@ -244,7 +299,7 @@ http://127.0.0.1:3030
     "params":{
         "lock_script":"0x490000001000000030000000310000009bd7e06f3ecf4be0f2fcd2188b23f1b9fcc88e5d4b65a8637b17723bbda3cce80114000000dc70f33de86fdf381b4fc5bf092bb23d02774801",
         "page":"0",
-        "page_size":"2"
+        "page_size":"3"
     }
 }' \
 | tr -d '\n' \
@@ -256,13 +311,13 @@ http://127.0.0.1:3030
 {
     "jsonrpc":"2.0",
     "result":{
-        "block_number":4875334,
+        "block_number":4949175,
         "nfts":[
             {
                 "audio":"",
                 "characteristic":"0x0505050505050505050505050505050505050505",
                 "configure":"0x00",
-                "cota_id":"0x780ae7e2eb39ce4985f632567224ccdd1dccfefe",
+                "cota_id":"0x3766e323d1b70a5536ab2d8dfcfaa03f9b5c4fea",
                 "description":"First step to Blockchain mass adoption. NFT platform launch memento.\n\n-- Nervina Labs & Lay2 Tech, 4/30/2021.",
                 "image":"https://i.loli.net/2021/04/29/qyJNSE4iHAas7GL.png",
                 "meta_characteristic":"",
@@ -277,7 +332,22 @@ http://127.0.0.1:3030
                 "audio":"",
                 "characteristic":"0x0505050505050505050505050505050505050505",
                 "configure":"0x00",
-                "cota_id":"0x780ae7e2eb39ce4985f632567224ccdd1dccfefe",
+                "cota_id":"0x3766e323d1b70a5536ab2d8dfcfaa03f9b5c4fea",
+                "description":"First step to Blockchain mass adoption. NFT platform launch memento.\n\n-- Nervina Labs & Lay2 Tech, 4/30/2021.",
+                "image":"https://i.loli.net/2021/04/29/qyJNSE4iHAas7GL.png",
+                "meta_characteristic":"",
+                "model":"",
+                "name":"First Step",
+                "properties":"",
+                "state":"0x00",
+                "token_index":"0x00000000",
+                "video":""
+            },
+            {
+                "audio":"",
+                "characteristic":"0x0505050505050505050505050505050505050505",
+                "configure":"0x00",
+                "cota_id":"0xc27aaf7033c51364be0232d1831e33addd90f9ed",
                 "description":"First step to Blockchain mass adoption. NFT platform launch memento.\n\n-- Nervina Labs & Lay2 Tech, 4/30/2021.",
                 "image":"https://i.loli.net/2021/04/29/qyJNSE4iHAas7GL.png",
                 "meta_characteristic":"",
@@ -289,14 +359,78 @@ http://127.0.0.1:3030
                 "video":""
             }
         ],
-        "page_size":2,
-        "total":1123
+        "page_size":3,
+        "total":1139
     },
     "id":2
 }
 ```
 
-- get_mint_cota_nft
+- With `cota_id` parameter
+
+```shell
+ echo '{
+    "id":2,
+    "jsonrpc":"2.0",
+    "method":"get_withdrawal_cota_nft",
+    "params":{
+        "lock_script":"0x490000001000000030000000310000009bd7e06f3ecf4be0f2fcd2188b23f1b9fcc88e5d4b65a8637b17723bbda3cce80114000000dc70f33de86fdf381b4fc5bf092bb23d02774801",
+        "page":"0",
+        "page_size":"10",
+        "cota_id": "0x3766e323d1b70a5536ab2d8dfcfaa03f9b5c4fea"
+    }
+}' \
+| tr -d '\n' \
+| curl -H 'content-type: application/json' -d @- \
+http://127.0.0.1:3030
+
+```
+
+```shell
+{
+    "jsonrpc":"2.0",
+    "result":{
+        "block_number":4949165,
+        "nfts":[
+            {
+                "audio":"",
+                "characteristic":"0x0505050505050505050505050505050505050505",
+                "configure":"0x00",
+                "cota_id":"0x3766e323d1b70a5536ab2d8dfcfaa03f9b5c4fea",
+                "description":"First step to Blockchain mass adoption. NFT platform launch memento.\n\n-- Nervina Labs & Lay2 Tech, 4/30/2021.",
+                "image":"https://i.loli.net/2021/04/29/qyJNSE4iHAas7GL.png",
+                "meta_characteristic":"",
+                "model":"",
+                "name":"First Step",
+                "properties":"",
+                "state":"0x00",
+                "token_index":"0x00000000",
+                "video":""
+            },
+            {
+                "audio":"",
+                "characteristic":"0x0505050505050505050505050505050505050505",
+                "configure":"0x00",
+                "cota_id":"0x3766e323d1b70a5536ab2d8dfcfaa03f9b5c4fea",
+                "description":"First step to Blockchain mass adoption. NFT platform launch memento.\n\n-- Nervina Labs & Lay2 Tech, 4/30/2021.",
+                "image":"https://i.loli.net/2021/04/29/qyJNSE4iHAas7GL.png",
+                "meta_characteristic":"",
+                "model":"",
+                "name":"First Step",
+                "properties":"",
+                "state":"0x00",
+                "token_index":"0x00000001",
+                "video":""
+            }
+        ],
+        "page_size":10,
+        "total":2
+    },
+    "id":2
+}
+```
+
+### get_mint_cota_nft
 ```shell
 echo '{
     "id":2,
@@ -359,7 +493,7 @@ http://127.0.0.1:3030
 }
 ```
 
-- is_claimed
+### is_claimed
 
 ```shell
  echo '{
@@ -388,7 +522,7 @@ http://127.0.0.1:3030
 }
 ```
 
-- get_cota_nft_sender
+### get_cota_nft_sender
 
 ```shell
 echo '{
@@ -417,7 +551,7 @@ http://127.0.0.1:3030
 }
 ```
 
-- get_define_info
+### get_define_info
 
 ```shell
 echo '{
@@ -425,7 +559,7 @@ echo '{
     "jsonrpc":"2.0",
     "method":"get_define_info",
     "params":{
-        "cota_id":"0xb22585a8053af3fed0fd39127f5b1487ce08b756"
+        "cota_id":"0xd3b2bc022b52ce7282b354d97f9e5e5baf6698d7"
     }
 }' \
 | tr -d '\n' \
@@ -437,16 +571,24 @@ http://127.0.0.1:3030
 {
     "jsonrpc":"2.0",
     "result":{
-        "block_number":4735284,
-        "configure":"0x0",
-        "issued":3,
-        "total":306
+        "audio":"",
+        "block_number":4948295,
+        "configure":"0x00",
+        "description":"Test 1 desc",
+        "image":"ipfs://bafyreidq5eujpiq5fkygqtmiy7ansuyeujsvpnwieagekmr4y6gllzdsq4/metadata.json",
+        "issued":26,
+        "meta_characteristic":"",
+        "model":"",
+        "name":"Test 1",
+        "properties":"",
+        "total":100,
+        "video":""
     },
     "id":2
 }
 ```
 
-- get_issuer_info
+### get_issuer_info
 
 ```shell
 echo '{

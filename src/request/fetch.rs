@@ -10,6 +10,7 @@ pub struct FetchReq {
     pub lock_script: Vec<u8>,
     pub page:        i64,
     pub page_size:   i64,
+    pub cota_id:     Option<[u8; 20]>,
 }
 
 impl FetchReq {
@@ -18,10 +19,15 @@ impl FetchReq {
         if Script::from_slice(&lock_script).is_err() {
             return Err(Error::RequestParamTypeError("Script".to_string()));
         }
+        let cota_id = match map.get("cota_id") {
+            Some(_) => Some(map.get_hex_bytes_filed::<20>("cota_id")?),
+            None => None,
+        };
         Ok(FetchReq {
             lock_script,
             page: map.get_i64_filed("page")?,
             page_size: map.get_i64_filed("page_size")?,
+            cota_id,
         })
     }
 }

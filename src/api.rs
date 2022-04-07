@@ -130,9 +130,10 @@ pub async fn fetch_hold_rpc(params: Params) -> Result<Value, Error> {
         lock_script,
         page,
         page_size,
+        cota_id,
     } = FetchReq::from_map(&map).map_err(|err| err.into())?;
     let (holds, total, block_number) =
-        get_hold_cota(&lock_script, page, page_size).map_err(|err| err.into())?;
+        get_hold_cota(&lock_script, page, page_size, cota_id).map_err(|err| err.into())?;
     let response = parse_hold_response(holds, total, page_size, block_number);
     Ok(Value::Object(response))
 }
@@ -144,9 +145,10 @@ pub async fn fetch_withdrawal_rpc(params: Params) -> Result<Value, Error> {
         lock_script,
         page,
         page_size,
+        cota_id,
     } = FetchReq::from_map(&map).map_err(|err| err.into())?;
     let (withdrawals, total, block_number) =
-        get_withdrawal_cota(&lock_script, page, page_size).map_err(|err| err.into())?;
+        get_withdrawal_cota(&lock_script, page, page_size, cota_id).map_err(|err| err.into())?;
     let response = parse_withdrawal_response(withdrawals, total, page_size, block_number);
     Ok(Value::Object(response))
 }
@@ -158,6 +160,7 @@ pub async fn fetch_mint_rpc(params: Params) -> Result<Value, Error> {
         lock_script,
         page,
         page_size,
+        ..
     } = FetchReq::from_map(&map).map_err(|err| err.into())?;
     let (withdrawals, total, block_number) =
         get_mint_cota(&lock_script, page, page_size).map_err(|err| err.into())?;
@@ -197,8 +200,9 @@ pub async fn get_define_info(params: Params) -> Result<Value, Error> {
     info!("Get define info request: {:?}", params);
     let map: Map<String, Value> = Params::parse(params)?;
     let DefineInfoReq { cota_id } = DefineInfoReq::from_map(&map).map_err(|err| err.into())?;
-    let define_info_opt = get_define_info_by_cota_id(cota_id).map_err(|err| err.into())?;
-    let response = parse_define_info(define_info_opt, get_block_number()?);
+    let (define_info_opt, class_info_opt) =
+        get_define_info_by_cota_id(cota_id).map_err(|err| err.into())?;
+    let response = parse_define_info(define_info_opt, class_info_opt, get_block_number()?);
     Ok(Value::Object(response))
 }
 
