@@ -47,9 +47,7 @@ pub async fn get_cota_smt_root(lock_script: &[u8]) -> Result<Option<Vec<u8>>, Er
         }
     }?;
     if result.objects.is_empty() {
-        return Err(Error::CKBIndexerError(
-            "CoTA live cells should not empty".to_owned(),
-        ));
+        return Ok(None);
     }
     let cell_data = result.objects.first().unwrap().output_data.as_bytes();
     match cell_data.len() {
