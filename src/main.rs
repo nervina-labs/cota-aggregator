@@ -52,6 +52,7 @@ fn main() {
     io.add_method("get_cota_nft_sender", get_sender_lock_hash);
     io.add_method("get_define_info", get_define_info);
     io.add_method("get_issuer_info", get_issuer_info);
+    io.add_method("parse_witness", parse_witness);
 
     let threads: usize = match env::var("THREADS") {
         Ok(thread) => from_str::<usize>(&thread).unwrap(),
