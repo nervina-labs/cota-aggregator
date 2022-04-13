@@ -6,3 +6,4 @@ pub(crate) mod mint;
 pub(crate) mod transfer;
 pub(crate) mod update;
 pub(crate) mod withdrawal;
+pub(crate) mod witness;
