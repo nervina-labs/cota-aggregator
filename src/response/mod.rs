@@ -7,3 +7,4 @@ pub mod mint;
 pub mod transfer;
 pub mod update;
 pub mod withdrawal;
+pub mod witness;
