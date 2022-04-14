@@ -2,20 +2,50 @@ use serde::{Deserialize, Serialize};
 
 #[derive(Serialize, Deserialize, Debug, Clone, Eq, PartialEq)]
 pub struct IssuerInfo {
+    pub version:     String,
     pub name:        String,
-    pub avatar:      String,
-    pub description: String,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub avatar:      Option<String>,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub description: Option<String>,
 }
 
 #[derive(Serialize, Deserialize, Debug, Clone, Eq, PartialEq)]
 pub struct ClassInfo {
+    pub version:        String,
     pub name:           String,
-    pub symbol:         String,
-    pub description:    String,
     pub image:          String,
-    pub audio:          String,
-    pub video:          String,
-    pub model:          String,
-    pub characteristic: String,
-    pub properties:     String,
+    pub cota_id:        String,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub symbol:         Option<String>,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub description:    Option<String>,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub audio:          Option<String>,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub video:          Option<String>,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub model:          Option<String>,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub characteristic: Option<String>,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub properties:     Option<String>,
+}
+
+#[derive(Serialize, Deserialize, Debug, Clone, Eq, PartialEq)]
+pub struct InfoData<T> {
+    #[serde(skip_serializing)]
+    pub target: String,
+    #[serde(rename = "type")]
+    pub type_:  String,
+    pub data:   T,
+}
+
+#[derive(Serialize, Deserialize, Debug, Clone, Eq, PartialEq)]
+pub struct Metadata<T> {
+    #[serde(skip_serializing)]
+    pub id:       String,
+    #[serde(skip_serializing)]
+    pub ver:      String,
+    pub metadata: InfoData<T>,
 }

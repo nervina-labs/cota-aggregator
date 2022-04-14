@@ -5,9 +5,10 @@ use super::parser::{
     parse_withdrawal, parse_withdrawal_v1,
 };
 use crate::response::helper::Inserter;
+use crate::response::witness::info::Metadata;
 use crate::utils::error::Error;
 use ckb_types::bytes::Bytes;
-use ckb_types::packed::WitnessArgs;
+use ckb_types::packed::{BytesOpt, WitnessArgs};
 use ckb_types::prelude::Unpack;
 use cota_smt::define::DefineCotaNFTEntries;
 use cota_smt::mint::{MintCotaNFTEntries, MintCotaNFTV1Entries};
@@ -23,6 +24,23 @@ use jsonrpc_http_server::jsonrpc_core::serde_json::Map;
 use jsonrpc_http_server::jsonrpc_core::Value;
 use molecule::error::VerificationError;
 use molecule::prelude::Entity;
+use serde_json::{from_slice, json};
+
+type CotaMap = Map<String, Value>;
+
+pub fn parse_cota_witness(witness: Vec<u8>, version: u8) -> Result<CotaMap, Error> {
+    if version > 1 {
+        return Err(Error::WitnessParseError("Version invalid".to_string()));
+    }
+    let witness_args = WitnessArgs::from_slice(&witness)
+        .map_err(|_| Error::WitnessParseError("Parse witness args error".to_string()))?;
+    if witness_args.input_type().is_none() && witness_args.output_type().is_none() {
+        return Err(Error::WitnessParseError("Not cota witness".to_string()));
+    }
+    let mut cota_map = Map::new();
+    cota_map = parse_cota(witness_args.input_type(), version, cota_map)?;
+    parse_metadata(witness_args.output_type(), cota_map)
+}
 
 const CREATE: u8 = 1;
 const MINT: u8 = 2;
@@ -32,22 +50,13 @@ const UPDATE: u8 = 5;
 const TRANSFER: u8 = 6;
 const CLAIM_UPDATE: u8 = 7;
 const TRANSFER_UPDATE: u8 = 8;
-
-pub fn parse_cota_witness(witness: Vec<u8>, version: u8) -> Result<Map<String, Value>, Error> {
-    if version > 1 {
-        return Err(Error::WitnessParseError("Version invalid".to_string()));
-    }
-    let witness_args = WitnessArgs::from_slice(&witness)
-        .map_err(|_| Error::WitnessParseError("Parse response.witness args error".to_string()))?;
-    let mut cota_map = Map::new();
-    match witness_args.input_type().to_opt() {
+fn parse_cota(input_type: BytesOpt, version: u8, mut cota_map: CotaMap) -> Result<CotaMap, Error> {
+    match input_type.to_opt() {
         Some(input_type_) => {
             let input_type: Bytes = input_type_.unpack();
             let (tx_type, slice) = (u8::from(input_type[0]), &input_type[1..]);
-            if tx_type > TRANSFER_UPDATE {
-                return Err(Error::WitnessParseError(
-                    "Not cota response.witness".to_string(),
-                ));
+            if tx_type > TRANSFER_UPDATE || tx_type == 0 {
+                return Err(Error::WitnessParseError("Not cota witness".to_string()));
             }
             let cota_entries = match tx_type {
                 CREATE => {
@@ -99,32 +108,49 @@ pub fn parse_cota_witness(witness: Vec<u8>, version: u8) -> Result<Map<String, V
             cota_map.insert_null("cota");
         }
     };
-    match witness_args.output_type().to_opt() {
-        Some(output_type_) => {
-            let issuer = serde_json::from_slice::<IssuerInfo>(output_type_.as_slice());
-            if issuer.is_ok() {
-                cota_map.insert("info".to_owned(), serde_json::json!(issuer.unwrap()));
-                return Ok(cota_map);
-            }
-            let class = serde_json::from_slice::<ClassInfo>(output_type_.as_slice());
-            if class.is_ok() {
-                cota_map.insert("info".to_owned(), serde_json::json!(class.unwrap()));
-                return Ok(cota_map);
-            }
-            cota_map.insert_null("info");
-        }
-        None => {
-            cota_map.insert_null("info");
-        }
-    };
-    if cota_map.is_empty() {
-        return Err(Error::WitnessParseError(
-            "Parse cota entries error".to_string(),
-        ));
-    }
     Ok(cota_map)
 }
 
 fn entries_error(_e: VerificationError) -> Error {
     Error::WitnessParseError("Parse cota entries error".to_string())
+}
+
+fn parse_metadata(output_type: BytesOpt, mut cota_map: CotaMap) -> Result<CotaMap, Error> {
+    match output_type.to_opt() {
+        Some(output_type_) => {
+            let metadata =
+                from_slice::<Metadata<IssuerInfo>>(&output_type_.raw_data()).map_err(json_error)?;
+            if metadata.metadata.type_ == "issuer" {
+                cota_map.insert("info".to_owned(), json!(metadata.metadata.data));
+                return Ok(cota_map);
+            }
+            if metadata.metadata.type_ == "cota" {
+                let class = from_slice::<Metadata<ClassInfo>>(&output_type_.raw_data())
+                    .map_err(json_error)?;
+                cota_map.insert("info".to_owned(), json!(class.metadata.data));
+                return Ok(cota_map);
+            }
+            if cota_map.is_empty() {
+                return Err(Error::WitnessParseError(
+                    "Invalid CoTA entries or metadata".to_string(),
+                ));
+            } else {
+                cota_map.insert_null("info");
+            }
+        }
+        None => {
+            if cota_map.is_empty() {
+                return Err(Error::WitnessParseError(
+                    "Invalid CoTA entries or metadata".to_string(),
+                ));
+            } else {
+                cota_map.insert_null("info");
+            }
+        }
+    };
+    Ok(cota_map)
+}
+
+fn json_error(e: serde_json::Error) -> Error {
+    Error::WitnessParseError(format!("Parse metadata json error: {}", e.to_string()))
 }
