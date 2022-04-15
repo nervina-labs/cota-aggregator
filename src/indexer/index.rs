@@ -47,9 +47,7 @@ pub async fn get_cota_smt_root(lock_script: &[u8]) -> Result<Option<Vec<u8>>, Er
         }
     }?;
     if result.objects.is_empty() {
-        return Err(Error::CKBIndexerError(
-            "CoTA live cells should not empty".to_owned(),
-        ));
+        return Ok(None);
     }
     let cell_data = result.objects.first().unwrap().output_data.as_bytes();
     match cell_data.len() {
@@ -65,7 +63,7 @@ fn generate_params(lock_script: &[u8]) -> Result<Value, Error> {
     dotenv().ok();
 
     let lock = Script::from_slice(lock_script)
-        .map_err(|_e| Error::Other("Lock script foramt error".to_owned()))?;
+        .map_err(|_e| Error::Other("Lock script format error".to_owned()))?;
     let hash_type = match lock.hash_type().into() {
         0u8 => "data",
         1u8 => "type",

@@ -19,6 +19,7 @@ use crate::request::mint::MintReq;
 use crate::request::transfer::{TransferReq, TransferUpdateReq};
 use crate::request::update::UpdateReq;
 use crate::request::withdrawal::{SenderLockReq, WithdrawalReq};
+use crate::request::witness::WitnessReq;
 use crate::response::claim::{parse_claimed_response, parse_claimed_smt, parse_claimed_update_smt};
 use crate::response::define::{parse_define_info, parse_define_smt};
 use crate::response::hold::parse_hold_response;
@@ -29,6 +30,7 @@ use crate::response::update::parse_update_smt;
 use crate::response::withdrawal::{
     parse_sender_response, parse_withdrawal_response, parse_withdrawal_smt,
 };
+use crate::response::witness::cota::parse_cota_witness;
 use crate::smt::db::db::RocksDB;
 use cota_smt::smt::blake2b_256;
 use jsonrpc_http_server::jsonrpc_core::serde_json::Map;
@@ -214,6 +216,14 @@ pub async fn get_issuer_info(params: Params) -> Result<Value, Error> {
     let lock_hash = blake2b_256(&lock_script);
     let issuer_info_opt = get_issuer_info_by_lock_hash(lock_hash).map_err(|err| err.into())?;
     let response = parse_issuer_response(issuer_info_opt, get_block_number()?);
+    Ok(Value::Object(response))
+}
+
+pub async fn parse_witness(params: Params) -> Result<Value, Error> {
+    info!("Parse witness request: {:?}", params);
+    let map: Map<String, Value> = Params::parse(params)?;
+    let WitnessReq { witness, version } = WitnessReq::from_map(&map).map_err(|err| err.into())?;
+    let response = parse_cota_witness(witness, version).map_err(|err| err.into())?;
     Ok(Value::Object(response))
 }
 

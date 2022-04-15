@@ -49,6 +49,9 @@ pub enum Error {
     #[fail(display = "CKB Indexer error: {}", _0)]
     CKBIndexerError(String),
 
+    #[fail(display = "Witness Parse error: {}", _0)]
+    WitnessParseError(String),
+
     #[fail(display = "Other error: {}", _0)]
     Other(String),
 }
@@ -85,11 +88,12 @@ impl Error {
             Self::CotaIdAndTokenIndexHasNotHeld => {
                 "The cota_id and token_index has not held".into()
             }
-            Self::DatabaseQueryError(_) => "Internal error".into(),
+            Self::DatabaseQueryError(msg) => format!("Database query error: {}", msg),
             Self::SMTProofError(msg) => format!("'{}' SMT proof error", msg),
             Self::CKBIndexerError(msg) => format!("CKB Indexer error: {}", msg),
-            Self::SMTError(_) => "Internal error".into(),
-            Self::RocksDBError(_) => "Internal error".into(),
+            Self::SMTError(msg) => format!("SMT error: {}", msg),
+            Self::RocksDBError(msg) => format!("RocksDB error: {}", msg),
+            Self::WitnessParseError(msg) => format!("Witness parse error: {}", msg),
             Self::Other(msg) => format!("Internal error: {:}", msg),
         }
     }
