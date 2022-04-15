@@ -10,6 +10,8 @@ pub trait Inserter {
     fn insert_str(&mut self, k: &str, v: String) -> Option<Value>;
     fn insert_array(&mut self, k: &str, v: Vec<Value>) -> Option<Value>;
     fn insert_null(&mut self, k: &str) -> Option<Value>;
+    fn insert_obj(&mut self, k: &str, v: Map<String, Value>) -> Option<Value>;
+    fn insert_obj_vec(&mut self, k: &str, v: Vec<Map<String, Value>>) -> Option<Value>;
 }
 
 impl Inserter for Map<String, Value> {
@@ -46,5 +48,14 @@ impl Inserter for Map<String, Value> {
 
     fn insert_null(&mut self, k: &str) -> Option<Value> {
         self.insert(k.to_string(), Value::Null)
+    }
+
+    fn insert_obj(&mut self, k: &str, v: Map<String, Value>) -> Option<Value> {
+        self.insert(k.to_string(), Value::Object(v))
+    }
+
+    fn insert_obj_vec(&mut self, k: &str, v: Vec<Map<String, Value>>) -> Option<Value> {
+        let vec: Vec<Value> = v.into_iter().map(|v_| Value::Object(v_)).collect();
+        self.insert(k.to_string(), Value::Array(vec))
     }
 }

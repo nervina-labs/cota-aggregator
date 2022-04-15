@@ -63,7 +63,7 @@ fn generate_params(lock_script: &[u8]) -> Result<Value, Error> {
     dotenv().ok();
 
     let lock = Script::from_slice(lock_script)
-        .map_err(|_e| Error::Other("Lock script foramt error".to_owned()))?;
+        .map_err(|_e| Error::Other("Lock script format error".to_owned()))?;
     let hash_type = match lock.hash_type().into() {
         0u8 => "data",
         1u8 => "type",
