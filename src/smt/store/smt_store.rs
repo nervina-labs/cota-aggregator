@@ -80,7 +80,6 @@ impl<'a> SMTStore<'a> {
         self.store
             .insert_raw(self.leaves_col, &self.lock_hash, smt_leaves.as_slice())
             .map_err(|err| Error::SMTError(format!("insert error {:?}", err)))?;
-        self.store.commit()?;
         Ok(())
     }
 
