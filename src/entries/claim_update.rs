@@ -41,12 +41,6 @@ pub async fn generate_claim_update_smt(
 
     let mut hold_keys: Vec<CotaNFTId> = Vec::new();
     let mut hold_values: Vec<CotaNFTInfo> = Vec::new();
-    let transaction = &StoreTransaction::new(db.transaction());
-    let withdrawal_smt = generate_history_smt(
-        transaction,
-        claim_update_req.withdrawal_lock_script.as_slice(),
-    )
-    .await?;
     let mut withdrawal_update_leaves: Vec<(H256, H256)> = Vec::with_capacity(nfts_len);
 
     let mut claim_keys: Vec<ClaimCotaNFTKey> = Vec::new();
@@ -122,29 +116,6 @@ pub async fn generate_claim_update_smt(
         claim_keys.push(claim_key);
         key_vec.push((key, version));
     }
-    withdrawal_smt.save_root_and_leaves(vec![])?;
-    let withdraw_merkle_proof = withdrawal_smt
-        .merkle_proof(
-            withdrawal_update_leaves
-                .iter()
-                .map(|leave| leave.0)
-                .collect(),
-        )
-        .map_err(|e| {
-            error!("Withdraw SMT proof error: {:?}", e.to_string());
-            Error::SMTProofError("Withdraw".to_string())
-        })?;
-    let withdraw_merkle_proof_compiled = withdraw_merkle_proof
-        .compile(withdrawal_update_leaves.clone())
-        .map_err(|e| {
-            error!("Withdraw SMT proof error: {:?}", e.to_string());
-            Error::SMTProofError("Withdraw".to_string())
-        })?;
-
-    let merkel_proof_vec: Vec<u8> = withdraw_merkle_proof_compiled.into();
-    let withdrawal_proof = BytesBuilder::default()
-        .extend(merkel_proof_vec.iter().map(|v| Byte::from(*v)))
-        .build();
 
     for (key, version) in key_vec {
         let (claim_value, value) = generate_claim_value(version);
@@ -172,6 +143,36 @@ pub async fn generate_claim_update_smt(
 
     let merkel_proof_vec: Vec<u8> = claim_update_merkle_proof_compiled.into();
     let claim_proof = BytesBuilder::default()
+        .extend(merkel_proof_vec.iter().map(|v| Byte::from(*v)))
+        .build();
+
+    let transaction = &StoreTransaction::new(db.transaction());
+    let withdrawal_smt = generate_history_smt(
+        transaction,
+        claim_update_req.withdrawal_lock_script.as_slice(),
+    )
+    .await?;
+    withdrawal_smt.save_root_and_leaves(vec![])?;
+    let withdraw_merkle_proof = withdrawal_smt
+        .merkle_proof(
+            withdrawal_update_leaves
+                .iter()
+                .map(|leave| leave.0)
+                .collect(),
+        )
+        .map_err(|e| {
+            error!("Withdraw SMT proof error: {:?}", e.to_string());
+            Error::SMTProofError("Withdraw".to_string())
+        })?;
+    let withdraw_merkle_proof_compiled = withdraw_merkle_proof
+        .compile(withdrawal_update_leaves.clone())
+        .map_err(|e| {
+            error!("Withdraw SMT proof error: {:?}", e.to_string());
+            Error::SMTProofError("Withdraw".to_string())
+        })?;
+
+    let merkel_proof_vec: Vec<u8> = withdraw_merkle_proof_compiled.into();
+    let withdrawal_proof = BytesBuilder::default()
         .extend(merkel_proof_vec.iter().map(|v| Byte::from(*v)))
         .build();
 
