@@ -131,8 +131,13 @@ pub async fn generate_transfer_smt(
         "Generate transfer smt object with update leaves",
     );
 
-    let start_time = Local::now().timestamp_millis();
     transfer_smt.save_root_and_leaves(previous_leaves)?;
+    let withdrawal_smt =
+        generate_history_smt(transaction, transfer_req.withdrawal_lock_script.as_slice()).await?;
+    withdrawal_smt.save_root_and_leaves(vec![])?;
+    transaction.commit()?;
+
+    let start_time = Local::now().timestamp_millis();
     let transfer_merkle_proof = transfer_smt
         .merkle_proof(transfer_update_leaves.iter().map(|leave| leave.0).collect())
         .map_err(|e| {
@@ -152,11 +157,7 @@ pub async fn generate_transfer_smt(
         .extend(transfer_merkel_proof_vec.iter().map(|v| Byte::from(*v)))
         .build();
 
-    let transaction = &StoreTransaction::new(db.transaction());
-    let withdrawal_smt =
-        generate_history_smt(transaction, transfer_req.withdrawal_lock_script.as_slice()).await?;
     let start_time = Local::now().timestamp_millis();
-    withdrawal_smt.save_root_and_leaves(vec![])?;
     let withdrawal_merkle_proof = withdrawal_smt
         .merkle_proof(
             withdrawal_update_leaves

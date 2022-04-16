@@ -146,8 +146,15 @@ pub async fn generate_transfer_update_smt(
             .update(key, value)
             .expect("transfer SMT update leave error");
     }
-
     transfer_update_smt.save_root_and_leaves(previous_leaves)?;
+    let withdrawal_smt = generate_history_smt(
+        transaction,
+        transfer_update_req.withdrawal_lock_script.as_slice(),
+    )
+    .await?;
+    withdrawal_smt.save_root_and_leaves(vec![])?;
+    transaction.commit()?;
+
     let transfer_update_merkle_proof = transfer_update_smt
         .merkle_proof(transfer_update_leaves.iter().map(|leave| leave.0).collect())
         .map_err(|e| {
@@ -170,13 +177,6 @@ pub async fn generate_transfer_update_smt(
         )
         .build();
 
-    let transaction = &StoreTransaction::new(db.transaction());
-    let withdrawal_smt = generate_history_smt(
-        transaction,
-        transfer_update_req.withdrawal_lock_script.as_slice(),
-    )
-    .await?;
-    withdrawal_smt.save_root_and_leaves(vec![])?;
     let withdrawal_merkle_proof = withdrawal_smt
         .merkle_proof(
             withdrawal_update_leaves

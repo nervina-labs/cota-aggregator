@@ -73,7 +73,7 @@ fn generate_mysql_smt<'a>(mut smt: CotaSMT<'a>, lock_hash: [u8; 32]) -> Result<C
         "Load all history smt leaves from mysql database",
     );
 
-    debug!("Define history leaves: {}", defines.len());
+    let start_time = Local::now().timestamp_millis();
     for define_db in defines {
         let DefineDb {
             cota_id,
@@ -86,10 +86,6 @@ fn generate_mysql_smt<'a>(mut smt: CotaSMT<'a>, lock_hash: [u8; 32]) -> Result<C
             generate_define_value(total.to_be_bytes(), issued.to_be_bytes(), configure);
         smt.update(key, value).expect("SMT update leave error");
     }
-    diff_time(start_time, "Push define history leaves to smt");
-
-    let start_time = Local::now().timestamp_millis();
-    debug!("Hold history leaves: {}", holds.len());
     for hold_db in holds {
         let HoldDb {
             cota_id,
@@ -155,7 +151,7 @@ fn generate_mysql_smt<'a>(mut smt: CotaSMT<'a>, lock_hash: [u8; 32]) -> Result<C
         let (_, value) = generate_claim_value(version);
         smt.update(key, value).expect("SMT update leave error");
     }
-    diff_time(start_time, "Push claim history leaves to smt");
+    diff_time(start_time, "Push all history leaves to smt");
     Ok(smt)
 }
 

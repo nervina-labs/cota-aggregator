@@ -128,6 +128,14 @@ pub async fn generate_claim_update_smt(
     }
 
     claim_smt.save_root_and_leaves(previous_leaves)?;
+    let withdrawal_smt = generate_history_smt(
+        transaction,
+        claim_update_req.withdrawal_lock_script.as_slice(),
+    )
+    .await?;
+    withdrawal_smt.save_root_and_leaves(vec![])?;
+    transaction.commit()?;
+
     let claim_update_merkle_proof = claim_smt
         .merkle_proof(claim_update_leaves.iter().map(|leave| leave.0).collect())
         .map_err(|e| {
@@ -146,13 +154,6 @@ pub async fn generate_claim_update_smt(
         .extend(merkel_proof_vec.iter().map(|v| Byte::from(*v)))
         .build();
 
-    let transaction = &StoreTransaction::new(db.transaction());
-    let withdrawal_smt = generate_history_smt(
-        transaction,
-        claim_update_req.withdrawal_lock_script.as_slice(),
-    )
-    .await?;
-    withdrawal_smt.save_root_and_leaves(vec![])?;
     let withdraw_merkle_proof = withdrawal_smt
         .merkle_proof(
             withdrawal_update_leaves
