@@ -1,5 +1,6 @@
 use crate::entries::helper::{generate_hold_key, generate_hold_value};
 use crate::entries::smt::generate_history_smt;
+use crate::indexer::index::get_cota_smt_root;
 use crate::models::hold::get_hold_cota_by_lock_hash;
 use crate::request::update::UpdateReq;
 use crate::smt::db::db::RocksDB;
@@ -17,7 +18,10 @@ pub async fn generate_update_smt(
     update_req: UpdateReq,
 ) -> Result<(H256, UpdateCotaNFTEntries), Error> {
     let transaction = &StoreTransaction::new(db.transaction());
-    let mut smt = generate_history_smt(transaction, update_req.lock_script.as_slice()).await?;
+
+    let smt_root = get_cota_smt_root(update_req.lock_script.as_slice()).await?;
+    let mut smt = generate_history_smt(transaction, update_req.lock_script.as_slice(), smt_root)?;
+
     let nfts = update_req.nfts;
     if nfts.is_empty() {
         return Err(Error::RequestParamNotFound("nfts".to_string()));

@@ -3,6 +3,8 @@ use crate::entries::helper::{
     generate_withdrawal_value, generate_withdrawal_value_v1,
 };
 use crate::entries::smt::generate_history_smt;
+use crate::entries::SMT_LOCK;
+use crate::indexer::index::get_cota_smt_root;
 use crate::models::withdrawal::{get_withdrawal_cota_by_lock_hash, WithdrawDb};
 use crate::request::transfer::TransferReq;
 use crate::request::withdrawal::TransferWithdrawal;
@@ -61,9 +63,6 @@ pub async fn generate_transfer_smt(
     let mut transfer_update_leaves: Vec<(H256, H256)> = Vec::with_capacity(transfers_len * 2);
     let mut previous_leaves: Vec<(H256, H256)> = Vec::with_capacity(transfers_len * 2);
     let mut withdrawal_update_leaves: Vec<(H256, H256)> = Vec::with_capacity(transfers_len);
-    let transaction = &StoreTransaction::new(db.transaction());
-    let mut transfer_smt =
-        generate_history_smt(transaction, transfer_req.lock_script.as_slice()).await?;
     let start_time = Local::now().timestamp_millis();
     for (withdrawal_db, transfer) in sender_withdrawals.into_iter().zip(transfers.clone()) {
         let WithdrawDb {
@@ -112,9 +111,6 @@ pub async fn generate_transfer_smt(
         withdrawal_values.push(withdrawal_value);
         transfer_update_leaves.push((key, value));
         previous_leaves.push((key, H256::zero()));
-        transfer_smt
-            .update(key, value)
-            .expect("transfer SMT update leave error");
 
         let (claimed_key, key) = generate_claim_key(cota_id, token_index, out_point);
         let (claimed_value, value) = generate_claim_value(version);
@@ -122,20 +118,35 @@ pub async fn generate_transfer_smt(
         claimed_values.push(claimed_value);
         transfer_update_leaves.push((key, value));
         previous_leaves.push((key, H256::zero()));
-        transfer_smt
-            .update(key, value)
-            .expect("transfer SMT update leave error");
     }
     diff_time(
         start_time,
         "Generate transfer smt object with update leaves",
     );
 
+    let transfer_smt_root = get_cota_smt_root(transfer_req.lock_script.as_slice()).await?;
+    let withdrawal_smt_root =
+        get_cota_smt_root(transfer_req.withdrawal_lock_script.as_slice()).await?;
+
+    let lock = SMT_LOCK.lock();
+    let transaction = &StoreTransaction::new(db.transaction());
+    let mut transfer_smt = generate_history_smt(
+        transaction,
+        transfer_req.lock_script.as_slice(),
+        transfer_smt_root,
+    )?;
+    transfer_smt
+        .update_all(transfer_update_leaves.clone())
+        .expect("transfer SMT update leave error");
     transfer_smt.save_root_and_leaves(previous_leaves)?;
-    let withdrawal_smt =
-        generate_history_smt(transaction, transfer_req.withdrawal_lock_script.as_slice()).await?;
+    let withdrawal_smt = generate_history_smt(
+        transaction,
+        transfer_req.withdrawal_lock_script.as_slice(),
+        withdrawal_smt_root,
+    )?;
     withdrawal_smt.save_root_and_leaves(vec![])?;
     transaction.commit()?;
+    drop(lock);
 
     let start_time = Local::now().timestamp_millis();
     let transfer_merkle_proof = transfer_smt

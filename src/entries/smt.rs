@@ -3,7 +3,6 @@ use crate::entries::helper::{
     generate_define_value, generate_hold_key, generate_hold_value, generate_withdrawal_key,
     generate_withdrawal_key_v1, generate_withdrawal_value, generate_withdrawal_value_v1,
 };
-use crate::indexer::index::get_cota_smt_root;
 use crate::models::claim::ClaimDb;
 use crate::models::common::get_all_cota_by_lock_hash;
 use crate::models::define::DefineDb;
@@ -23,9 +22,10 @@ use cota_smt::smt::{blake2b_256, H256};
 use log::debug;
 use std::collections::HashMap;
 
-pub async fn generate_history_smt<'a>(
+pub fn generate_history_smt<'a>(
     transaction: &'a StoreTransaction,
     lock_script: &[u8],
+    smt_root_opt: Option<Vec<u8>>,
 ) -> Result<CotaSMT<'a>, Error> {
     let lock_hash = blake2b_256(lock_script);
     let smt_store = SMTStore::new(
@@ -50,7 +50,6 @@ pub async fn generate_history_smt<'a>(
     if root == H256::zero() {
         return generate_mysql_smt(smt, lock_hash);
     }
-    let smt_root_opt = get_cota_smt_root(lock_script).await?;
     debug!(
         "cota cell smt root: {:?} of {:?}",
         smt_root_opt,
