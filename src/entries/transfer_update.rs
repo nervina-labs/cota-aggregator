@@ -65,11 +65,6 @@ pub async fn generate_transfer_update_smt(
     let transaction = &StoreTransaction::new(db.transaction());
     let mut transfer_update_smt =
         generate_history_smt(transaction, transfer_update_req.lock_script.as_slice()).await?;
-    let withdrawal_smt = generate_history_smt(
-        transaction,
-        transfer_update_req.withdrawal_lock_script.as_slice(),
-    )
-    .await?;
     for (withdrawal_db, transfer) in sender_withdrawals.into_iter().zip(transfers.clone()) {
         let WithdrawDb {
             cota_id,
@@ -152,6 +147,35 @@ pub async fn generate_transfer_update_smt(
             .expect("transfer SMT update leave error");
     }
 
+    transfer_update_smt.save_root_and_leaves(previous_leaves)?;
+    let transfer_update_merkle_proof = transfer_update_smt
+        .merkle_proof(transfer_update_leaves.iter().map(|leave| leave.0).collect())
+        .map_err(|e| {
+            error!("Transfer update SMT proof error: {:?}", e.to_string());
+            Error::SMTProofError("Transfer".to_string())
+        })?;
+    let transfer_update_merkle_proof_compiled = transfer_update_merkle_proof
+        .compile(transfer_update_leaves.clone())
+        .map_err(|e| {
+            error!("Transfer SMT proof error: {:?}", e.to_string());
+            Error::SMTProofError("Transfer update".to_string())
+        })?;
+
+    let transfer_update_merkel_proof_vec: Vec<u8> = transfer_update_merkle_proof_compiled.into();
+    let transfer_update_merkel_proof_bytes = BytesBuilder::default()
+        .extend(
+            transfer_update_merkel_proof_vec
+                .iter()
+                .map(|v| Byte::from(*v)),
+        )
+        .build();
+
+    let transaction = &StoreTransaction::new(db.transaction());
+    let withdrawal_smt = generate_history_smt(
+        transaction,
+        transfer_update_req.withdrawal_lock_script.as_slice(),
+    )
+    .await?;
     withdrawal_smt.save_root_and_leaves(vec![])?;
     let withdrawal_merkle_proof = withdrawal_smt
         .merkle_proof(
@@ -174,29 +198,6 @@ pub async fn generate_transfer_update_smt(
     let withdrawal_merkel_proof_vec: Vec<u8> = withdrawal_merkle_proof_compiled.into();
     let withdrawal_merkel_proof_bytes = BytesBuilder::default()
         .extend(withdrawal_merkel_proof_vec.iter().map(|v| Byte::from(*v)))
-        .build();
-
-    transfer_update_smt.save_root_and_leaves(previous_leaves)?;
-    let transfer_update_merkle_proof = transfer_update_smt
-        .merkle_proof(transfer_update_leaves.iter().map(|leave| leave.0).collect())
-        .map_err(|e| {
-            error!("Transfer update SMT proof error: {:?}", e.to_string());
-            Error::SMTProofError("Transfer".to_string())
-        })?;
-    let transfer_update_merkle_proof_compiled = transfer_update_merkle_proof
-        .compile(transfer_update_leaves.clone())
-        .map_err(|e| {
-            error!("Transfer SMT proof error: {:?}", e.to_string());
-            Error::SMTProofError("Transfer update".to_string())
-        })?;
-
-    let transfer_update_merkel_proof_vec: Vec<u8> = transfer_update_merkle_proof_compiled.into();
-    let transfer_update_merkel_proof_bytes = BytesBuilder::default()
-        .extend(
-            transfer_update_merkel_proof_vec
-                .iter()
-                .map(|v| Byte::from(*v)),
-        )
         .build();
 
     let transfer_update_entries = TransferUpdateCotaNFTV1EntriesBuilder::default()
