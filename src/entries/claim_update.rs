@@ -4,6 +4,7 @@ use crate::entries::helper::{
     generate_withdrawal_value_v1,
 };
 use crate::entries::smt::generate_history_smt;
+use crate::entries::SMT_LOCK;
 use crate::indexer::index::get_cota_smt_root;
 use crate::models::withdrawal::{get_withdrawal_cota_by_lock_hash, WithdrawDb};
 use crate::request::claim::ClaimUpdateReq;
@@ -15,13 +16,7 @@ use cota_smt::common::*;
 use cota_smt::molecule::prelude::*;
 use cota_smt::smt::{blake2b_256, H256};
 use cota_smt::transfer_update::{ClaimUpdateCotaNFTEntries, ClaimUpdateCotaNFTEntriesBuilder};
-use lazy_static::lazy_static;
 use log::error;
-use parking_lot::Mutex;
-
-lazy_static! {
-    static ref SMT_LOCK: Mutex<()> = Mutex::new(());
-}
 
 pub async fn generate_claim_update_smt(
     db: &RocksDB,
