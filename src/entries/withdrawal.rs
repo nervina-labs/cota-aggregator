@@ -3,6 +3,7 @@ use crate::entries::helper::{
     generate_withdrawal_value_v1,
 };
 use crate::entries::smt::generate_history_smt;
+use crate::indexer::index::get_cota_smt_root;
 use crate::models::hold::get_hold_cota_by_lock_hash;
 use crate::request::withdrawal::WithdrawalReq;
 use crate::smt::db::db::RocksDB;
@@ -20,7 +21,10 @@ pub async fn generate_withdrawal_smt(
     withdrawal_req: WithdrawalReq,
 ) -> Result<(H256, WithdrawalCotaNFTV1Entries), Error> {
     let transaction = &StoreTransaction::new(db.transaction());
-    let mut smt = generate_history_smt(transaction, withdrawal_req.lock_script.as_slice()).await?;
+
+    let smt_root = get_cota_smt_root(withdrawal_req.lock_script.as_slice()).await?;
+    let mut smt =
+        generate_history_smt(transaction, withdrawal_req.lock_script.as_slice(), smt_root)?;
     let withdrawals = withdrawal_req.withdrawals;
     if withdrawals.is_empty() {
         return Err(Error::RequestParamNotFound("withdrawals".to_string()));

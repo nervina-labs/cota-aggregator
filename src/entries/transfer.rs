@@ -3,6 +3,7 @@ use crate::entries::helper::{
     generate_withdrawal_value, generate_withdrawal_value_v1,
 };
 use crate::entries::smt::generate_history_smt;
+use crate::indexer::index::get_cota_smt_root;
 use crate::models::withdrawal::{get_withdrawal_cota_by_lock_hash, WithdrawDb};
 use crate::request::transfer::TransferReq;
 use crate::request::withdrawal::TransferWithdrawal;
@@ -16,7 +17,13 @@ use cota_smt::common::*;
 use cota_smt::molecule::prelude::*;
 use cota_smt::smt::{blake2b_256, H256};
 use cota_smt::transfer::{TransferCotaNFTV1Entries, TransferCotaNFTV1EntriesBuilder};
+use lazy_static::lazy_static;
 use log::error;
+use parking_lot::Mutex;
+
+lazy_static! {
+    static ref SMT_LOCK: Mutex<()> = Mutex::new(());
+}
 
 pub async fn generate_transfer_smt(
     db: &RocksDB,
@@ -122,17 +129,29 @@ pub async fn generate_transfer_smt(
         "Generate transfer smt object with update leaves",
     );
 
+    let transfer_smt_root = get_cota_smt_root(transfer_req.lock_script.as_slice()).await?;
+    let withdrawal_smt_root =
+        get_cota_smt_root(transfer_req.withdrawal_lock_script.as_slice()).await?;
+
+    let lock = SMT_LOCK.lock();
     let transaction = &StoreTransaction::new(db.transaction());
-    let mut transfer_smt =
-        generate_history_smt(transaction, transfer_req.lock_script.as_slice()).await?;
+    let mut transfer_smt = generate_history_smt(
+        transaction,
+        transfer_req.lock_script.as_slice(),
+        transfer_smt_root,
+    )?;
     transfer_smt
         .update_all(transfer_update_leaves.clone())
         .expect("transfer SMT update leave error");
     transfer_smt.save_root_and_leaves(previous_leaves)?;
-    let withdrawal_smt =
-        generate_history_smt(transaction, transfer_req.withdrawal_lock_script.as_slice()).await?;
+    let withdrawal_smt = generate_history_smt(
+        transaction,
+        transfer_req.withdrawal_lock_script.as_slice(),
+        withdrawal_smt_root,
+    )?;
     withdrawal_smt.save_root_and_leaves(vec![])?;
     transaction.commit()?;
+    drop(lock);
 
     let start_time = Local::now().timestamp_millis();
     let transfer_merkle_proof = transfer_smt

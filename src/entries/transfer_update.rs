@@ -3,6 +3,7 @@ use crate::entries::helper::{
     generate_withdrawal_value, generate_withdrawal_value_v1,
 };
 use crate::entries::smt::generate_history_smt;
+use crate::indexer::index::get_cota_smt_root;
 use crate::models::withdrawal::{get_withdrawal_cota_by_lock_hash, WithdrawDb};
 use crate::request::transfer::{TransferUpdate, TransferUpdateReq};
 use crate::smt::db::db::RocksDB;
@@ -15,7 +16,13 @@ use cota_smt::smt::{blake2b_256, H256};
 use cota_smt::transfer_update::{
     TransferUpdateCotaNFTV1Entries, TransferUpdateCotaNFTV1EntriesBuilder,
 };
+use lazy_static::lazy_static;
 use log::error;
+use parking_lot::Mutex;
+
+lazy_static! {
+    static ref SMT_LOCK: Mutex<()> = Mutex::new(());
+}
 
 pub async fn generate_transfer_update_smt(
     db: &RocksDB,
@@ -137,9 +144,17 @@ pub async fn generate_transfer_update_smt(
         previous_leaves.push((key, H256::zero()));
     }
 
+    let transfer_smt_root = get_cota_smt_root(transfer_update_req.lock_script.as_slice()).await?;
+    let withdrawal_smt_root =
+        get_cota_smt_root(transfer_update_req.withdrawal_lock_script.as_slice()).await?;
+
+    let lock = SMT_LOCK.lock();
     let transaction = &StoreTransaction::new(db.transaction());
-    let mut transfer_update_smt =
-        generate_history_smt(transaction, transfer_update_req.lock_script.as_slice()).await?;
+    let mut transfer_update_smt = generate_history_smt(
+        transaction,
+        transfer_update_req.lock_script.as_slice(),
+        transfer_smt_root,
+    )?;
     transfer_update_smt
         .update_all(transfer_update_leaves.clone())
         .expect("transfer SMT update leave error");
@@ -147,10 +162,11 @@ pub async fn generate_transfer_update_smt(
     let withdrawal_smt = generate_history_smt(
         transaction,
         transfer_update_req.withdrawal_lock_script.as_slice(),
-    )
-    .await?;
+        withdrawal_smt_root,
+    )?;
     withdrawal_smt.save_root_and_leaves(vec![])?;
     transaction.commit()?;
+    drop(lock);
 
     let transfer_update_merkle_proof = transfer_update_smt
         .merkle_proof(transfer_update_leaves.iter().map(|leave| leave.0).collect())
