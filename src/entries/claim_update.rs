@@ -47,9 +47,6 @@ pub async fn generate_claim_update_smt(
     let mut key_vec: Vec<(H256, u8)> = Vec::new();
     let mut claim_values: Vec<Byte32> = Vec::new();
     let mut claim_infos: Vec<ClaimCotaNFTInfo> = Vec::new();
-    let transaction = &StoreTransaction::new(db.transaction());
-    let mut claim_smt =
-        generate_history_smt(transaction, claim_update_req.lock_script.as_slice()).await?;
     let mut claim_update_leaves: Vec<(H256, H256)> = Vec::with_capacity(nfts_len * 2);
     let mut previous_leaves: Vec<(H256, H256)> = Vec::with_capacity(nfts_len * 2);
     for (index, withdrawal) in sender_withdrawals.into_iter().enumerate() {
@@ -106,9 +103,6 @@ pub async fn generate_claim_update_smt(
         let (hold_value, value) = generate_hold_value(configure, nft.state, nft.characteristic);
         hold_keys.push(hold_key);
         hold_values.push(hold_value);
-        claim_smt
-            .update(key, value)
-            .expect("claim SMT update leave error");
         claim_update_leaves.push((key, value));
         previous_leaves.push((key, H256::zero()));
 
@@ -120,13 +114,16 @@ pub async fn generate_claim_update_smt(
     for (key, version) in key_vec {
         let (claim_value, value) = generate_claim_value(version);
         claim_values.push(claim_value);
-        claim_smt
-            .update(key, value)
-            .expect("claim SMT update leave error");
         claim_update_leaves.push((key, value));
         previous_leaves.push((key, H256::zero()));
     }
 
+    let transaction = &StoreTransaction::new(db.transaction());
+    let mut claim_smt =
+        generate_history_smt(transaction, claim_update_req.lock_script.as_slice()).await?;
+    claim_smt
+        .update_all(claim_update_leaves.clone())
+        .expect("claim SMT update leave error");
     claim_smt.save_root_and_leaves(previous_leaves)?;
     let withdrawal_smt = generate_history_smt(
         transaction,
