@@ -23,6 +23,10 @@ pub mod schema;
 mod smt;
 mod utils;
 
+#[cfg(all(not(target_env = "msvc"), not(target_os = "macos")))]
+#[global_allocator]
+static ALLOC: tikv_jemallocator::Jemalloc = tikv_jemallocator::Jemalloc;
+
 lazy_static! {
     static ref DB: RocksDB = RocksDB::default().expect("RocksDB open error");
 }
