@@ -18,7 +18,6 @@ pub async fn generate_update_smt(
     update_req: UpdateReq,
 ) -> Result<(H256, UpdateCotaNFTEntries), Error> {
     let transaction = &StoreTransaction::new(db.transaction());
-
     let smt_root = get_cota_smt_root(update_req.lock_script.as_slice()).await?;
     let mut smt = generate_history_smt(transaction, update_req.lock_script.as_slice(), smt_root)?;
 
@@ -59,6 +58,8 @@ pub async fn generate_update_smt(
     }
 
     smt.save_root_and_leaves(previous_leaves)?;
+    transaction.commit()?;
+
     let update_merkle_proof = smt
         .merkle_proof(update_leaves.iter().map(|leave| leave.0).collect())
         .map_err(|e| {
