@@ -38,8 +38,8 @@ pub async fn generate_mint_smt(
     let mut define_new_values: Vec<DefineCotaNFTValue> = Vec::new();
     let mut withdrawal_keys: Vec<WithdrawalCotaNFTKeyV1> = Vec::new();
     let mut withdrawal_values: Vec<WithdrawalCotaNFTValueV1> = Vec::new();
-    let transaction = &StoreTransaction::new(db.transaction());
 
+    let transaction = &StoreTransaction::new(db.transaction());
     let smt_root = get_cota_smt_root(mint_req.lock_script.as_slice()).await?;
     let mut smt = generate_history_smt(transaction, mint_req.lock_script.as_slice(), smt_root)?;
 
@@ -98,8 +98,10 @@ pub async fn generate_mint_smt(
     }
     diff_time(start_time, "Generate mint smt object with update leaves");
 
-    let start_time = Local::now().timestamp_millis();
     smt.save_root_and_leaves(previous_leaves)?;
+    transaction.commit()?;
+
+    let start_time = Local::now().timestamp_millis();
     let mint_merkle_proof = smt
         .merkle_proof(update_leaves.iter().map(|leave| leave.0).collect())
         .map_err(|e| {

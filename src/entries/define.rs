@@ -17,7 +17,6 @@ pub async fn generate_define_smt(
     define_req: DefineReq,
 ) -> Result<(H256, DefineCotaNFTEntries), Error> {
     let transaction = &StoreTransaction::new(db.transaction());
-
     let smt_root = get_cota_smt_root(define_req.lock_script.as_slice()).await?;
     let mut smt = generate_history_smt(transaction, define_req.lock_script.as_slice(), smt_root)?;
 
@@ -39,6 +38,8 @@ pub async fn generate_define_smt(
     previous_leaves.push((key, H256::zero()));
 
     smt.save_root_and_leaves(previous_leaves)?;
+    transaction.commit()?;
+
     let define_merkle_proof = smt
         .merkle_proof(update_leaves.iter().map(|leave| leave.0).collect())
         .map_err(|e| {

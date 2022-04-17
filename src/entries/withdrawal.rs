@@ -21,10 +21,10 @@ pub async fn generate_withdrawal_smt(
     withdrawal_req: WithdrawalReq,
 ) -> Result<(H256, WithdrawalCotaNFTV1Entries), Error> {
     let transaction = &StoreTransaction::new(db.transaction());
-
     let smt_root = get_cota_smt_root(withdrawal_req.lock_script.as_slice()).await?;
     let mut smt =
         generate_history_smt(transaction, withdrawal_req.lock_script.as_slice(), smt_root)?;
+
     let withdrawals = withdrawal_req.withdrawals;
     if withdrawals.is_empty() {
         return Err(Error::RequestParamNotFound("withdrawals".to_string()));
@@ -83,6 +83,8 @@ pub async fn generate_withdrawal_smt(
     }
 
     smt.save_root_and_leaves(previous_leaves)?;
+    transaction.commit()?;
+
     let withdrawal_merkle_proof = smt
         .merkle_proof(update_leaves.iter().map(|leave| leave.0).collect())
         .map_err(|e| {
