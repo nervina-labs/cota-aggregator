@@ -5,6 +5,7 @@ extern crate dotenv;
 
 use crate::api::*;
 use crate::smt::db::db::RocksDB;
+use dotenv::dotenv;
 use jsonrpc_http_server::jsonrpc_core::serde_json::from_str;
 use jsonrpc_http_server::jsonrpc_core::IoHandler;
 use jsonrpc_http_server::ServerBuilder;
@@ -27,6 +28,7 @@ lazy_static! {
 }
 
 fn main() {
+    dotenv().ok();
     env_logger::Builder::from_default_env()
         .format_timestamp(Some(env_logger::fmt::TimestampPrecision::Millis))
         .init();
