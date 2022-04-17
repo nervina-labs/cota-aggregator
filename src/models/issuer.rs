@@ -1,7 +1,7 @@
-use crate::models::helper::establish_connection;
 use crate::schema::issuer_infos::dsl::issuer_infos;
 use crate::schema::issuer_infos::{avatar, description, lock_hash, name};
 use crate::utils::error::Error;
+use crate::POOL;
 use diesel::*;
 use log::error;
 use serde::{Deserialize, Serialize};
@@ -14,7 +14,7 @@ pub struct IssuerInfoDb {
 }
 
 pub fn get_issuer_info_by_lock_hash(lock_hash_: [u8; 32]) -> Result<Option<IssuerInfoDb>, Error> {
-    let conn = &establish_connection();
+    let conn = &POOL.clone().get().expect("Mysql pool connection error");
     let lock_hash_hex = hex::encode(lock_hash_);
     let issuers: Vec<IssuerInfoDb> = issuer_infos
         .select((name, avatar, description))

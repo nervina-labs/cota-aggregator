@@ -1,7 +1,5 @@
-use super::helper::{
-    establish_connection, parse_cota_id_and_token_index_pairs, parse_lock_hash, SqlConnection,
-};
-use crate::models::block::get_syncer_tip_block_number_with_conn;
+use super::helper::{parse_cota_id_and_token_index_pairs, parse_lock_hash};
+use crate::models::block::get_syncer_tip_block_number;
 use crate::models::helper::{generate_crc, PAGE_SIZE};
 use crate::models::scripts::get_script_map_by_ids;
 use crate::models::{DBResult, DBTotalResult};
@@ -9,6 +7,7 @@ use crate::schema::withdraw_cota_nft_kv_pairs::dsl::withdraw_cota_nft_kv_pairs;
 use crate::schema::withdraw_cota_nft_kv_pairs::*;
 use crate::utils::error::Error;
 use crate::utils::helper::{diff_time, parse_bytes_n};
+use crate::POOL;
 use chrono::prelude::*;
 use diesel::*;
 use log::error;
@@ -47,12 +46,12 @@ pub struct WithdrawNFTDb {
     pub characteristic: [u8; 20],
 }
 
-pub fn get_withdrawal_cota_by_lock_hash_with_conn(
-    conn: &SqlConnection,
+pub fn get_withdrawal_cota_by_lock_hash(
     lock_hash_: [u8; 32],
     cota_id_and_token_index_pairs: Option<Vec<([u8; 20], [u8; 4])>>,
 ) -> DBResult<WithdrawDb> {
     let start_time = Local::now().timestamp_millis();
+    let conn = &POOL.clone().get().expect("Mysql pool connection error");
     let (lock_hash_hex, lock_hash_crc_) = parse_lock_hash(lock_hash_);
     let mut withdraw_nfts: Vec<WithdrawCotaNft> = vec![];
     match cota_id_and_token_index_pairs {
@@ -68,6 +67,7 @@ pub fn get_withdrawal_cota_by_lock_hash_with_conn(
                     .filter(lock_hash.eq(lock_hash_hex.clone()))
                     .filter(cota_id.eq(cota_id_str))
                     .order(updated_at.desc())
+                    .limit(1)
                     .load::<WithdrawCotaNft>(conn)
                     .map_err(|e| {
                         error!("Query withdraw error: {}", e.to_string());
@@ -103,28 +103,17 @@ pub fn get_withdrawal_cota_by_lock_hash_with_conn(
         }
     };
     diff_time(start_time, "SQL get_withdrawal_cota_by_lock_hash");
-    parse_withdraw_db(conn, withdraw_nfts)
-}
-
-pub fn get_withdrawal_cota_by_lock_hash(
-    lock_hash_: [u8; 32],
-    cota_id_and_token_index_pairs: Option<Vec<([u8; 20], [u8; 4])>>,
-) -> DBResult<WithdrawDb> {
-    get_withdrawal_cota_by_lock_hash_with_conn(
-        &establish_connection(),
-        lock_hash_,
-        cota_id_and_token_index_pairs,
-    )
+    parse_withdraw_db(withdraw_nfts)
 }
 
 pub fn get_withdrawal_cota_by_cota_ids(
-    conn: &SqlConnection,
     lock_hash_: [u8; 32],
     cota_ids: Vec<[u8; 20]>,
     page: i64,
     page_size: i64,
 ) -> DBTotalResult<WithdrawDb> {
     let start_time = Local::now().timestamp_millis();
+    let conn = &POOL.clone().get().expect("Mysql pool connection error");
     let (lock_hash_hex, lock_hash_crc_) = parse_lock_hash(lock_hash_);
     let cota_ids_: Vec<String> = cota_ids
         .into_iter()
@@ -154,19 +143,19 @@ pub fn get_withdrawal_cota_by_cota_ids(
             error!("Query withdraw error: {}", e.to_string());
             Error::DatabaseQueryError(e.to_string())
         })?;
-    let (withdrawals, block_height) = parse_withdraw_db(conn, withdraw_cota_nfts)?;
+    let (withdrawals, block_height) = parse_withdraw_db(withdraw_cota_nfts)?;
     diff_time(start_time, "SQL get_withdrawal_cota_by_cota_ids");
     Ok((withdrawals, total, block_height))
 }
 
 pub fn get_withdrawal_cota_by_script_id(
-    conn: &SqlConnection,
     script_id: i64,
     page: i64,
     page_size: i64,
     cota_id_opt: Option<[u8; 20]>,
 ) -> DBTotalResult<WithdrawNFTDb> {
     let start_time = Local::now().timestamp_millis();
+    let conn = &POOL.clone().get().expect("Mysql pool connection error");
     let total_result = match cota_id_opt {
         Some(cota_id_) => withdraw_cota_nft_kv_pairs
             .filter(receiver_lock_script_id.eq(script_id))
@@ -206,18 +195,18 @@ pub fn get_withdrawal_cota_by_script_id(
         Error::DatabaseQueryError(e.to_string())
     })?;
     let withdrawals = parse_withdraw_cota_nft(withdraw_cota_nfts);
-    let block_height = get_syncer_tip_block_number_with_conn(conn)?;
+    let block_height = get_syncer_tip_block_number()?;
     diff_time(start_time, "SQL get_withdrawal_cota_by_script_id");
     Ok((withdrawals, total, block_height))
 }
 
 pub fn get_sender_lock_by_script_id(
-    conn: &SqlConnection,
     script_id: i64,
     cota_id_: [u8; 20],
     token_index_: [u8; 4],
 ) -> Result<Option<String>, Error> {
     let start_time = Local::now().timestamp_millis();
+    let conn = &POOL.clone().get().expect("Mysql pool connection error");
     let cota_id_hex = hex::encode(cota_id_);
     let token_index_u32 = u32::from_be_bytes(token_index_);
     let cota_id_crc_u32 = generate_crc(cota_id_hex.as_bytes());
@@ -238,11 +227,8 @@ pub fn get_sender_lock_by_script_id(
     Ok(lock_hashes.get(0).cloned())
 }
 
-fn parse_withdraw_db(
-    conn: &SqlConnection,
-    withdrawals: Vec<WithdrawCotaNft>,
-) -> DBResult<WithdrawDb> {
-    let block_height = get_syncer_tip_block_number_with_conn(conn)?;
+fn parse_withdraw_db(withdrawals: Vec<WithdrawCotaNft>) -> DBResult<WithdrawDb> {
+    let block_height = get_syncer_tip_block_number()?;
     if withdrawals.is_empty() {
         return Ok((vec![], block_height));
     }
@@ -251,7 +237,7 @@ fn parse_withdraw_db(
         .map(|withdrawal| withdrawal.receiver_lock_script_id)
         .collect();
     let mut withdraw_db_vec: Vec<WithdrawDb> = vec![];
-    let script_map = get_script_map_by_ids(conn, receiver_lock_script_ids)?;
+    let script_map = get_script_map_by_ids(receiver_lock_script_ids)?;
     for withdrawal in withdrawals {
         let lock_script = script_map
             .get(&withdrawal.receiver_lock_script_id)
