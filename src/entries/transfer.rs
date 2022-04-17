@@ -128,7 +128,6 @@ pub async fn generate_transfer_smt(
     let withdrawal_smt_root =
         get_cota_smt_root(transfer_req.withdrawal_lock_script.as_slice()).await?;
 
-    let lock = SMT_LOCK.lock();
     let transaction = &StoreTransaction::new(db.transaction());
     let mut transfer_smt = generate_history_smt(
         transaction,
@@ -139,6 +138,10 @@ pub async fn generate_transfer_smt(
         .update_all(transfer_update_leaves.clone())
         .expect("transfer SMT update leave error");
     transfer_smt.save_root_and_leaves(previous_leaves)?;
+    transaction.commit()?;
+
+    let lock = SMT_LOCK.lock();
+    let transaction = &StoreTransaction::new(db.transaction());
     let withdrawal_smt = generate_history_smt(
         transaction,
         transfer_req.withdrawal_lock_script.as_slice(),

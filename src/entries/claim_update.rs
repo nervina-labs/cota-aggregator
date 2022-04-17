@@ -124,7 +124,6 @@ pub async fn generate_claim_update_smt(
     let withdrawal_smt_root =
         get_cota_smt_root(claim_update_req.withdrawal_lock_script.as_slice()).await?;
 
-    let lock = SMT_LOCK.lock();
     let transaction = &StoreTransaction::new(db.transaction());
     let mut claim_smt = generate_history_smt(
         transaction,
@@ -135,6 +134,10 @@ pub async fn generate_claim_update_smt(
         .update_all(claim_update_leaves.clone())
         .expect("claim SMT update leave error");
     claim_smt.save_root_and_leaves(previous_leaves)?;
+    transaction.commit()?;
+
+    let lock = SMT_LOCK.lock();
+    let transaction = &StoreTransaction::new(db.transaction());
     let withdrawal_smt = generate_history_smt(
         transaction,
         claim_update_req.withdrawal_lock_script.as_slice(),
