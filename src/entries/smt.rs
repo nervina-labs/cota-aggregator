@@ -59,9 +59,14 @@ pub fn generate_history_smt<'a>(
         if smt_root.as_slice() == root.as_slice() {
             debug!("The smt leaves and root in rocksdb are right");
             return Ok(smt);
+        } else {
+            smt = reset_smt_temp_leaves(smt)?;
+            if smt_root.as_slice() == smt.root().as_slice() {
+                debug!("The smt leaves and root in rocksdb are right");
+                return Ok(smt);
+            }
         }
     }
-    smt = reset_smt_temp_leaves(smt)?;
     generate_mysql_smt(smt, lock_hash)
 }
 
