@@ -49,6 +49,7 @@ pub fn get_hold_cota_by_lock_hash(
                     .filter(cota_id.eq(cota_id_str))
                     .filter(token_index.eq(token_index_u32))
                     .order(updated_at.desc())
+                    .limit(1)
                     .load::<HoldCotaNft>(conn)
                     .map_or_else(
                         |e| {

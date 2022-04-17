@@ -67,6 +67,7 @@ pub fn get_withdrawal_cota_by_lock_hash(
                     .filter(lock_hash.eq(lock_hash_hex.clone()))
                     .filter(cota_id.eq(cota_id_str))
                     .order(updated_at.desc())
+                    .limit(1)
                     .load::<WithdrawCotaNft>(conn)
                     .map_err(|e| {
                         error!("Query withdraw error: {}", e.to_string());
