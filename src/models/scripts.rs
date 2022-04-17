@@ -1,10 +1,10 @@
-use super::helper::SqlConnection;
 use crate::models::helper::{generate_crc, PAGE_SIZE};
 use crate::schema::scripts::dsl::scripts;
 use crate::schema::scripts::*;
 use crate::schema::scripts::{args, code_hash, hash_type};
 use crate::utils::error::Error;
 use crate::utils::helper::{diff_time, parse_bytes, parse_bytes_n};
+use crate::POOL;
 use chrono::prelude::*;
 use cota_smt::ckb_types::packed::{Byte32, BytesBuilder, Script as LockScript, ScriptBuilder};
 use cota_smt::ckb_types::prelude::*;
@@ -30,11 +30,9 @@ pub struct ScriptDb {
     pub args:      Vec<u8>,
 }
 
-pub fn get_script_map_by_ids(
-    conn: &SqlConnection,
-    script_ids: Vec<i64>,
-) -> Result<HashMap<i64, Vec<u8>>, Error> {
+pub fn get_script_map_by_ids(script_ids: Vec<i64>) -> Result<HashMap<i64, Vec<u8>>, Error> {
     let start_time = Local::now().timestamp_millis();
+    let conn = &POOL.clone().get().expect("Mysql pool connection error");
     let mut scripts_dbs: Vec<ScriptDb> = vec![];
     let script_ids_subs: Vec<&[i64]> = script_ids.chunks(PAGE_SIZE as usize).collect();
     for script_ids_sub in script_ids_subs.into_iter() {
@@ -60,11 +58,9 @@ pub fn get_script_map_by_ids(
     Ok(script_map)
 }
 
-pub fn get_script_id_by_lock_script(
-    conn: &SqlConnection,
-    lock_script: &[u8],
-) -> Result<Option<i64>, Error> {
+pub fn get_script_id_by_lock_script(lock_script: &[u8]) -> Result<Option<i64>, Error> {
     let start_time = Local::now().timestamp_millis();
+    let conn = &POOL.clone().get().expect("Mysql pool connection error");
     let lock = LockScript::from_slice(lock_script).unwrap();
 
     let lock_code_hash = hex::encode(lock.code_hash().as_slice().to_vec());

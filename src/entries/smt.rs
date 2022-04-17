@@ -57,6 +57,7 @@ pub fn generate_history_smt<'a>(
     );
     if let Some(smt_root) = smt_root_opt {
         if smt_root.as_slice() == root.as_slice() {
+            debug!("The smt leaves and root in rocksdb are right");
             return Ok(smt);
         }
     }

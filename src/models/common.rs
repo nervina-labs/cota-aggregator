@@ -1,18 +1,14 @@
-use crate::models::claim::{get_claim_cota_by_lock_hash_with_conn, ClaimDb};
+use crate::models::claim::{get_claim_cota_by_lock_hash, ClaimDb};
 use crate::models::class::{get_class_info_by_cota_id, ClassInfoDb};
-use crate::models::define::{
-    get_define_cota_by_cota_id, get_define_cota_by_lock_hash_with_conn, DefineDb,
-};
-use crate::models::helper::establish_connection;
+use crate::models::define::{get_define_cota_by_cota_id, get_define_cota_by_lock_hash, DefineDb};
 use crate::models::hold::{
-    check_hold_cota_by_lock_hash, get_hold_cota_by_lock_hash_and_page,
-    get_hold_cota_by_lock_hash_with_conn, HoldDb,
+    check_hold_cota_by_lock_hash, get_hold_cota_by_lock_hash, get_hold_cota_by_lock_hash_and_page,
+    HoldDb,
 };
 use crate::models::scripts::get_script_id_by_lock_script;
 use crate::models::withdrawal::{
     get_sender_lock_by_script_id, get_withdrawal_cota_by_cota_ids,
-    get_withdrawal_cota_by_lock_hash_with_conn, get_withdrawal_cota_by_script_id, WithdrawDb,
-    WithdrawNFTDb,
+    get_withdrawal_cota_by_lock_hash, get_withdrawal_cota_by_script_id, WithdrawDb, WithdrawNFTDb,
 };
 use crate::models::DBTotalResult;
 use crate::utils::error::Error;
@@ -21,11 +17,10 @@ use cota_smt::smt::blake2b_256;
 type DBAllResult = Result<(Vec<DefineDb>, Vec<HoldDb>, Vec<WithdrawDb>, Vec<ClaimDb>), Error>;
 
 pub fn get_all_cota_by_lock_hash(lock_hash: [u8; 32]) -> DBAllResult {
-    let conn = &establish_connection();
-    let defines = get_define_cota_by_lock_hash_with_conn(conn, lock_hash)?;
-    let holds = get_hold_cota_by_lock_hash_with_conn(conn, lock_hash, None)?;
-    let withdrawals = get_withdrawal_cota_by_lock_hash_with_conn(conn, lock_hash, None)?;
-    let claims = get_claim_cota_by_lock_hash_with_conn(conn, lock_hash)?;
+    let defines = get_define_cota_by_lock_hash(lock_hash)?;
+    let holds = get_hold_cota_by_lock_hash(lock_hash, None)?;
+    let withdrawals = get_withdrawal_cota_by_lock_hash(lock_hash, None)?;
+    let claims = get_claim_cota_by_lock_hash(lock_hash)?;
     Ok((defines.0, holds.0, withdrawals.0, claims.0))
 }
 
@@ -36,12 +31,11 @@ pub fn get_hold_cota(
     cota_id_opt: Option<[u8; 20]>,
 ) -> DBTotalResult<(HoldDb, Option<ClassInfoDb>)> {
     let lock_hash = blake2b_256(lock_script);
-    let conn = &establish_connection();
     let (hold_nfts, total, block_height) =
-        get_hold_cota_by_lock_hash_and_page(conn, lock_hash, page, page_size, cota_id_opt)?;
+        get_hold_cota_by_lock_hash_and_page(lock_hash, page, page_size, cota_id_opt)?;
     let mut nfts: Vec<(HoldDb, Option<ClassInfoDb>)> = vec![];
     for hold in hold_nfts {
-        let class_info = get_class_info_by_cota_id(conn, hold.cota_id)?;
+        let class_info = get_class_info_by_cota_id(hold.cota_id)?;
         nfts.push((hold, class_info))
     }
     Ok((nfts, total, block_height))
@@ -53,17 +47,16 @@ pub fn get_withdrawal_cota(
     page_size: i64,
     cota_id_opt: Option<[u8; 20]>,
 ) -> DBTotalResult<(WithdrawNFTDb, Option<ClassInfoDb>)> {
-    let conn = &establish_connection();
-    let script_id_opt = get_script_id_by_lock_script(conn, lock_script)?;
+    let script_id_opt = get_script_id_by_lock_script(lock_script)?;
     let (withdrawal_nfts, total, block_height) = match script_id_opt {
         Some(script_id) => {
-            get_withdrawal_cota_by_script_id(conn, script_id, page, page_size, cota_id_opt)
+            get_withdrawal_cota_by_script_id(script_id, page, page_size, cota_id_opt)
         }
         None => Ok((vec![], 0, 0)),
     }?;
     let mut nfts: Vec<(WithdrawNFTDb, Option<ClassInfoDb>)> = vec![];
     for withdrawal in withdrawal_nfts {
-        let class_info = get_class_info_by_cota_id(conn, withdrawal.cota_id)?;
+        let class_info = get_class_info_by_cota_id(withdrawal.cota_id)?;
         nfts.push((withdrawal, class_info))
     }
     Ok((nfts, total, block_height))
@@ -74,15 +67,14 @@ pub fn get_mint_cota(
     page: i64,
     page_size: i64,
 ) -> DBTotalResult<(WithdrawDb, Option<ClassInfoDb>)> {
-    let conn = &establish_connection();
     let lock_hash = blake2b_256(lock_script);
-    let defines = get_define_cota_by_lock_hash_with_conn(conn, lock_hash)?.0;
+    let defines = get_define_cota_by_lock_hash(lock_hash)?.0;
     let cota_ids: Vec<[u8; 20]> = defines.into_iter().map(|define| define.cota_id).collect();
     let (withdrawal_nfts, total, block_height) =
-        get_withdrawal_cota_by_cota_ids(conn, lock_hash, cota_ids, page, page_size)?;
+        get_withdrawal_cota_by_cota_ids(lock_hash, cota_ids, page, page_size)?;
     let mut nfts: Vec<(WithdrawDb, Option<ClassInfoDb>)> = vec![];
     for withdrawal in withdrawal_nfts {
-        let class_info = get_class_info_by_cota_id(conn, withdrawal.cota_id)?;
+        let class_info = get_class_info_by_cota_id(withdrawal.cota_id)?;
         nfts.push((withdrawal, class_info))
     }
     Ok((nfts, total, block_height))
@@ -102,19 +94,17 @@ pub fn get_sender_lock_hash_by_cota_nft(
     cota_id: [u8; 20],
     token_index: [u8; 4],
 ) -> Result<Option<String>, Error> {
-    let conn = &establish_connection();
-    let lock_script_id_opt = get_script_id_by_lock_script(conn, lock_script)?;
+    let lock_script_id_opt = get_script_id_by_lock_script(lock_script)?;
     if lock_script_id_opt.is_none() {
         return Ok(None);
     }
-    get_sender_lock_by_script_id(conn, lock_script_id_opt.unwrap(), cota_id, token_index)
+    get_sender_lock_by_script_id(lock_script_id_opt.unwrap(), cota_id, token_index)
 }
 
 pub fn get_define_info_by_cota_id(
     cota_id: [u8; 20],
 ) -> Result<(Option<DefineDb>, Option<ClassInfoDb>), Error> {
-    let conn = &establish_connection();
-    let define_opt: Option<DefineDb> = get_define_cota_by_cota_id(conn, cota_id)?;
-    let class_info_opt = get_class_info_by_cota_id(conn, cota_id)?;
+    let define_opt: Option<DefineDb> = get_define_cota_by_cota_id(cota_id)?;
+    let class_info_opt = get_class_info_by_cota_id(cota_id)?;
     Ok((define_opt, class_info_opt))
 }

@@ -1,10 +1,10 @@
 use crc::{Crc, CRC_32_ISO_HDLC};
 use diesel::mysql::MysqlConnection;
-use diesel::r2d2::{self, ConnectionManager, PooledConnection};
+use diesel::r2d2::{self, ConnectionManager, Pool};
 use jsonrpc_http_server::jsonrpc_core::serde_json::from_str;
 use std::env;
 
-pub type SqlConnection = PooledConnection<ConnectionManager<MysqlConnection>>;
+pub type SqlConnection = Pool<ConnectionManager<MysqlConnection>>;
 
 pub const PAGE_SIZE: i64 = 1000;
 
@@ -15,8 +15,7 @@ pub fn establish_connection() -> SqlConnection {
         Ok(max_) => from_str::<u32>(&max_).unwrap(),
         Err(_e) => 20,
     };
-    let pool = r2d2::Pool::builder().max_size(max).build(manager).unwrap();
-    pool.get().expect("Error connecting to database")
+    r2d2::Pool::builder().max_size(max).build(manager).unwrap()
 }
 
 pub fn generate_crc(v: &[u8]) -> u32 {

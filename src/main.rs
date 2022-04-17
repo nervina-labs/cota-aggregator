@@ -4,6 +4,7 @@ extern crate diesel;
 extern crate dotenv;
 
 use crate::api::*;
+use crate::models::helper::{establish_connection, SqlConnection};
 use crate::smt::db::db::RocksDB;
 use dotenv::dotenv;
 use jsonrpc_http_server::jsonrpc_core::serde_json::from_str;
@@ -29,6 +30,7 @@ static ALLOC: tikv_jemallocator::Jemalloc = tikv_jemallocator::Jemalloc;
 
 lazy_static! {
     static ref DB: RocksDB = RocksDB::default().expect("RocksDB open error");
+    static ref POOL: SqlConnection = establish_connection();
 }
 
 fn main() {

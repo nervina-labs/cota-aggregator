@@ -1,9 +1,9 @@
-use crate::models::helper::SqlConnection;
 use crate::schema::class_infos::dsl::class_infos;
 use crate::schema::class_infos::{
     audio, characteristic, cota_id, description, image, model, name, properties, symbol, video,
 };
 use crate::utils::error::Error;
+use crate::POOL;
 use diesel::*;
 use log::error;
 use serde::{Deserialize, Serialize};
@@ -21,11 +21,9 @@ pub struct ClassInfoDb {
     pub properties:     String,
 }
 
-pub fn get_class_info_by_cota_id(
-    conn: &SqlConnection,
-    cota_id_: [u8; 20],
-) -> Result<Option<ClassInfoDb>, Error> {
+pub fn get_class_info_by_cota_id(cota_id_: [u8; 20]) -> Result<Option<ClassInfoDb>, Error> {
     let cota_id_hex = hex::encode(cota_id_);
+    let conn = &POOL.clone().get().expect("Mysql pool connection error");
     let classes: Vec<ClassInfoDb> = class_infos
         .select((
             name,
