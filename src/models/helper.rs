@@ -4,11 +4,11 @@ use diesel::r2d2::{self, ConnectionManager, Pool};
 use jsonrpc_http_server::jsonrpc_core::serde_json::from_str;
 use std::env;
 
-pub type SqlConnection = Pool<ConnectionManager<MysqlConnection>>;
+pub type SqlConnectionPool = Pool<ConnectionManager<MysqlConnection>>;
 
 pub const PAGE_SIZE: i64 = 1000;
 
-pub fn establish_connection() -> SqlConnection {
+pub fn init_connection_pool() -> SqlConnectionPool {
     let database_url = env::var("DATABASE_URL").expect("DATABASE_URL must be set");
     let manager = ConnectionManager::<MysqlConnection>::new(database_url);
     let max: u32 = match env::var("MAX_POOL") {

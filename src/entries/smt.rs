@@ -62,7 +62,7 @@ pub fn generate_history_smt<'a>(
         } else {
             smt = reset_smt_temp_leaves(smt)?;
             if smt_root.as_slice() == smt.root().as_slice() {
-                debug!("The smt leaves and root in rocksdb are right");
+                debug!("The smt leaves and root in rocksdb are right after reset");
                 return Ok(smt);
             }
         }
