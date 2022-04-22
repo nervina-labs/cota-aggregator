@@ -1,18 +1,21 @@
+use crate::models::block::get_syncer_tip_block_number;
 use crate::models::claim::{get_claim_cota_by_lock_hash, ClaimDb};
 use crate::models::class::{get_class_info_by_cota_id, ClassInfoDb};
 use crate::models::define::{get_define_cota_by_cota_id, get_define_cota_by_lock_hash, DefineDb};
 use crate::models::hold::{
     check_hold_cota_by_lock_hash, get_hold_cota_by_lock_hash, get_hold_cota_by_lock_hash_and_page,
-    HoldDb,
+    get_hold_cota_count_by_lock_hash, HoldDb,
 };
 use crate::models::scripts::get_script_id_by_lock_script;
 use crate::models::withdrawal::{
     get_sender_lock_by_script_id, get_withdrawal_cota_by_cota_ids,
-    get_withdrawal_cota_by_lock_hash, get_withdrawal_cota_by_script_id, WithdrawDb, WithdrawNFTDb,
+    get_withdrawal_cota_by_lock_hash, get_withdrawal_cota_by_script_id,
+    get_withdrawal_cota_count_by_lock_hash, WithdrawDb, WithdrawNFTDb,
 };
 use crate::models::DBTotalResult;
 use crate::utils::error::Error;
 use cota_smt::smt::blake2b_256;
+use log::debug;
 
 type DBAllResult = Result<(Vec<DefineDb>, Vec<HoldDb>, Vec<WithdrawDb>, Vec<ClaimDb>), Error>;
 
@@ -107,4 +110,17 @@ pub fn get_define_info_by_cota_id(
     let define_opt: Option<DefineDb> = get_define_cota_by_cota_id(cota_id)?;
     let class_info_opt = get_class_info_by_cota_id(cota_id)?;
     Ok((define_opt, class_info_opt))
+}
+
+pub fn get_owned_cota_count(lock_script: &[u8], cota_id: [u8; 20]) -> Result<(i64, u64), Error> {
+    let lock_hash = blake2b_256(lock_script);
+    let hold_count = get_hold_cota_count_by_lock_hash(lock_hash, cota_id)?;
+    let withdrawal_count = get_withdrawal_cota_count_by_lock_hash(lock_hash, cota_id)?;
+    debug!(
+        "hold count: {} and withdrawal count: {}",
+        hold_count, withdrawal_count
+    );
+    let block_height = get_syncer_tip_block_number()?;
+    let count = hold_count + withdrawal_count;
+    Ok((count, block_height))
 }

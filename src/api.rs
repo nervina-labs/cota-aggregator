@@ -9,12 +9,12 @@ use crate::entries::withdrawal::generate_withdrawal_smt;
 use crate::models::block::get_syncer_tip_block_number;
 use crate::models::common::{
     check_cota_claimed, get_define_info_by_cota_id, get_hold_cota, get_mint_cota,
-    get_sender_lock_hash_by_cota_nft, get_withdrawal_cota,
+    get_owned_cota_count, get_sender_lock_hash_by_cota_nft, get_withdrawal_cota,
 };
 use crate::models::issuer::get_issuer_info_by_lock_hash;
 use crate::request::claim::{ClaimReq, ClaimUpdateReq, IsClaimedReq};
 use crate::request::define::{DefineInfoReq, DefineReq};
-use crate::request::fetch::{FetchIssuerReq, FetchReq};
+use crate::request::fetch::{FetchCountReq, FetchIssuerReq, FetchReq};
 use crate::request::mint::MintReq;
 use crate::request::transfer::{TransferReq, TransferUpdateReq};
 use crate::request::update::UpdateReq;
@@ -22,7 +22,7 @@ use crate::request::withdrawal::{SenderLockReq, WithdrawalReq};
 use crate::request::witness::WitnessReq;
 use crate::response::claim::{parse_claimed_response, parse_claimed_smt, parse_claimed_update_smt};
 use crate::response::define::{parse_define_info, parse_define_smt};
-use crate::response::hold::parse_hold_response;
+use crate::response::hold::{parse_hold_response, parse_owned_nft_count};
 use crate::response::issuer::parse_issuer_response;
 use crate::response::mint::{parse_mint_response, parse_mint_smt};
 use crate::response::transfer::{parse_transfer_smt, parse_transfer_update_smt};
@@ -224,6 +224,19 @@ pub async fn parse_witness(params: Params) -> Result<Value, Error> {
     let map: Map<String, Value> = Params::parse(params)?;
     let WitnessReq { witness, version } = WitnessReq::from_map(&map).map_err(|err| err.into())?;
     let response = parse_cota_witness(witness, version).map_err(|err| err.into())?;
+    Ok(Value::Object(response))
+}
+
+pub async fn get_cota_count(params: Params) -> Result<Value, Error> {
+    info!("Get cota count request: {:?}", params);
+    let map: Map<String, Value> = Params::parse(params)?;
+    let FetchCountReq {
+        lock_script,
+        cota_id,
+    } = FetchCountReq::from_map(&map).map_err(|err| err.into())?;
+    let (count, block_height) =
+        get_owned_cota_count(&lock_script, cota_id).map_err(|err| err.into())?;
+    let response = parse_owned_nft_count(count, block_height);
     Ok(Value::Object(response))
 }
 

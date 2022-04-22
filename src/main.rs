@@ -61,6 +61,7 @@ fn main() {
     io.add_method("get_define_info", get_define_info);
     io.add_method("get_issuer_info", get_issuer_info);
     io.add_method("parse_witness", parse_witness);
+    io.add_method("get_cota_count", get_cota_count);
 
     let threads: usize = match env::var("THREADS") {
         Ok(thread) => from_str::<usize>(&thread).unwrap(),
