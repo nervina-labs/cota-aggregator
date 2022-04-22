@@ -4,6 +4,8 @@ use crate::entries::helper::{
     generate_withdrawal_value_v1,
 };
 use crate::entries::smt::generate_history_smt;
+use crate::entries::SMT_LOCK;
+use crate::indexer::index::get_cota_smt_root;
 use crate::models::withdrawal::{get_withdrawal_cota_by_lock_hash, WithdrawDb};
 use crate::request::claim::ClaimReq;
 use crate::smt::db::db::RocksDB;
@@ -42,15 +44,10 @@ pub async fn generate_claim_smt(
 
     let mut hold_keys: Vec<CotaNFTId> = Vec::new();
     let mut hold_values: Vec<CotaNFTInfo> = Vec::new();
-    let transaction = &StoreTransaction::new(db.transaction());
-    let withdrawal_smt =
-        generate_history_smt(transaction, claim_req.withdrawal_lock_script.as_slice()).await?;
     let mut withdrawal_update_leaves: Vec<(H256, H256)> = Vec::with_capacity(claims_len);
-
     let mut claim_keys: Vec<ClaimCotaNFTKey> = Vec::new();
     let mut key_vec: Vec<(H256, u8)> = Vec::new();
     let mut claim_values: Vec<Byte32> = Vec::new();
-    let mut claim_smt = generate_history_smt(transaction, claim_req.lock_script.as_slice()).await?;
     let mut claim_update_leaves: Vec<(H256, H256)> = Vec::with_capacity(claims_len * 2);
     let mut previous_leaves: Vec<(H256, H256)> = Vec::with_capacity(claims_len * 2);
     for withdrawal in sender_withdrawals {
@@ -95,9 +92,6 @@ pub async fn generate_claim_smt(
         let (hold_value, value) = generate_hold_value(configure, state, characteristic);
         hold_keys.push(hold_key);
         hold_values.push(hold_value);
-        claim_smt
-            .update(key, value)
-            .expect("claim SMT update leave error");
         claim_update_leaves.push((key, value));
         previous_leaves.push((key, H256::zero()));
 
@@ -105,7 +99,58 @@ pub async fn generate_claim_smt(
         claim_keys.push(claim_key);
         key_vec.push((key, version));
     }
+
+    for (key, version) in key_vec {
+        let (claim_value, value) = generate_claim_value(version);
+        claim_values.push(claim_value);
+        claim_update_leaves.push((key, value))
+    }
+
+    let claim_smt_root = get_cota_smt_root(claim_req.lock_script.as_slice()).await?;
+    let withdrawal_smt_root =
+        get_cota_smt_root(claim_req.withdrawal_lock_script.as_slice()).await?;
+
+    let transaction = &StoreTransaction::new(db.transaction());
+    let mut claim_smt = generate_history_smt(
+        transaction,
+        claim_req.lock_script.as_slice(),
+        claim_smt_root,
+    )?;
+    claim_smt
+        .update_all(claim_update_leaves.clone())
+        .expect("claim SMT update leave error");
+    claim_smt.save_root_and_leaves(previous_leaves)?;
+    transaction.commit()?;
+
+    let lock = SMT_LOCK.lock();
+    let transaction = &StoreTransaction::new(db.transaction());
+    let withdrawal_smt = generate_history_smt(
+        transaction,
+        claim_req.withdrawal_lock_script.as_slice(),
+        withdrawal_smt_root,
+    )?;
     withdrawal_smt.save_root_and_leaves(vec![])?;
+    transaction.commit()?;
+    drop(lock);
+
+    let claim_merkle_proof = claim_smt
+        .merkle_proof(claim_update_leaves.iter().map(|leave| leave.0).collect())
+        .map_err(|e| {
+            error!("Claim SMT proof error: {:?}", e.to_string());
+            Error::SMTProofError("Claim".to_string())
+        })?;
+    let claim_merkle_proof_compiled = claim_merkle_proof
+        .compile(claim_update_leaves.clone())
+        .map_err(|e| {
+            error!("Claim SMT proof error: {:?}", e.to_string());
+            Error::SMTProofError("Claim".to_string())
+        })?;
+
+    let merkel_proof_vec: Vec<u8> = claim_merkle_proof_compiled.into();
+    let claim_proof = BytesBuilder::default()
+        .extend(merkel_proof_vec.iter().map(|v| Byte::from(*v)))
+        .build();
+
     let withdraw_merkle_proof = withdrawal_smt
         .merkle_proof(
             withdrawal_update_leaves
@@ -126,33 +171,6 @@ pub async fn generate_claim_smt(
 
     let merkel_proof_vec: Vec<u8> = withdraw_merkle_proof_compiled.into();
     let withdrawal_proof = BytesBuilder::default()
-        .extend(merkel_proof_vec.iter().map(|v| Byte::from(*v)))
-        .build();
-
-    for (key, version) in key_vec {
-        let (claim_value, value) = generate_claim_value(version);
-        claim_values.push(claim_value);
-        claim_smt
-            .update(key, value)
-            .expect("claim SMT update leave error");
-        claim_update_leaves.push((key, value))
-    }
-    claim_smt.save_root_and_leaves(previous_leaves)?;
-    let claim_merkle_proof = claim_smt
-        .merkle_proof(claim_update_leaves.iter().map(|leave| leave.0).collect())
-        .map_err(|e| {
-            error!("Claim SMT proof error: {:?}", e.to_string());
-            Error::SMTProofError("Claim".to_string())
-        })?;
-    let claim_merkle_proof_compiled = claim_merkle_proof
-        .compile(claim_update_leaves.clone())
-        .map_err(|e| {
-            error!("Claim SMT proof error: {:?}", e.to_string());
-            Error::SMTProofError("Claim".to_string())
-        })?;
-
-    let merkel_proof_vec: Vec<u8> = claim_merkle_proof_compiled.into();
-    let claim_proof = BytesBuilder::default()
         .extend(merkel_proof_vec.iter().map(|v| Byte::from(*v)))
         .build();
 

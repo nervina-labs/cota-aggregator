@@ -1,4 +1,5 @@
 use crate::response::helper::Inserter;
+use ckb_types::packed::Script;
 use cota_smt::common::{
     ClaimCotaNFTInfo, ClaimCotaNFTKey, CotaNFTId, CotaNFTInfo, DefineCotaNFTId, DefineCotaNFTValue,
     WithdrawalCotaNFTKeyV1, WithdrawalCotaNFTValue, WithdrawalCotaNFTValueV1,
@@ -513,7 +514,16 @@ fn parse_withdrawal_cota_nft_key_v1(obj: WithdrawalCotaNFTKeyV1) -> Map<String, 
 fn parse_withdrawal_cota_nft_value_v1(obj: WithdrawalCotaNFTValueV1) -> Map<String, Value> {
     let mut map = Map::new();
     map.insert_obj("nft_info", parse_cota_nft_info(obj.nft_info()));
-    map.insert_str("to_lock", slice_to_hex(&obj.to_lock().raw_data().to_vec()));
+    map.insert_obj("to_lock", parse_script(&obj.to_lock().raw_data().to_vec()));
+    map
+}
+
+fn parse_script(slice: &[u8]) -> Map<String, Value> {
+    let mut map = Map::new();
+    let script = Script::from_slice(slice).expect("Parse script error");
+    map.insert_str("code_hash", slice_to_hex(script.code_hash().as_slice()));
+    map.insert_str("hash_type", slice_to_hex(script.hash_type().as_slice()));
+    map.insert_str("args", slice_to_hex(&script.args().raw_data().to_vec()));
     map
 }
 

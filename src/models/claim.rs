@@ -1,11 +1,12 @@
 use super::helper::parse_lock_hash;
-use crate::models::block::get_syncer_tip_block_number_with_conn;
-use crate::models::helper::{SqlConnection, PAGE_SIZE};
+use crate::models::block::get_syncer_tip_block_number;
+use crate::models::helper::PAGE_SIZE;
 use crate::models::DBResult;
 use crate::schema::claimed_cota_nft_kv_pairs::dsl::claimed_cota_nft_kv_pairs;
 use crate::schema::claimed_cota_nft_kv_pairs::*;
 use crate::utils::error::Error;
 use crate::utils::helper::{diff_time, parse_bytes_n};
+use crate::POOL;
 use chrono::prelude::*;
 use diesel::*;
 use log::error;
@@ -24,14 +25,12 @@ pub struct ClaimDb {
     pub out_point:   [u8; 24],
 }
 
-pub fn get_claim_cota_by_lock_hash_with_conn(
-    conn: &SqlConnection,
-    lock_hash_: [u8; 32],
-) -> DBResult<ClaimDb> {
+pub fn get_claim_cota_by_lock_hash(lock_hash_: [u8; 32]) -> DBResult<ClaimDb> {
     let start_time = Local::now().timestamp_millis();
     let (lock_hash_hex, lock_hash_crc_) = parse_lock_hash(lock_hash_);
     let mut page: i64 = 0;
     let mut claims: Vec<ClaimDb> = Vec::new();
+    let conn = &POOL.clone().get().expect("Mysql pool connection error");
     loop {
         let claims_page: Vec<ClaimDb> = claimed_cota_nft_kv_pairs
             .select(get_selection())
@@ -54,7 +53,7 @@ pub fn get_claim_cota_by_lock_hash_with_conn(
         }
         page += 1;
     }
-    let block_height = get_syncer_tip_block_number_with_conn(conn)?;
+    let block_height = get_syncer_tip_block_number()?;
     diff_time(start_time, "SQL get_claim_cota_by_lock_hash");
     Ok((claims, block_height))
 }

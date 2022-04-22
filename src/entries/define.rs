@@ -1,5 +1,6 @@
 use crate::entries::helper::{generate_define_key, generate_define_value};
 use crate::entries::smt::generate_history_smt;
+use crate::indexer::index::get_cota_smt_root;
 use crate::request::define::DefineReq;
 use crate::smt::db::db::RocksDB;
 use crate::smt::transaction::store_transaction::StoreTransaction;
@@ -16,7 +17,8 @@ pub async fn generate_define_smt(
     define_req: DefineReq,
 ) -> Result<(H256, DefineCotaNFTEntries), Error> {
     let transaction = &StoreTransaction::new(db.transaction());
-    let mut smt = generate_history_smt(transaction, define_req.lock_script.as_slice()).await?;
+    let smt_root = get_cota_smt_root(define_req.lock_script.as_slice()).await?;
+    let mut smt = generate_history_smt(transaction, define_req.lock_script.as_slice(), smt_root)?;
 
     let mut update_leaves: Vec<(H256, H256)> = Vec::with_capacity(1);
     let mut previous_leaves: Vec<(H256, H256)> = Vec::with_capacity(1);
@@ -36,6 +38,8 @@ pub async fn generate_define_smt(
     previous_leaves.push((key, H256::zero()));
 
     smt.save_root_and_leaves(previous_leaves)?;
+    transaction.commit()?;
+
     let define_merkle_proof = smt
         .merkle_proof(update_leaves.iter().map(|leave| leave.0).collect())
         .map_err(|e| {

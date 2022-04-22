@@ -3,6 +3,8 @@ use crate::entries::helper::{
     generate_withdrawal_value, generate_withdrawal_value_v1,
 };
 use crate::entries::smt::generate_history_smt;
+use crate::entries::SMT_LOCK;
+use crate::indexer::index::get_cota_smt_root;
 use crate::models::withdrawal::{get_withdrawal_cota_by_lock_hash, WithdrawDb};
 use crate::request::transfer::{TransferUpdate, TransferUpdateReq};
 use crate::smt::db::db::RocksDB;
@@ -62,14 +64,6 @@ pub async fn generate_transfer_update_smt(
     let mut transfer_update_leaves: Vec<(H256, H256)> = Vec::with_capacity(transfers_len * 2);
     let mut previous_leaves: Vec<(H256, H256)> = Vec::with_capacity(transfers_len * 2);
     let mut withdrawal_update_leaves: Vec<(H256, H256)> = Vec::with_capacity(transfers_len);
-    let transaction = &StoreTransaction::new(db.transaction());
-    let mut transfer_update_smt =
-        generate_history_smt(transaction, transfer_update_req.lock_script.as_slice()).await?;
-    let withdrawal_smt = generate_history_smt(
-        transaction,
-        transfer_update_req.withdrawal_lock_script.as_slice(),
-    )
-    .await?;
     for (withdrawal_db, transfer) in sender_withdrawals.into_iter().zip(transfers.clone()) {
         let WithdrawDb {
             cota_id,
@@ -136,10 +130,6 @@ pub async fn generate_transfer_update_smt(
         transfer_update_leaves.push((key, value));
         previous_leaves.push((key, H256::zero()));
 
-        transfer_update_smt
-            .update(key, value)
-            .expect("transfer update SMT update leave error");
-
         let (claimed_key, key) = generate_claim_key(cota_id, token_index, out_point);
         claimed_keys.push(claimed_key);
 
@@ -147,12 +137,57 @@ pub async fn generate_transfer_update_smt(
         claimed_values.push(claimed_value);
         transfer_update_leaves.push((key, value));
         previous_leaves.push((key, H256::zero()));
-        transfer_update_smt
-            .update(key, value)
-            .expect("transfer SMT update leave error");
     }
 
+    let transfer_smt_root = get_cota_smt_root(transfer_update_req.lock_script.as_slice()).await?;
+    let withdrawal_smt_root =
+        get_cota_smt_root(transfer_update_req.withdrawal_lock_script.as_slice()).await?;
+
+    let transaction = &StoreTransaction::new(db.transaction());
+    let mut transfer_update_smt = generate_history_smt(
+        transaction,
+        transfer_update_req.lock_script.as_slice(),
+        transfer_smt_root,
+    )?;
+    transfer_update_smt
+        .update_all(transfer_update_leaves.clone())
+        .expect("transfer SMT update leave error");
+    transfer_update_smt.save_root_and_leaves(previous_leaves)?;
+    transaction.commit()?;
+
+    let lock = SMT_LOCK.lock();
+    let transaction = &StoreTransaction::new(db.transaction());
+    let withdrawal_smt = generate_history_smt(
+        transaction,
+        transfer_update_req.withdrawal_lock_script.as_slice(),
+        withdrawal_smt_root,
+    )?;
     withdrawal_smt.save_root_and_leaves(vec![])?;
+    transaction.commit()?;
+    drop(lock);
+
+    let transfer_update_merkle_proof = transfer_update_smt
+        .merkle_proof(transfer_update_leaves.iter().map(|leave| leave.0).collect())
+        .map_err(|e| {
+            error!("Transfer update SMT proof error: {:?}", e.to_string());
+            Error::SMTProofError("Transfer".to_string())
+        })?;
+    let transfer_update_merkle_proof_compiled = transfer_update_merkle_proof
+        .compile(transfer_update_leaves.clone())
+        .map_err(|e| {
+            error!("Transfer SMT proof error: {:?}", e.to_string());
+            Error::SMTProofError("Transfer update".to_string())
+        })?;
+
+    let transfer_update_merkel_proof_vec: Vec<u8> = transfer_update_merkle_proof_compiled.into();
+    let transfer_update_merkel_proof_bytes = BytesBuilder::default()
+        .extend(
+            transfer_update_merkel_proof_vec
+                .iter()
+                .map(|v| Byte::from(*v)),
+        )
+        .build();
+
     let withdrawal_merkle_proof = withdrawal_smt
         .merkle_proof(
             withdrawal_update_leaves
@@ -174,29 +209,6 @@ pub async fn generate_transfer_update_smt(
     let withdrawal_merkel_proof_vec: Vec<u8> = withdrawal_merkle_proof_compiled.into();
     let withdrawal_merkel_proof_bytes = BytesBuilder::default()
         .extend(withdrawal_merkel_proof_vec.iter().map(|v| Byte::from(*v)))
-        .build();
-
-    transfer_update_smt.save_root_and_leaves(previous_leaves)?;
-    let transfer_update_merkle_proof = transfer_update_smt
-        .merkle_proof(transfer_update_leaves.iter().map(|leave| leave.0).collect())
-        .map_err(|e| {
-            error!("Transfer update SMT proof error: {:?}", e.to_string());
-            Error::SMTProofError("Transfer".to_string())
-        })?;
-    let transfer_update_merkle_proof_compiled = transfer_update_merkle_proof
-        .compile(transfer_update_leaves.clone())
-        .map_err(|e| {
-            error!("Transfer SMT proof error: {:?}", e.to_string());
-            Error::SMTProofError("Transfer update".to_string())
-        })?;
-
-    let transfer_update_merkel_proof_vec: Vec<u8> = transfer_update_merkle_proof_compiled.into();
-    let transfer_update_merkel_proof_bytes = BytesBuilder::default()
-        .extend(
-            transfer_update_merkel_proof_vec
-                .iter()
-                .map(|v| Byte::from(*v)),
-        )
         .build();
 
     let transfer_update_entries = TransferUpdateCotaNFTV1EntriesBuilder::default()

@@ -41,10 +41,6 @@ impl<'a> SMTStore<'a> {
         }
     }
 
-    pub fn commit(&self) -> Result<(), Error> {
-        self.store.commit()
-    }
-
     pub fn save_root(&self, root: &H256) -> Result<(), Error> {
         self.store
             .insert_raw(self.root_col, &self.lock_hash, root.as_slice())

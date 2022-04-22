@@ -1,6 +1,7 @@
 use crate::entries::helper::{generate_define_key, generate_define_value};
 use crate::entries::helper::{generate_withdrawal_key_v1, generate_withdrawal_value_v1};
 use crate::entries::smt::generate_history_smt;
+use crate::indexer::index::get_cota_smt_root;
 use crate::models::define::{get_define_cota_by_lock_hash_and_cota_id, DefineDb};
 use crate::request::mint::{MintReq, MintWithdrawal};
 use crate::smt::db::db::RocksDB;
@@ -37,8 +38,11 @@ pub async fn generate_mint_smt(
     let mut define_new_values: Vec<DefineCotaNFTValue> = Vec::new();
     let mut withdrawal_keys: Vec<WithdrawalCotaNFTKeyV1> = Vec::new();
     let mut withdrawal_values: Vec<WithdrawalCotaNFTValueV1> = Vec::new();
+
     let transaction = &StoreTransaction::new(db.transaction());
-    let mut smt = generate_history_smt(transaction, mint_req.lock_script.as_slice()).await?;
+    let smt_root = get_cota_smt_root(mint_req.lock_script.as_slice()).await?;
+    let mut smt = generate_history_smt(transaction, mint_req.lock_script.as_slice(), smt_root)?;
+
     let mut update_leaves: Vec<(H256, H256)> = Vec::with_capacity(withdrawals_len + 1);
     let mut previous_leaves: Vec<(H256, H256)> = Vec::with_capacity(withdrawals_len + 1);
     let DefineDb {
@@ -94,8 +98,10 @@ pub async fn generate_mint_smt(
     }
     diff_time(start_time, "Generate mint smt object with update leaves");
 
-    let start_time = Local::now().timestamp_millis();
     smt.save_root_and_leaves(previous_leaves)?;
+    transaction.commit()?;
+
+    let start_time = Local::now().timestamp_millis();
     let mint_merkle_proof = smt
         .merkle_proof(update_leaves.iter().map(|leave| leave.0).collect())
         .map_err(|e| {

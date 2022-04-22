@@ -3,7 +3,6 @@ use crate::entries::helper::{
     generate_define_value, generate_hold_key, generate_hold_value, generate_withdrawal_key,
     generate_withdrawal_key_v1, generate_withdrawal_value, generate_withdrawal_value_v1,
 };
-use crate::indexer::index::get_cota_smt_root;
 use crate::models::claim::ClaimDb;
 use crate::models::common::get_all_cota_by_lock_hash;
 use crate::models::define::DefineDb;
@@ -23,9 +22,10 @@ use cota_smt::smt::{blake2b_256, H256};
 use log::debug;
 use std::collections::HashMap;
 
-pub async fn generate_history_smt<'a>(
+pub fn generate_history_smt<'a>(
     transaction: &'a StoreTransaction,
     lock_script: &[u8],
+    smt_root_opt: Option<Vec<u8>>,
 ) -> Result<CotaSMT<'a>, Error> {
     let lock_hash = blake2b_256(lock_script);
     let smt_store = SMTStore::new(
@@ -50,7 +50,6 @@ pub async fn generate_history_smt<'a>(
     if root == H256::zero() {
         return generate_mysql_smt(smt, lock_hash);
     }
-    let smt_root_opt = get_cota_smt_root(lock_script).await?;
     debug!(
         "cota cell smt root: {:?} of {:?}",
         smt_root_opt,
@@ -58,10 +57,16 @@ pub async fn generate_history_smt<'a>(
     );
     if let Some(smt_root) = smt_root_opt {
         if smt_root.as_slice() == root.as_slice() {
+            debug!("The smt leaves and root in rocksdb are right");
             return Ok(smt);
+        } else {
+            smt = reset_smt_temp_leaves(smt)?;
+            if smt_root.as_slice() == smt.root().as_slice() {
+                debug!("The smt leaves and root in rocksdb are right after reset");
+                return Ok(smt);
+            }
         }
     }
-    smt = reset_smt_temp_leaves(smt)?;
     generate_mysql_smt(smt, lock_hash)
 }
 
@@ -73,7 +78,7 @@ fn generate_mysql_smt<'a>(mut smt: CotaSMT<'a>, lock_hash: [u8; 32]) -> Result<C
         "Load all history smt leaves from mysql database",
     );
 
-    debug!("Define history leaves: {}", defines.len());
+    let start_time = Local::now().timestamp_millis();
     for define_db in defines {
         let DefineDb {
             cota_id,
@@ -86,10 +91,6 @@ fn generate_mysql_smt<'a>(mut smt: CotaSMT<'a>, lock_hash: [u8; 32]) -> Result<C
             generate_define_value(total.to_be_bytes(), issued.to_be_bytes(), configure);
         smt.update(key, value).expect("SMT update leave error");
     }
-    diff_time(start_time, "Push define history leaves to smt");
-
-    let start_time = Local::now().timestamp_millis();
-    debug!("Hold history leaves: {}", holds.len());
     for hold_db in holds {
         let HoldDb {
             cota_id,
@@ -155,7 +156,7 @@ fn generate_mysql_smt<'a>(mut smt: CotaSMT<'a>, lock_hash: [u8; 32]) -> Result<C
         let (_, value) = generate_claim_value(version);
         smt.update(key, value).expect("SMT update leave error");
     }
-    diff_time(start_time, "Push claim history leaves to smt");
+    diff_time(start_time, "Push all history leaves to smt");
     Ok(smt)
 }
 
