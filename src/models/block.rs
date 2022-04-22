@@ -9,6 +9,7 @@ pub fn get_syncer_tip_block_number() -> Result<u64, Error> {
     let conn = &POOL.clone().get().expect("Mysql pool connection error");
     check_infos
         .select(block_number)
+        .order(block_number.desc())
         .first::<u64>(conn)
         .map_err(|e| {
             error!("Query block number error: {}", e.to_string());
