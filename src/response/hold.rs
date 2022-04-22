@@ -50,3 +50,10 @@ fn parse_hold_value((hold, class_info): (HoldDb, Option<ClassInfoDb>)) -> Value 
     }
     Value::Object(map)
 }
+
+pub fn parse_owned_nft_count(count: i64, block_number: u64) -> Map<String, Value> {
+    let mut map = Map::new();
+    map.insert_i64("count", count);
+    map.insert_u64("block_number", block_number);
+    map
+}

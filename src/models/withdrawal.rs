@@ -106,6 +106,28 @@ pub fn get_withdrawal_cota_by_lock_hash(
     parse_withdraw_db(withdraw_nfts)
 }
 
+pub fn get_withdrawal_cota_count_by_lock_hash(
+    lock_hash_: [u8; 32],
+    cota_id_: [u8; 20],
+) -> Result<i64, Error> {
+    let start_time = Local::now().timestamp_millis();
+    let conn = &POOL.clone().get().expect("Mysql pool connection error");
+    let (lock_hash_hex, lock_hash_crc_) = parse_lock_hash(lock_hash_);
+    let cota_id_str = hex::encode(cota_id_);
+    let withdrawal_count: i64 = withdraw_cota_nft_kv_pairs
+        .filter(lock_hash_crc.eq(lock_hash_crc_))
+        .filter(lock_hash.eq(lock_hash_hex.clone()))
+        .filter(cota_id.eq(cota_id_str))
+        .count()
+        .get_result::<i64>(conn)
+        .map_err(|e| {
+            error!("Query withdrawal error: {}", e.to_string());
+            Error::DatabaseQueryError(e.to_string())
+        })?;
+    diff_time(start_time, "SQL get_withdrawal_cota_count_by_lock_hash");
+    Ok(withdrawal_count)
+}
+
 pub fn get_withdrawal_cota_by_cota_ids(
     lock_hash_: [u8; 32],
     cota_ids: Vec<[u8; 20]>,

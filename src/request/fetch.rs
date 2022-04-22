@@ -46,3 +46,23 @@ impl FetchIssuerReq {
         Ok(FetchIssuerReq { lock_script })
     }
 }
+
+#[derive(Clone, Eq, PartialEq)]
+pub struct FetchCountReq {
+    pub lock_script: Vec<u8>,
+    pub cota_id:     [u8; 20],
+}
+
+impl FetchCountReq {
+    pub fn from_map(map: &Map<String, Value>) -> Result<Self, Error> {
+        let lock_script = map.get_hex_vec_filed("lock_script")?;
+        if Script::from_slice(&lock_script).is_err() {
+            return Err(Error::RequestParamTypeError("Script".to_string()));
+        }
+
+        Ok(FetchCountReq {
+            lock_script,
+            cota_id: map.get_hex_bytes_filed::<20>("cota_id")?,
+        })
+    }
+}
