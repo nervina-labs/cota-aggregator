@@ -1,6 +1,6 @@
 use super::helper::parse_lock_hash;
 use crate::models::block::get_syncer_tip_block_number;
-use crate::models::helper::PAGE_SIZE;
+use crate::models::helper::{generate_crc, PAGE_SIZE};
 use crate::models::DBResult;
 use crate::schema::claimed_cota_nft_kv_pairs::dsl::claimed_cota_nft_kv_pairs;
 use crate::schema::claimed_cota_nft_kv_pairs::*;
@@ -56,6 +56,33 @@ pub fn get_claim_cota_by_lock_hash(lock_hash_: [u8; 32]) -> DBResult<ClaimDb> {
     let block_height = get_syncer_tip_block_number()?;
     diff_time(start_time, "SQL get_claim_cota_by_lock_hash");
     Ok((claims, block_height))
+}
+
+pub fn is_exist_in_claim(
+    lock_hash_: [u8; 32],
+    cota_id_: [u8; 20],
+    token_index_: [u8; 4],
+    out_point_: [u8; 24],
+) -> bool {
+    let conn = &POOL.clone().get().expect("Mysql pool connection error");
+    let (lock_hash_hex, lock_hash_crc_) = parse_lock_hash(lock_hash_);
+    let cota_id_hex = hex::encode(cota_id_);
+    let cota_id_crc_u32 = generate_crc(cota_id_hex.as_bytes());
+    let token_index_u32 = u32::from_be_bytes(token_index_);
+    let out_point_hex = hex::encode(out_point_);
+    let out_point_crc_u32 = generate_crc(out_point_hex.as_bytes());
+    claimed_cota_nft_kv_pairs
+        .filter(lock_hash_crc.eq(lock_hash_crc_))
+        .filter(lock_hash.eq(lock_hash_hex.clone()))
+        .filter(cota_id_crc.eq(cota_id_crc_u32))
+        .filter(cota_id.eq(cota_id_hex))
+        .filter(token_index.eq(token_index_u32))
+        .filter(out_point_crc.eq(out_point_crc_u32))
+        .filter(out_point.eq(out_point_hex))
+        .limit(1)
+        .count()
+        .get_result::<i64>(conn)
+        .map_or(false, |count_| count_ > 0)
 }
 
 fn parse_claimed_cota_nft(claims: Vec<ClaimCotaNft>) -> Vec<ClaimDb> {
