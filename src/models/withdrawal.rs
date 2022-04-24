@@ -41,6 +41,7 @@ pub struct WithdrawDb {
 pub struct WithdrawNFTDb {
     pub cota_id:        [u8; 20],
     pub token_index:    [u8; 4],
+    pub out_point:      [u8; 24],
     pub state:          u8,
     pub configure:      u8,
     pub characteristic: [u8; 20],
@@ -106,28 +107,6 @@ pub fn get_withdrawal_cota_by_lock_hash(
     parse_withdraw_db(withdraw_nfts)
 }
 
-pub fn get_withdrawal_cota_count_by_lock_hash(
-    lock_hash_: [u8; 32],
-    cota_id_: [u8; 20],
-) -> Result<i64, Error> {
-    let start_time = Local::now().timestamp_millis();
-    let conn = &POOL.clone().get().expect("Mysql pool connection error");
-    let (lock_hash_hex, lock_hash_crc_) = parse_lock_hash(lock_hash_);
-    let cota_id_str = hex::encode(cota_id_);
-    let withdrawal_count: i64 = withdraw_cota_nft_kv_pairs
-        .filter(lock_hash_crc.eq(lock_hash_crc_))
-        .filter(lock_hash.eq(lock_hash_hex.clone()))
-        .filter(cota_id.eq(cota_id_str))
-        .count()
-        .get_result::<i64>(conn)
-        .map_err(|e| {
-            error!("Query withdrawal error: {}", e.to_string());
-            Error::DatabaseQueryError(e.to_string())
-        })?;
-    diff_time(start_time, "SQL get_withdrawal_cota_count_by_lock_hash");
-    Ok(withdrawal_count)
-}
-
 pub fn get_withdrawal_cota_by_cota_ids(
     lock_hash_: [u8; 32],
     cota_ids: Vec<[u8; 20]>,
@@ -172,8 +151,6 @@ pub fn get_withdrawal_cota_by_cota_ids(
 
 pub fn get_withdrawal_cota_by_script_id(
     script_id: i64,
-    page: i64,
-    page_size: i64,
     cota_id_opt: Option<[u8; 20]>,
 ) -> DBTotalResult<WithdrawNFTDb> {
     let start_time = Local::now().timestamp_millis();
@@ -200,15 +177,11 @@ pub fn get_withdrawal_cota_by_script_id(
             .filter(receiver_lock_script_id.eq(script_id))
             .filter(cota_id.eq(hex::encode(&cota_id_)))
             .order(updated_at.desc())
-            .limit(page_size)
-            .offset(page_size * page)
             .load::<WithdrawCotaNft>(conn),
         None => withdraw_cota_nft_kv_pairs
             .select(get_selection())
             .filter(receiver_lock_script_id.eq(script_id))
             .order(updated_at.desc())
-            .limit(page_size)
-            .offset(page_size * page)
             .load::<WithdrawCotaNft>(conn),
     };
 
@@ -291,6 +264,7 @@ fn parse_withdraw_cota_nft(withdrawals: Vec<WithdrawCotaNft>) -> Vec<WithdrawNFT
             configure:      withdrawal.configure,
             state:          withdrawal.state,
             characteristic: parse_bytes_n::<20>(withdrawal.characteristic).unwrap(),
+            out_point:      parse_bytes_n::<24>(withdrawal.out_point).unwrap(),
         })
         .collect();
     withdraw_db_vec

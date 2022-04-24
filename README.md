@@ -685,7 +685,7 @@ echo '{
     "method":"get_cota_count",
     "params":{
         "lock_script":"0x490000001000000030000000310000009bd7e06f3ecf4be0f2fcd2188b23f1b9fcc88e5d4b65a8637b17723bbda3cce80114000000dc70f33de86fdf381b4fc5bf092bb23d02774801",
-        "cota_id":"0xb22585a8053af3fed0fd39127f5b1487ce08b756"
+        "cota_id":"0x1e23dc506c1b15f286c9db84a4d12a4532660975"
     }
 }' \
 | tr -d '\n' \
@@ -698,7 +698,7 @@ http://127.0.0.1:3030
     "jsonrpc":"2.0",
     "result":{
         "block_number":5120925,
-        "count":3
+        "count":80
     },
     "id":2
 }
