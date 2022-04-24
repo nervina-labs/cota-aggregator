@@ -172,7 +172,7 @@ pub async fn generate_claim_smt(
 
     let mut action_vec: Vec<u8> = Vec::new();
     action_vec.extend("Claim ".as_bytes());
-    action_vec.extend(&[0u8, 0, 0, claims_len as u8]);
+    action_vec.extend(claims_len.to_string().as_bytes());
     action_vec.extend(" NFTs".as_bytes());
     let action_bytes = BytesBuilder::default()
         .set(action_vec.iter().map(|v| Byte::from(*v)).collect())

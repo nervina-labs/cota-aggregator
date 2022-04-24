@@ -18,6 +18,7 @@ use cota_smt::molecule::prelude::*;
 use cota_smt::smt::{blake2b_256, H256};
 use cota_smt::transfer::{TransferCotaNFTV1Entries, TransferCotaNFTV1EntriesBuilder};
 use log::error;
+use molecule::hex_string;
 
 pub async fn generate_transfer_smt(
     db: &RocksDB,
@@ -44,10 +45,10 @@ pub async fn generate_transfer_smt(
     let mut action_vec: Vec<u8> = Vec::new();
     if transfers_len == 1 {
         action_vec.extend("Transfer the NFT ".as_bytes());
-        action_vec.extend(&sender_withdrawals.first().unwrap().cota_id);
-        action_vec.extend(&sender_withdrawals.first().unwrap().token_index);
+        action_vec.extend(hex_string(&sender_withdrawals.first().unwrap().cota_id).as_bytes());
+        action_vec.extend(hex_string(&sender_withdrawals.first().unwrap().token_index).as_bytes());
         action_vec.extend(" to ".as_bytes());
-        action_vec.extend(&transfers.first().unwrap().to_lock_script);
+        action_vec.extend(hex_string(&transfers.first().unwrap().to_lock_script).as_bytes());
     }
     let action_bytes = BytesBuilder::default()
         .set(action_vec.iter().map(|v| Byte::from(*v)).collect())
