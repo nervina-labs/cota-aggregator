@@ -157,6 +157,7 @@ fn generate_mysql_smt<'a>(mut smt: CotaSMT<'a>, lock_hash: [u8; 32]) -> Result<C
         smt.update(key, value).expect("SMT update leave error");
     }
     diff_time(start_time, "Push all history leaves to smt");
+    debug!("The smt root of all leaves from mysql: {:?}", smt.root());
     Ok(smt)
 }
 
