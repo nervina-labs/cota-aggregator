@@ -1,5 +1,6 @@
 use crate::entries::helper::{generate_define_key, generate_define_value};
-use crate::entries::smt::generate_history_smt;
+use crate::entries::smt::{generate_history_smt, init_smt};
+use crate::entries::SMT_LOCK;
 use crate::indexer::index::get_cota_smt_root;
 use crate::request::define::DefineReq;
 use crate::smt::db::db::RocksDB;
@@ -11,15 +12,12 @@ use cota_smt::define::{DefineCotaNFTEntries, DefineCotaNFTEntriesBuilder};
 use cota_smt::molecule::prelude::*;
 use cota_smt::smt::H256;
 use log::error;
+use std::sync::Arc;
 
 pub async fn generate_define_smt(
     db: &RocksDB,
     define_req: DefineReq,
 ) -> Result<(H256, DefineCotaNFTEntries), Error> {
-    let transaction = &StoreTransaction::new(db.transaction());
-    let smt_root = get_cota_smt_root(define_req.lock_script.as_slice()).await?;
-    let mut smt = generate_history_smt(transaction, define_req.lock_script.as_slice(), smt_root)?;
-
     let mut update_leaves: Vec<(H256, H256)> = Vec::with_capacity(1);
     let mut previous_leaves: Vec<(H256, H256)> = Vec::with_capacity(1);
     let DefineReq {
@@ -31,14 +29,36 @@ pub async fn generate_define_smt(
     } = define_req;
     let (define_key, key) = generate_define_key(cota_id);
     let (define_value, value) = generate_define_value(total, issued, configure);
-
-    smt.update(key, value)
-        .expect("define SMT update leave error");
     update_leaves.push((key, value));
     previous_leaves.push((key, H256::zero()));
 
-    smt.save_root_and_leaves(previous_leaves)?;
-    transaction.commit()?;
+    let smt_root = get_cota_smt_root(&define_req.lock_script).await?;
+    let transaction = &StoreTransaction::new(db.transaction());
+    let mut smt = init_smt(transaction, &define_req.lock_script)?;
+    // Add lock to smt
+    let &(ref lock, ref cond) = &*Arc::clone(&SMT_LOCK);
+    let no_pending = {
+        let mut set = lock.lock();
+        set.insert(define_req.lock_script.clone())
+    };
+    loop {
+        if no_pending {
+            smt = generate_history_smt(smt, &define_req.lock_script, smt_root)?;
+            smt.update(key, value)
+                .expect("define SMT update leave error");
+            smt.save_root_and_leaves(previous_leaves)?;
+            smt.commit()?;
+            {
+                let mut set = lock.lock();
+                set.remove(&define_req.lock_script);
+            }
+            cond.notify_all();
+            break;
+        } else {
+            let mut set = lock.lock();
+            cond.wait(&mut set);
+        }
+    }
 
     let define_merkle_proof = smt
         .merkle_proof(update_leaves.iter().map(|leave| leave.0).collect())

@@ -1,6 +1,7 @@
 use crate::entries::helper::{generate_define_key, generate_define_value};
 use crate::entries::helper::{generate_withdrawal_key_v1, generate_withdrawal_value_v1};
-use crate::entries::smt::generate_history_smt;
+use crate::entries::smt::{generate_history_smt, init_smt};
+use crate::entries::SMT_LOCK;
 use crate::indexer::index::get_cota_smt_root;
 use crate::models::define::{get_define_cota_by_lock_hash_and_cota_id, DefineDb};
 use crate::request::mint::{MintReq, MintWithdrawal};
@@ -15,6 +16,7 @@ use cota_smt::mint::{MintCotaNFTV1Entries, MintCotaNFTV1EntriesBuilder};
 use cota_smt::molecule::prelude::*;
 use cota_smt::smt::{blake2b_256, H256};
 use log::error;
+use std::sync::Arc;
 
 pub async fn generate_mint_smt(
     db: &RocksDB,
@@ -39,10 +41,6 @@ pub async fn generate_mint_smt(
     let mut withdrawal_keys: Vec<WithdrawalCotaNFTKeyV1> = Vec::new();
     let mut withdrawal_values: Vec<WithdrawalCotaNFTValueV1> = Vec::new();
 
-    let transaction = &StoreTransaction::new(db.transaction());
-    let smt_root = get_cota_smt_root(mint_req.lock_script.as_slice()).await?;
-    let mut smt = generate_history_smt(transaction, mint_req.lock_script.as_slice(), smt_root)?;
-
     let mut update_leaves: Vec<(H256, H256)> = Vec::with_capacity(withdrawals_len + 1);
     let mut previous_leaves: Vec<(H256, H256)> = Vec::with_capacity(withdrawals_len + 1);
     let DefineDb {
@@ -65,7 +63,6 @@ pub async fn generate_mint_smt(
 
     previous_leaves.push((key, old_value));
     update_leaves.push((key, value));
-    smt.update(key, value).expect("mint SMT update leave error");
 
     let mut action_vec: Vec<u8> = Vec::new();
     if withdrawals_len == 1 {
@@ -94,12 +91,37 @@ pub async fn generate_mint_smt(
 
         previous_leaves.push((key, H256::zero()));
         update_leaves.push((key, value));
-        smt.update(key, value).expect("mint SMT update leave error");
     }
     diff_time(start_time, "Generate mint smt object with update leaves");
 
-    smt.save_root_and_leaves(previous_leaves)?;
-    transaction.commit()?;
+    let smt_root = get_cota_smt_root(&mint_req.lock_script).await?;
+
+    let transaction = &StoreTransaction::new(db.transaction());
+    let mut smt = init_smt(transaction, &mint_req.lock_script)?;
+    // Add lock to smt
+    let &(ref lock, ref cond) = &*Arc::clone(&SMT_LOCK);
+    let no_pending = {
+        let mut set = lock.lock();
+        set.insert(mint_req.lock_script.clone())
+    };
+    loop {
+        if no_pending {
+            smt = generate_history_smt(smt, &mint_req.lock_script, smt_root)?;
+            smt.update_all(update_leaves.clone())
+                .expect("mint SMT update leave error");
+            smt.save_root_and_leaves(previous_leaves)?;
+            smt.commit()?;
+            {
+                let mut set = lock.lock();
+                set.remove(&mint_req.lock_script);
+            }
+            cond.notify_all();
+            break;
+        } else {
+            let mut set = lock.lock();
+            cond.wait(&mut set);
+        }
+    }
 
     let start_time = Local::now().timestamp_millis();
     let mint_merkle_proof = smt

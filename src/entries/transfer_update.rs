@@ -2,7 +2,7 @@ use crate::entries::helper::{
     generate_claim_key, generate_claim_value, generate_withdrawal_key, generate_withdrawal_key_v1,
     generate_withdrawal_value, generate_withdrawal_value_v1,
 };
-use crate::entries::smt::generate_history_smt;
+use crate::entries::smt::{generate_history_smt, init_smt};
 use crate::entries::SMT_LOCK;
 use crate::indexer::index::get_cota_smt_root;
 use crate::models::withdrawal::{get_withdrawal_cota_by_lock_hash, WithdrawDb};
@@ -18,6 +18,7 @@ use cota_smt::transfer_update::{
     TransferUpdateCotaNFTV1Entries, TransferUpdateCotaNFTV1EntriesBuilder,
 };
 use log::error;
+use std::sync::Arc;
 
 pub async fn generate_transfer_update_smt(
     db: &RocksDB,
@@ -139,32 +140,69 @@ pub async fn generate_transfer_update_smt(
         previous_leaves.push((key, H256::zero()));
     }
 
-    let transfer_smt_root = get_cota_smt_root(transfer_update_req.lock_script.as_slice()).await?;
+    let transfer_smt_root = get_cota_smt_root(&transfer_update_req.lock_script).await?;
+    let transaction = &StoreTransaction::new(db.transaction());
+    let mut transfer_update_smt = init_smt(transaction, &transfer_update_req.lock_script)?;
+    // Add lock to transfer smt
+    let &(ref transfer_lock, ref transfer_cond) = &*Arc::clone(&SMT_LOCK);
+    let transfer_no_pending = {
+        let mut set = transfer_lock.lock();
+        set.insert(transfer_update_req.lock_script.clone())
+    };
+    loop {
+        if transfer_no_pending {
+            transfer_update_smt = generate_history_smt(
+                transfer_update_smt,
+                &transfer_update_req.lock_script,
+                transfer_smt_root,
+            )?;
+            transfer_update_smt
+                .update_all(transfer_update_leaves.clone())
+                .expect("transfer SMT update leave error");
+            transfer_update_smt.save_root_and_leaves(previous_leaves)?;
+            transfer_update_smt.commit()?;
+            {
+                let mut set = transfer_lock.lock();
+                set.remove(&transfer_update_req.lock_script);
+            }
+            transfer_cond.notify_all();
+            break;
+        } else {
+            let mut set = transfer_lock.lock();
+            transfer_cond.wait(&mut set);
+        }
+    }
+
     let withdrawal_smt_root =
-        get_cota_smt_root(transfer_update_req.withdrawal_lock_script.as_slice()).await?;
-
+        get_cota_smt_root(&transfer_update_req.withdrawal_lock_script).await?;
     let transaction = &StoreTransaction::new(db.transaction());
-    let mut transfer_update_smt = generate_history_smt(
-        transaction,
-        transfer_update_req.lock_script.as_slice(),
-        transfer_smt_root,
-    )?;
-    transfer_update_smt
-        .update_all(transfer_update_leaves.clone())
-        .expect("transfer SMT update leave error");
-    transfer_update_smt.save_root_and_leaves(previous_leaves)?;
-    transaction.commit()?;
-
-    let lock = SMT_LOCK.lock();
-    let transaction = &StoreTransaction::new(db.transaction());
-    let withdrawal_smt = generate_history_smt(
-        transaction,
-        transfer_update_req.withdrawal_lock_script.as_slice(),
-        withdrawal_smt_root,
-    )?;
-    withdrawal_smt.save_root_and_leaves(vec![])?;
-    transaction.commit()?;
-    drop(lock);
+    let mut withdrawal_smt = init_smt(transaction, &transfer_update_req.withdrawal_lock_script)?;
+    // Add lock to withdraw smt
+    let &(ref withdraw_lock, ref withdraw_cond) = &*Arc::clone(&SMT_LOCK);
+    let withdraw_no_pending = {
+        let mut set = withdraw_lock.lock();
+        set.insert(transfer_update_req.withdrawal_lock_script.clone())
+    };
+    loop {
+        if withdraw_no_pending {
+            withdrawal_smt = generate_history_smt(
+                withdrawal_smt,
+                &transfer_update_req.withdrawal_lock_script,
+                withdrawal_smt_root,
+            )?;
+            withdrawal_smt.save_root_and_leaves(vec![])?;
+            transaction.commit()?;
+            {
+                let mut set = withdraw_lock.lock();
+                set.remove(&transfer_update_req.withdrawal_lock_script);
+            }
+            withdraw_cond.notify_all();
+            break;
+        } else {
+            let mut set = withdraw_lock.lock();
+            withdraw_cond.wait(&mut set);
+        }
+    }
 
     let transfer_update_merkle_proof = transfer_update_smt
         .merkle_proof(transfer_update_leaves.iter().map(|leave| leave.0).collect())

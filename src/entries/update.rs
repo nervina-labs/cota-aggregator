@@ -1,5 +1,6 @@
 use crate::entries::helper::{generate_hold_key, generate_hold_value};
-use crate::entries::smt::generate_history_smt;
+use crate::entries::smt::{generate_history_smt, init_smt};
+use crate::entries::SMT_LOCK;
 use crate::indexer::index::get_cota_smt_root;
 use crate::models::hold::get_hold_cota_by_lock_hash;
 use crate::request::update::UpdateReq;
@@ -12,15 +13,12 @@ use cota_smt::molecule::prelude::*;
 use cota_smt::smt::{blake2b_256, H256};
 use cota_smt::update::{UpdateCotaNFTEntries, UpdateCotaNFTEntriesBuilder};
 use log::error;
+use std::sync::Arc;
 
 pub async fn generate_update_smt(
     db: &RocksDB,
     update_req: UpdateReq,
 ) -> Result<(H256, UpdateCotaNFTEntries), Error> {
-    let transaction = &StoreTransaction::new(db.transaction());
-    let smt_root = get_cota_smt_root(update_req.lock_script.as_slice()).await?;
-    let mut smt = generate_history_smt(transaction, update_req.lock_script.as_slice(), smt_root)?;
-
     let nfts = update_req.nfts;
     if nfts.is_empty() {
         return Err(Error::RequestParamNotFound("nfts".to_string()));
@@ -54,11 +52,35 @@ pub async fn generate_update_smt(
         hold_values.push(hold_value);
         update_leaves.push((key, value));
         previous_leaves.push((key, old_value));
-        smt.update(key, value).expect("hold SMT update leave error");
     }
 
-    smt.save_root_and_leaves(previous_leaves)?;
-    transaction.commit()?;
+    let smt_root = get_cota_smt_root(&update_req.lock_script).await?;
+    let transaction = &StoreTransaction::new(db.transaction());
+    let mut smt = init_smt(transaction, &update_req.lock_script)?;
+    // Add lock to smt
+    let &(ref lock, ref cond) = &*Arc::clone(&SMT_LOCK);
+    let no_pending = {
+        let mut set = lock.lock();
+        set.insert(update_req.lock_script.clone())
+    };
+    loop {
+        if no_pending {
+            smt = generate_history_smt(smt, &update_req.lock_script, smt_root)?;
+            smt.update_all(update_leaves.clone())
+                .expect("hold SMT update leave error");
+            smt.save_root_and_leaves(previous_leaves)?;
+            smt.commit()?;
+            {
+                let mut set = lock.lock();
+                set.remove(&update_req.lock_script);
+            }
+            cond.notify_all();
+            break;
+        } else {
+            let mut set = lock.lock();
+            cond.wait(&mut set);
+        }
+    }
 
     let update_merkle_proof = smt
         .merkle_proof(update_leaves.iter().map(|leave| leave.0).collect())

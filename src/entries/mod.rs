@@ -1,5 +1,7 @@
 use lazy_static::lazy_static;
-use parking_lot::Mutex;
+use parking_lot::{Condvar, Mutex};
+use std::collections::HashSet;
+use std::sync::Arc;
 
 pub(crate) mod claim;
 pub(crate) mod claim_update;
@@ -14,5 +16,6 @@ pub(crate) mod update;
 pub(crate) mod withdrawal;
 
 lazy_static! {
-    static ref SMT_LOCK: Mutex<()> = Mutex::new(());
+    static ref SMT_LOCK: Arc<(Mutex<HashSet<Vec<u8>>>, Condvar)> =
+        Arc::new((Mutex::new(HashSet::new()), Condvar::new()));
 }

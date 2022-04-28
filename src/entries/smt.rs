@@ -22,10 +22,9 @@ use cota_smt::smt::{blake2b_256, H256};
 use log::debug;
 use std::collections::HashMap;
 
-pub fn generate_history_smt<'a>(
+pub fn init_smt<'a>(
     transaction: &'a StoreTransaction,
     lock_script: &[u8],
-    smt_root_opt: Option<Vec<u8>>,
 ) -> Result<CotaSMT<'a>, Error> {
     let lock_hash = blake2b_256(lock_script);
     let smt_store = SMTStore::new(
@@ -45,8 +44,16 @@ pub fn generate_history_smt<'a>(
         root,
         hex::encode(lock_hash)
     );
-    let mut smt: CotaSMT = CotaSMT::new(root, smt_store);
+    Ok(CotaSMT::new(root, smt_store))
+}
 
+pub fn generate_history_smt<'a>(
+    mut smt: CotaSMT<'a>,
+    lock_script: &[u8],
+    smt_root_opt: Option<Vec<u8>>,
+) -> Result<CotaSMT<'a>, Error> {
+    let root = *smt.root();
+    let lock_hash = blake2b_256(lock_script);
     if root == H256::zero() {
         return generate_mysql_smt(smt, lock_hash);
     }
