@@ -35,11 +35,9 @@ pub async fn generate_transfer_update_smt(
             .map(|transfer| (transfer.cota_id, transfer.token_index))
             .collect(),
     );
-    let sender_withdrawals = get_withdrawal_cota_by_lock_hash(
-        blake2b_256(&transfer_update_req.withdrawal_lock_script.as_slice()),
-        cota_id_and_token_index_pairs,
-    )?
-    .0;
+    let withdraw_lock_hash = blake2b_256(&transfer_update_req.withdrawal_lock_script);
+    let sender_withdrawals =
+        get_withdrawal_cota_by_lock_hash(withdraw_lock_hash, cota_id_and_token_index_pairs)?.0;
     if sender_withdrawals.is_empty() || sender_withdrawals.len() != transfers_len {
         return Err(Error::CotaIdAndTokenIndexHasNotWithdrawn);
     }
@@ -142,20 +140,18 @@ pub async fn generate_transfer_update_smt(
 
     let transfer_smt_root = get_cota_smt_root(&transfer_update_req.lock_script).await?;
     let transaction = &StoreTransaction::new(db.transaction());
-    let mut transfer_update_smt = init_smt(transaction, &transfer_update_req.lock_script)?;
+    let transfer_lock_hash = blake2b_256(&transfer_update_req.lock_script);
+    let mut transfer_update_smt = init_smt(transaction, transfer_lock_hash)?;
     // Add lock to transfer smt
     let &(ref transfer_lock, ref transfer_cond) = &*Arc::clone(&SMT_LOCK);
     let transfer_no_pending = {
         let mut set = transfer_lock.lock();
-        set.insert(transfer_update_req.lock_script.clone())
+        set.insert(transfer_lock_hash)
     };
     loop {
         if transfer_no_pending {
-            transfer_update_smt = generate_history_smt(
-                transfer_update_smt,
-                &transfer_update_req.lock_script,
-                transfer_smt_root,
-            )?;
+            transfer_update_smt =
+                generate_history_smt(transfer_update_smt, transfer_lock_hash, transfer_smt_root)?;
             transfer_update_smt
                 .update_all(transfer_update_leaves.clone())
                 .expect("transfer SMT update leave error");
@@ -163,7 +159,7 @@ pub async fn generate_transfer_update_smt(
             transfer_update_smt.commit()?;
             {
                 let mut set = transfer_lock.lock();
-                set.remove(&transfer_update_req.lock_script);
+                set.remove(&transfer_lock_hash);
             }
             transfer_cond.notify_all();
             break;
@@ -176,25 +172,22 @@ pub async fn generate_transfer_update_smt(
     let withdrawal_smt_root =
         get_cota_smt_root(&transfer_update_req.withdrawal_lock_script).await?;
     let transaction = &StoreTransaction::new(db.transaction());
-    let mut withdrawal_smt = init_smt(transaction, &transfer_update_req.withdrawal_lock_script)?;
+    let mut withdrawal_smt = init_smt(transaction, withdraw_lock_hash)?;
     // Add lock to withdraw smt
     let &(ref withdraw_lock, ref withdraw_cond) = &*Arc::clone(&SMT_LOCK);
     let withdraw_no_pending = {
         let mut set = withdraw_lock.lock();
-        set.insert(transfer_update_req.withdrawal_lock_script.clone())
+        set.insert(withdraw_lock_hash)
     };
     loop {
         if withdraw_no_pending {
-            withdrawal_smt = generate_history_smt(
-                withdrawal_smt,
-                &transfer_update_req.withdrawal_lock_script,
-                withdrawal_smt_root,
-            )?;
+            withdrawal_smt =
+                generate_history_smt(withdrawal_smt, withdraw_lock_hash, withdrawal_smt_root)?;
             withdrawal_smt.save_root_and_leaves(vec![])?;
             transaction.commit()?;
             {
                 let mut set = withdraw_lock.lock();
-                set.remove(&transfer_update_req.withdrawal_lock_script);
+                set.remove(&withdraw_lock_hash);
             }
             withdraw_cond.notify_all();
             break;

@@ -95,25 +95,25 @@ pub async fn generate_mint_smt(
     diff_time(start_time, "Generate mint smt object with update leaves");
 
     let smt_root = get_cota_smt_root(&mint_req.lock_script).await?;
-
+    let lock_hash = blake2b_256(&mint_req.lock_script);
     let transaction = &StoreTransaction::new(db.transaction());
-    let mut smt = init_smt(transaction, &mint_req.lock_script)?;
+    let mut smt = init_smt(transaction, lock_hash)?;
     // Add lock to smt
     let &(ref lock, ref cond) = &*Arc::clone(&SMT_LOCK);
     let no_pending = {
         let mut set = lock.lock();
-        set.insert(mint_req.lock_script.clone())
+        set.insert(lock_hash)
     };
     loop {
         if no_pending {
-            smt = generate_history_smt(smt, &mint_req.lock_script, smt_root)?;
+            smt = generate_history_smt(smt, lock_hash, smt_root)?;
             smt.update_all(update_leaves.clone())
                 .expect("mint SMT update leave error");
             smt.save_root_and_leaves(previous_leaves)?;
             smt.commit()?;
             {
                 let mut set = lock.lock();
-                set.remove(&mint_req.lock_script);
+                set.remove(&lock_hash);
             }
             cond.notify_all();
             break;

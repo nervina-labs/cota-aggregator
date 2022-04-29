@@ -16,6 +16,6 @@ pub(crate) mod update;
 pub(crate) mod withdrawal;
 
 lazy_static! {
-    static ref SMT_LOCK: Arc<(Mutex<HashSet<Vec<u8>>>, Condvar)> =
+    static ref SMT_LOCK: Arc<(Mutex<HashSet<[u8; 32]>>, Condvar)> =
         Arc::new((Mutex::new(HashSet::new()), Condvar::new()));
 }

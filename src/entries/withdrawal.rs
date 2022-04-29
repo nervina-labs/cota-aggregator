@@ -76,23 +76,24 @@ pub async fn generate_withdrawal_smt(
 
     let smt_root = get_cota_smt_root(&withdrawal_req.lock_script).await?;
     let transaction = &StoreTransaction::new(db.transaction());
-    let mut smt = init_smt(transaction, &withdrawal_req.lock_script)?;
+    let lock_hash = blake2b_256(&withdrawal_req.lock_script);
+    let mut smt = init_smt(transaction, lock_hash)?;
     // Add lock to smt
     let &(ref lock, ref cond) = &*Arc::clone(&SMT_LOCK);
     let no_pending = {
         let mut set = lock.lock();
-        set.insert(withdrawal_req.lock_script.clone())
+        set.insert(lock_hash)
     };
     loop {
         if no_pending {
-            smt = generate_history_smt(smt, &withdrawal_req.lock_script, smt_root)?;
+            smt = generate_history_smt(smt, lock_hash, smt_root)?;
             smt.update_all(update_leaves.clone())
                 .expect("withdraw SMT update leave error");
             smt.save_root_and_leaves(previous_leaves)?;
             smt.commit()?;
             {
                 let mut set = lock.lock();
-                set.remove(&withdrawal_req.lock_script);
+                set.remove(&lock_hash);
             }
             cond.notify_all();
             break;

@@ -18,15 +18,14 @@ use crate::utils::error::Error;
 use crate::utils::helper::diff_time;
 use chrono::prelude::*;
 use cota_smt::common::*;
-use cota_smt::smt::{blake2b_256, H256};
+use cota_smt::smt::H256;
 use log::debug;
 use std::collections::HashMap;
 
 pub fn init_smt<'a>(
     transaction: &'a StoreTransaction,
-    lock_script: &[u8],
+    lock_hash: [u8; 32],
 ) -> Result<CotaSMT<'a>, Error> {
-    let lock_hash = blake2b_256(lock_script);
     let smt_store = SMTStore::new(
         lock_hash,
         COLUMN_SMT_LEAF,
@@ -49,11 +48,10 @@ pub fn init_smt<'a>(
 
 pub fn generate_history_smt<'a>(
     mut smt: CotaSMT<'a>,
-    lock_script: &[u8],
+    lock_hash: [u8; 32],
     smt_root_opt: Option<Vec<u8>>,
 ) -> Result<CotaSMT<'a>, Error> {
     let root = *smt.root();
-    let lock_hash = blake2b_256(lock_script);
     if root == H256::zero() {
         return generate_mysql_smt(smt, lock_hash);
     }
