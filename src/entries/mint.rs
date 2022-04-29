@@ -100,11 +100,11 @@ pub async fn generate_mint_smt(
     let mut smt = init_smt(transaction, lock_hash)?;
     // Add lock to smt
     let &(ref lock, ref cond) = &*Arc::clone(&SMT_LOCK);
-    let no_pending = {
-        let mut set = lock.lock();
-        set.insert(lock_hash)
-    };
     loop {
+        let no_pending = {
+            let mut set = lock.lock();
+            set.insert(lock_hash)
+        };
         if no_pending {
             smt = generate_history_smt(smt, lock_hash, smt_root)?;
             smt.update_all(update_leaves.clone())

@@ -125,11 +125,11 @@ pub async fn generate_claim_update_smt(
     let mut claim_smt = init_smt(transaction, claim_lock_hash)?;
     // Add lock to smt
     let &(ref claim_lock, ref claim_cond) = &*Arc::clone(&SMT_LOCK);
-    let claim_no_pending = {
-        let mut set = claim_lock.lock();
-        set.insert(claim_lock_hash)
-    };
     loop {
+        let claim_no_pending = {
+            let mut set = claim_lock.lock();
+            set.insert(claim_lock_hash)
+        };
         if claim_no_pending {
             claim_smt = generate_history_smt(claim_smt, claim_lock_hash, claim_smt_root)?;
             claim_smt
@@ -154,11 +154,11 @@ pub async fn generate_claim_update_smt(
     let mut withdrawal_smt = init_smt(transaction, withdraw_lock_hash)?;
     // Add lock to withdraw smt
     let &(ref withdraw_lock, ref withdraw_cond) = &*Arc::clone(&SMT_LOCK);
-    let withdraw_no_pending = {
-        let mut set = withdraw_lock.lock();
-        set.insert(withdraw_lock_hash)
-    };
     loop {
+        let withdraw_no_pending = {
+            let mut set = withdraw_lock.lock();
+            set.insert(withdraw_lock_hash)
+        };
         if withdraw_no_pending {
             withdrawal_smt =
                 generate_history_smt(withdrawal_smt, withdraw_lock_hash, withdrawal_smt_root)?;

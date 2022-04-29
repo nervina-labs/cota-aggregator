@@ -144,11 +144,11 @@ pub async fn generate_transfer_update_smt(
     let mut transfer_update_smt = init_smt(transaction, transfer_lock_hash)?;
     // Add lock to transfer smt
     let &(ref transfer_lock, ref transfer_cond) = &*Arc::clone(&SMT_LOCK);
-    let transfer_no_pending = {
-        let mut set = transfer_lock.lock();
-        set.insert(transfer_lock_hash)
-    };
     loop {
+        let transfer_no_pending = {
+            let mut set = transfer_lock.lock();
+            set.insert(transfer_lock_hash)
+        };
         if transfer_no_pending {
             transfer_update_smt =
                 generate_history_smt(transfer_update_smt, transfer_lock_hash, transfer_smt_root)?;
@@ -175,11 +175,11 @@ pub async fn generate_transfer_update_smt(
     let mut withdrawal_smt = init_smt(transaction, withdraw_lock_hash)?;
     // Add lock to withdraw smt
     let &(ref withdraw_lock, ref withdraw_cond) = &*Arc::clone(&SMT_LOCK);
-    let withdraw_no_pending = {
-        let mut set = withdraw_lock.lock();
-        set.insert(withdraw_lock_hash)
-    };
     loop {
+        let withdraw_no_pending = {
+            let mut set = withdraw_lock.lock();
+            set.insert(withdraw_lock_hash)
+        };
         if withdraw_no_pending {
             withdrawal_smt =
                 generate_history_smt(withdrawal_smt, withdraw_lock_hash, withdrawal_smt_root)?;
