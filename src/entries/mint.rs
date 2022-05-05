@@ -1,7 +1,8 @@
-use crate::entries::helper::{generate_define_key, generate_define_value};
+use crate::entries::helper::{
+    generate_define_key, generate_define_value, lock_err_handle, smt_lock, smt_unlock,
+};
 use crate::entries::helper::{generate_withdrawal_key_v1, generate_withdrawal_value_v1};
 use crate::entries::smt::{generate_history_smt, init_smt};
-use crate::entries::SMT_LOCK;
 use crate::indexer::index::get_cota_smt_root;
 use crate::models::define::{get_define_cota_by_lock_hash_and_cota_id, DefineDb};
 use crate::request::mint::{MintReq, MintWithdrawal};
@@ -16,7 +17,6 @@ use cota_smt::mint::{MintCotaNFTV1Entries, MintCotaNFTV1EntriesBuilder};
 use cota_smt::molecule::prelude::*;
 use cota_smt::smt::{blake2b_256, H256};
 use log::error;
-use std::sync::Arc;
 
 pub async fn generate_mint_smt(
     db: &RocksDB,
@@ -99,31 +99,17 @@ pub async fn generate_mint_smt(
     let transaction = &StoreTransaction::new(db.transaction());
     let mut smt = init_smt(transaction, lock_hash)?;
     // Add lock to smt
-    let &(ref lock, ref cond) = &*Arc::clone(&SMT_LOCK);
-    {
-        let mut set = lock.lock();
-        while !set.insert(lock_hash) {
-            cond.wait(&mut set);
-        }
-    }
-    let unlock = || {
-        let mut set = lock.lock();
-        set.remove(&lock_hash);
-        cond.notify_all();
-    };
-    let err_handle = |err| {
-        unlock();
-        err
-    };
+    smt_lock(lock_hash);
+    let err_handle = |err| lock_err_handle(&lock_hash, err);
     smt = generate_history_smt(smt, lock_hash, smt_root).map_err(err_handle)?;
     smt.update_all(update_leaves.clone()).map_err(|e| {
-        unlock();
+        smt_unlock(&lock_hash);
         Error::SMTError(e.to_string())
     })?;
     smt.save_root_and_leaves(previous_leaves)
         .map_err(err_handle)?;
     smt.commit().map_err(err_handle)?;
-    unlock();
+    smt_unlock(&lock_hash);
 
     let start_time = Local::now().timestamp_millis();
     let mint_merkle_proof = smt

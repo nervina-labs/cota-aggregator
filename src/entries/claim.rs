@@ -1,10 +1,9 @@
 use crate::entries::helper::{
     generate_claim_key, generate_claim_value, generate_hold_key, generate_hold_value,
     generate_withdrawal_key, generate_withdrawal_key_v1, generate_withdrawal_value,
-    generate_withdrawal_value_v1,
+    generate_withdrawal_value_v1, lock_err_handle, smt_lock, smt_unlock,
 };
 use crate::entries::smt::{generate_history_smt, init_smt};
-use crate::entries::SMT_LOCK;
 use crate::indexer::index::get_cota_smt_root;
 use crate::models::withdrawal::{get_withdrawal_cota_by_lock_hash, WithdrawDb};
 use crate::request::claim::ClaimReq;
@@ -17,7 +16,6 @@ use cota_smt::molecule::prelude::*;
 use cota_smt::smt::{blake2b_256, H256};
 use cota_smt::transfer::{ClaimCotaNFTEntries, ClaimCotaNFTEntriesBuilder};
 use log::error;
-use std::sync::Arc;
 
 pub async fn generate_claim_smt(
     db: &RocksDB,
@@ -113,62 +111,34 @@ pub async fn generate_claim_smt(
     let mut claim_smt = init_smt(transaction, claim_lock_hash)?;
 
     // Add lock to claim smt
-    let &(ref claim_lock, ref claim_cond) = &*Arc::clone(&SMT_LOCK);
-    {
-        let mut set = claim_lock.lock();
-        while !set.insert(claim_lock_hash) {
-            claim_cond.wait(&mut set);
-        }
-    }
-    let unlock = || {
-        let mut set = claim_lock.lock();
-        set.remove(&claim_lock_hash);
-        claim_cond.notify_all();
-    };
-    let err_handle = |err| {
-        unlock();
-        err
-    };
+    smt_lock(claim_lock_hash);
+    let err_handle = |err| lock_err_handle(&claim_lock_hash, err);
     claim_smt =
         generate_history_smt(claim_smt, claim_lock_hash, claim_smt_root).map_err(err_handle)?;
     claim_smt
         .update_all(claim_update_leaves.clone())
         .map_err(|e| {
-            unlock();
+            smt_unlock(&claim_lock_hash);
             Error::SMTError(e.to_string())
         })?;
     claim_smt
         .save_root_and_leaves(previous_leaves)
         .map_err(err_handle)?;
     claim_smt.commit().map_err(err_handle)?;
-    unlock();
+    smt_unlock(&claim_lock_hash);
 
     let transaction = &StoreTransaction::new(db.transaction());
     let mut withdrawal_smt = init_smt(transaction, withdraw_lock_hash)?;
     // Add lock to withdraw smt
-    let &(ref withdraw_lock, ref withdraw_cond) = &*Arc::clone(&SMT_LOCK);
-    {
-        let mut set = withdraw_lock.lock();
-        while !set.insert(withdraw_lock_hash) {
-            withdraw_cond.wait(&mut set);
-        }
-    }
-    let unlock = || {
-        let mut set = withdraw_lock.lock();
-        set.remove(&withdraw_lock_hash);
-        withdraw_cond.notify_all();
-    };
-    let err_handle = |err| {
-        unlock();
-        err
-    };
+    smt_lock(withdraw_lock_hash);
+    let err_handle = |err| lock_err_handle(&withdraw_lock_hash, err);
     withdrawal_smt = generate_history_smt(withdrawal_smt, withdraw_lock_hash, withdrawal_smt_root)
         .map_err(err_handle)?;
     withdrawal_smt
         .save_root_and_leaves(vec![])
         .map_err(err_handle)?;
     withdrawal_smt.commit().map_err(err_handle)?;
-    unlock();
+    smt_unlock(&withdraw_lock_hash);
 
     let claim_merkle_proof = claim_smt
         .merkle_proof(claim_update_leaves.iter().map(|leave| leave.0).collect())
