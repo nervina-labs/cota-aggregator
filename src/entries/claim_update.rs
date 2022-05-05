@@ -120,61 +120,68 @@ pub async fn generate_claim_update_smt(
     }
 
     let claim_smt_root = get_cota_smt_root(&claim_update_req.lock_script).await?;
+    let withdrawal_smt_root = get_cota_smt_root(&claim_update_req.withdrawal_lock_script).await?;
+
     let claim_lock_hash = blake2b_256(&claim_update_req.lock_script);
     let transaction = &StoreTransaction::new(db.transaction());
     let mut claim_smt = init_smt(transaction, claim_lock_hash)?;
     // Add lock to smt
     let &(ref claim_lock, ref claim_cond) = &*Arc::clone(&SMT_LOCK);
-    loop {
-        let claim_no_pending = {
-            let mut set = claim_lock.lock();
-            set.insert(claim_lock_hash)
-        };
-        if claim_no_pending {
-            claim_smt = generate_history_smt(claim_smt, claim_lock_hash, claim_smt_root)?;
-            claim_smt
-                .update_all(claim_update_leaves.clone())
-                .expect("claim SMT update leave error");
-            claim_smt.save_root_and_leaves(previous_leaves)?;
-            claim_smt.commit()?;
-            {
-                let mut set = claim_lock.lock();
-                set.remove(&claim_lock_hash);
-            }
-            claim_cond.notify_all();
-            break;
-        } else {
-            let mut set = claim_lock.lock();
+    {
+        let mut set = claim_lock.lock();
+        while !set.insert(claim_lock_hash) {
             claim_cond.wait(&mut set);
         }
     }
+    let unlock = || {
+        let mut set = claim_lock.lock();
+        set.remove(&claim_lock_hash);
+        claim_cond.notify_all();
+    };
+    let err_handle = |err| {
+        unlock();
+        err
+    };
+    claim_smt =
+        generate_history_smt(claim_smt, claim_lock_hash, claim_smt_root).map_err(err_handle)?;
+    claim_smt
+        .update_all(claim_update_leaves.clone())
+        .map_err(|e| {
+            unlock();
+            Error::SMTError(e.to_string())
+        })?;
+    claim_smt
+        .save_root_and_leaves(previous_leaves)
+        .map_err(err_handle)?;
+    claim_smt.commit().map_err(err_handle)?;
+    unlock();
 
-    let withdrawal_smt_root = get_cota_smt_root(&claim_update_req.withdrawal_lock_script).await?;
     let transaction = &StoreTransaction::new(db.transaction());
     let mut withdrawal_smt = init_smt(transaction, withdraw_lock_hash)?;
     // Add lock to withdraw smt
     let &(ref withdraw_lock, ref withdraw_cond) = &*Arc::clone(&SMT_LOCK);
-    loop {
-        let withdraw_no_pending = {
-            let mut set = withdraw_lock.lock();
-            set.insert(withdraw_lock_hash)
-        };
-        if withdraw_no_pending {
-            withdrawal_smt =
-                generate_history_smt(withdrawal_smt, withdraw_lock_hash, withdrawal_smt_root)?;
-            withdrawal_smt.save_root_and_leaves(vec![])?;
-            withdrawal_smt.commit()?;
-            {
-                let mut set = withdraw_lock.lock();
-                set.remove(&withdraw_lock_hash);
-            }
-            withdraw_cond.notify_all();
-            break;
-        } else {
-            let mut set = withdraw_lock.lock();
+    {
+        let mut set = withdraw_lock.lock();
+        while !set.insert(withdraw_lock_hash) {
             withdraw_cond.wait(&mut set);
         }
     }
+    let unlock = || {
+        let mut set = withdraw_lock.lock();
+        set.remove(&withdraw_lock_hash);
+        withdraw_cond.notify_all();
+    };
+    let err_handle = |err| {
+        unlock();
+        err
+    };
+    withdrawal_smt = generate_history_smt(withdrawal_smt, withdraw_lock_hash, withdrawal_smt_root)
+        .map_err(err_handle)?;
+    withdrawal_smt
+        .save_root_and_leaves(vec![])
+        .map_err(err_handle)?;
+    withdrawal_smt.commit().map_err(err_handle)?;
+    unlock();
 
     let claim_update_merkle_proof = claim_smt
         .merkle_proof(claim_update_leaves.iter().map(|leave| leave.0).collect())

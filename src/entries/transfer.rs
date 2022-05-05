@@ -124,62 +124,68 @@ pub async fn generate_transfer_smt(
     );
 
     let transfer_smt_root = get_cota_smt_root(&transfer_req.lock_script).await?;
+    let withdrawal_smt_root = get_cota_smt_root(&transfer_req.withdrawal_lock_script).await?;
+
     let transaction = &StoreTransaction::new(db.transaction());
     let transfer_lock_hash = blake2b_256(&transfer_req.lock_script);
     let mut transfer_smt = init_smt(transaction, transfer_lock_hash)?;
     // Add lock to transfer smt
     let &(ref transfer_lock, ref transfer_cond) = &*Arc::clone(&SMT_LOCK);
-    loop {
-        let transfer_no_pending = {
-            let mut set = transfer_lock.lock();
-            set.insert(transfer_lock_hash)
-        };
-        if transfer_no_pending {
-            transfer_smt =
-                generate_history_smt(transfer_smt, transfer_lock_hash, transfer_smt_root)?;
-            transfer_smt
-                .update_all(transfer_update_leaves.clone())
-                .expect("transfer SMT update leave error");
-            transfer_smt.save_root_and_leaves(previous_leaves)?;
-            transfer_smt.commit()?;
-            {
-                let mut set = transfer_lock.lock();
-                set.remove(&transfer_lock_hash);
-            }
-            transfer_cond.notify_all();
-            break;
-        } else {
-            let mut set = transfer_lock.lock();
+    {
+        let mut set = transfer_lock.lock();
+        while !set.insert(transfer_lock_hash) {
             transfer_cond.wait(&mut set);
         }
     }
+    let unlock = || {
+        let mut set = transfer_lock.lock();
+        set.remove(&transfer_lock_hash);
+        transfer_cond.notify_all();
+    };
+    let err_handle = |err| {
+        unlock();
+        err
+    };
+    transfer_smt = generate_history_smt(transfer_smt, transfer_lock_hash, transfer_smt_root)
+        .map_err(err_handle)?;
+    transfer_smt
+        .update_all(transfer_update_leaves.clone())
+        .map_err(|e| {
+            unlock();
+            Error::SMTError(e.to_string())
+        })?;
+    transfer_smt
+        .save_root_and_leaves(previous_leaves)
+        .map_err(err_handle)?;
+    transfer_smt.commit().map_err(err_handle)?;
+    unlock();
 
-    let withdrawal_smt_root = get_cota_smt_root(&transfer_req.withdrawal_lock_script).await?;
     let transaction = &StoreTransaction::new(db.transaction());
     let mut withdrawal_smt = init_smt(transaction, withdraw_lock_hash)?;
     // Add lock to withdraw smt
     let &(ref withdraw_lock, ref withdraw_cond) = &*Arc::clone(&SMT_LOCK);
-    loop {
-        let withdraw_no_pending = {
-            let mut set = withdraw_lock.lock();
-            set.insert(withdraw_lock_hash)
-        };
-        if withdraw_no_pending {
-            withdrawal_smt =
-                generate_history_smt(withdrawal_smt, withdraw_lock_hash, withdrawal_smt_root)?;
-            withdrawal_smt.save_root_and_leaves(vec![])?;
-            withdrawal_smt.commit()?;
-            {
-                let mut set = withdraw_lock.lock();
-                set.remove(&withdraw_lock_hash);
-            }
-            withdraw_cond.notify_all();
-            break;
-        } else {
-            let mut set = withdraw_lock.lock();
+    {
+        let mut set = withdraw_lock.lock();
+        while !set.insert(withdraw_lock_hash) {
             withdraw_cond.wait(&mut set);
         }
     }
+    let unlock = || {
+        let mut set = withdraw_lock.lock();
+        set.remove(&withdraw_lock_hash);
+        withdraw_cond.notify_all();
+    };
+    let err_handle = |err| {
+        unlock();
+        err
+    };
+    withdrawal_smt = generate_history_smt(withdrawal_smt, withdraw_lock_hash, withdrawal_smt_root)
+        .map_err(err_handle)?;
+    withdrawal_smt
+        .save_root_and_leaves(vec![])
+        .map_err(err_handle)?;
+    withdrawal_smt.commit().map_err(err_handle)?;
+    unlock();
 
     let start_time = Local::now().timestamp_millis();
     let transfer_merkle_proof = transfer_smt

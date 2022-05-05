@@ -60,28 +60,30 @@ pub async fn generate_update_smt(
     let mut smt = init_smt(transaction, lock_hash)?;
     // Add lock to smt
     let &(ref lock, ref cond) = &*Arc::clone(&SMT_LOCK);
-    loop {
-        let no_pending = {
-            let mut set = lock.lock();
-            set.insert(lock_hash)
-        };
-        if no_pending {
-            smt = generate_history_smt(smt, lock_hash, smt_root)?;
-            smt.update_all(update_leaves.clone())
-                .expect("hold SMT update leave error");
-            smt.save_root_and_leaves(previous_leaves)?;
-            smt.commit()?;
-            {
-                let mut set = lock.lock();
-                set.remove(&lock_hash);
-            }
-            cond.notify_all();
-            break;
-        } else {
-            let mut set = lock.lock();
+    {
+        let mut set = lock.lock();
+        while !set.insert(lock_hash) {
             cond.wait(&mut set);
         }
     }
+    let unlock = || {
+        let mut set = lock.lock();
+        set.remove(&lock_hash);
+        cond.notify_all();
+    };
+    let err_handle = |err| {
+        unlock();
+        err
+    };
+    smt = generate_history_smt(smt, lock_hash, smt_root).map_err(err_handle)?;
+    smt.update_all(update_leaves.clone()).map_err(|e| {
+        unlock();
+        Error::SMTError(e.to_string())
+    })?;
+    smt.save_root_and_leaves(previous_leaves)
+        .map_err(err_handle)?;
+    smt.commit().map_err(err_handle)?;
+    unlock();
 
     let update_merkle_proof = smt
         .merkle_proof(update_leaves.iter().map(|leave| leave.0).collect())
