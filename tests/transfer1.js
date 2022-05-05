@@ -25,7 +25,7 @@ const run = async () => {
   const transfers = [
     {
       cotaId: '0x096b5d210b3b32fab6f8fbd937e21b06b5d91e86',
-      tokenIndex: "0x00000018",
+      tokenIndex: "0x0000001a",
       toLockScript: serializeScript(addressToScript(RECEIVER2_ADDRESS)),
     },
   ]

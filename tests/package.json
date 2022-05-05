@@ -6,7 +6,7 @@
   "license": "MIT",
 
   "dependencies": {
-    "@nervina-labs/cota-sdk": "0.4.4",
+    "@nervina-labs/cota-sdk": "0.4.7",
     "@nervosnetwork/ckb-sdk-utils": "^0.102.3"
   }
 }
