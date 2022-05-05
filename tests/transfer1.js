@@ -6,9 +6,11 @@ const RECEIVER1_ADDRESS = 'ckt1qyqrq7vdeh5a8rnp4n2tuuu08p5uw8a5qdtqrpvdsg'
 const ISSUER_ADDRESS = 'ckt1qyq0scej4vn0uka238m63azcel7cmcme7f2sxj5ska'
 const RECEIVER2_ADDRESS = 'ckt1qyqz8vxeyrv4nur4j27ktp34fmwnua9wuyqqggd748'
 
-const secp256k1CellDep = async (ckb) => {
-  const secp256k1Dep = (await ckb.loadDeps()).secp256k1Dep
-  return { outPoint: secp256k1Dep.outPoint, depType: 'depGroup' }
+const secp256k1CellDep = () => {
+  return { outPoint: {
+      txHash: "0xf8de3bb47d055cdf460d93a2a6e1b05f7432f9777c8c474abf4eec1d4aee5d37",
+      index: "0x0",
+    }, depType: 'depGroup' }
 }
 
 const run = async () => {
@@ -23,13 +25,13 @@ const run = async () => {
   const transfers = [
     {
       cotaId: '0x096b5d210b3b32fab6f8fbd937e21b06b5d91e86',
-      tokenIndex: "0x00000014",
+      tokenIndex: "0x00000018",
       toLockScript: serializeScript(addressToScript(RECEIVER2_ADDRESS)),
     },
   ]
   let rawTx = await generateTransferCotaTx(service, cotaLock, withdrawLock, transfers)
 
-  const secp256k1Dep = await secp256k1CellDep(ckb)
+  const secp256k1Dep = await secp256k1CellDep()
   rawTx.cellDeps.push(secp256k1Dep)
 
   const signedTx = ckb.signTransaction(RECEIVER1_PRIVATE_KEY)(rawTx)
