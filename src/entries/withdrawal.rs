@@ -1,6 +1,6 @@
 use crate::entries::helper::{
     generate_empty_value, generate_hold_key, generate_hold_value, generate_withdrawal_key_v1,
-    generate_withdrawal_value_v1, lock_err_handle, smt_lock, smt_unlock,
+    generate_withdrawal_value_v1, with_lock,
 };
 use crate::entries::smt::{generate_history_smt, init_smt};
 use crate::indexer::index::get_cota_smt_root;
@@ -77,17 +77,13 @@ pub async fn generate_withdrawal_smt(
     let lock_hash = blake2b_256(&withdrawal_req.lock_script);
     let mut smt = init_smt(transaction, lock_hash)?;
     // Add lock to smt
-    smt_lock(lock_hash);
-    let err_handle = |err| lock_err_handle(&lock_hash, err);
-    smt = generate_history_smt(smt, lock_hash, smt_root).map_err(err_handle)?;
-    smt.update_all(update_leaves.clone()).map_err(|e| {
-        smt_unlock(&lock_hash);
-        Error::SMTError(e.to_string())
+    with_lock(lock_hash, || {
+        generate_history_smt(&mut smt, lock_hash, smt_root)?;
+        smt.update_all(update_leaves.clone())
+            .map_err(|e| Error::SMTError(e.to_string()))?;
+        smt.save_root_and_leaves(previous_leaves.clone())?;
+        smt.commit()
     })?;
-    smt.save_root_and_leaves(previous_leaves)
-        .map_err(err_handle)?;
-    smt.commit().map_err(err_handle)?;
-    smt_unlock(&lock_hash);
 
     let withdrawal_merkle_proof = smt
         .merkle_proof(update_leaves.iter().map(|leave| leave.0).collect())

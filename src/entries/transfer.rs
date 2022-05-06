@@ -1,6 +1,6 @@
 use crate::entries::helper::{
     generate_claim_key, generate_claim_value, generate_withdrawal_key, generate_withdrawal_key_v1,
-    generate_withdrawal_value, generate_withdrawal_value_v1, lock_err_handle, smt_lock, smt_unlock,
+    generate_withdrawal_value, generate_withdrawal_value_v1, with_lock,
 };
 use crate::entries::smt::{generate_history_smt, init_smt};
 use crate::indexer::index::get_cota_smt_root;
@@ -128,34 +128,23 @@ pub async fn generate_transfer_smt(
     let transfer_lock_hash = blake2b_256(&transfer_req.lock_script);
     let mut transfer_smt = init_smt(transaction, transfer_lock_hash)?;
     // Add lock to transfer smt
-    smt_lock(transfer_lock_hash);
-    let err_handle = |err| lock_err_handle(&transfer_lock_hash, err);
-    transfer_smt = generate_history_smt(transfer_smt, transfer_lock_hash, transfer_smt_root)
-        .map_err(err_handle)?;
-    transfer_smt
-        .update_all(transfer_update_leaves.clone())
-        .map_err(|e| {
-            smt_unlock(&transfer_lock_hash);
-            Error::SMTError(e.to_string())
-        })?;
-    transfer_smt
-        .save_root_and_leaves(previous_leaves)
-        .map_err(err_handle)?;
-    transfer_smt.commit().map_err(err_handle)?;
-    smt_unlock(&transfer_lock_hash);
+    with_lock(transfer_lock_hash, || {
+        generate_history_smt(&mut transfer_smt, transfer_lock_hash, transfer_smt_root)?;
+        transfer_smt
+            .update_all(transfer_update_leaves.clone())
+            .map_err(|e| Error::SMTError(e.to_string()))?;
+        transfer_smt.save_root_and_leaves(previous_leaves.clone())?;
+        transfer_smt.commit()
+    })?;
 
     let transaction = &StoreTransaction::new(db.transaction());
     let mut withdrawal_smt = init_smt(transaction, withdraw_lock_hash)?;
     // Add lock to withdraw smt
-    smt_lock(withdraw_lock_hash);
-    let err_handle = |err| lock_err_handle(&withdraw_lock_hash, err);
-    withdrawal_smt = generate_history_smt(withdrawal_smt, withdraw_lock_hash, withdrawal_smt_root)
-        .map_err(err_handle)?;
-    withdrawal_smt
-        .save_root_and_leaves(vec![])
-        .map_err(err_handle)?;
-    withdrawal_smt.commit().map_err(err_handle)?;
-    smt_unlock(&withdraw_lock_hash);
+    with_lock(withdraw_lock_hash, || {
+        generate_history_smt(&mut withdrawal_smt, withdraw_lock_hash, withdrawal_smt_root)?;
+        withdrawal_smt.save_root_and_leaves(vec![])?;
+        withdrawal_smt.commit()
+    })?;
 
     let start_time = Local::now().timestamp_millis();
     let transfer_merkle_proof = transfer_smt

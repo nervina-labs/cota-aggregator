@@ -182,22 +182,27 @@ pub fn generate_cota_index(cota_id: [u8; 20], token_index: [u8; 4]) -> Vec<u8> {
     cota_id_index
 }
 
-pub fn smt_lock(lock_hash: [u8; 32]) {
+pub fn with_lock<F>(lock_hash: [u8; 32], mut operator: F) -> Result<(), Error>
+where
+    F: FnMut() -> Result<(), Error>,
+{
     let &(ref lock, ref cond) = &*Arc::clone(&SMT_LOCK);
-    let mut set = lock.lock();
-    while !set.insert(lock_hash) {
-        cond.wait(&mut set);
+    {
+        let mut set = lock.lock();
+        while !set.insert(lock_hash) {
+            cond.wait(&mut set);
+        }
     }
-}
-
-pub fn smt_unlock(lock_hash: &[u8]) {
-    let &(ref lock, ref cond) = &*Arc::clone(&SMT_LOCK);
-    let mut set = lock.lock();
-    set.remove(lock_hash);
-    cond.notify_all();
-}
-
-pub fn lock_err_handle(lock_hash: &[u8], err: Error) -> Error {
-    smt_unlock(lock_hash);
-    err
+    let unlock = || {
+        let mut set = lock.lock();
+        set.remove(&lock_hash);
+        cond.notify_all();
+    };
+    let err_handle = |err| {
+        unlock();
+        err
+    };
+    operator().map_err(err_handle)?;
+    unlock();
+    Ok(())
 }

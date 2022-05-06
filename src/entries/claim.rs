@@ -1,7 +1,7 @@
 use crate::entries::helper::{
     generate_claim_key, generate_claim_value, generate_hold_key, generate_hold_value,
     generate_withdrawal_key, generate_withdrawal_key_v1, generate_withdrawal_value,
-    generate_withdrawal_value_v1, lock_err_handle, smt_lock, smt_unlock,
+    generate_withdrawal_value_v1, with_lock,
 };
 use crate::entries::smt::{generate_history_smt, init_smt};
 use crate::indexer::index::get_cota_smt_root;
@@ -111,34 +111,23 @@ pub async fn generate_claim_smt(
     let mut claim_smt = init_smt(transaction, claim_lock_hash)?;
 
     // Add lock to claim smt
-    smt_lock(claim_lock_hash);
-    let err_handle = |err| lock_err_handle(&claim_lock_hash, err);
-    claim_smt =
-        generate_history_smt(claim_smt, claim_lock_hash, claim_smt_root).map_err(err_handle)?;
-    claim_smt
-        .update_all(claim_update_leaves.clone())
-        .map_err(|e| {
-            smt_unlock(&claim_lock_hash);
-            Error::SMTError(e.to_string())
-        })?;
-    claim_smt
-        .save_root_and_leaves(previous_leaves)
-        .map_err(err_handle)?;
-    claim_smt.commit().map_err(err_handle)?;
-    smt_unlock(&claim_lock_hash);
+    with_lock(claim_lock_hash, || {
+        generate_history_smt(&mut claim_smt, claim_lock_hash, claim_smt_root)?;
+        claim_smt
+            .update_all(claim_update_leaves.clone())
+            .map_err(|e| Error::SMTError(e.to_string()))?;
+        claim_smt.save_root_and_leaves(previous_leaves.clone())?;
+        claim_smt.commit()
+    })?;
 
     let transaction = &StoreTransaction::new(db.transaction());
     let mut withdrawal_smt = init_smt(transaction, withdraw_lock_hash)?;
     // Add lock to withdraw smt
-    smt_lock(withdraw_lock_hash);
-    let err_handle = |err| lock_err_handle(&withdraw_lock_hash, err);
-    withdrawal_smt = generate_history_smt(withdrawal_smt, withdraw_lock_hash, withdrawal_smt_root)
-        .map_err(err_handle)?;
-    withdrawal_smt
-        .save_root_and_leaves(vec![])
-        .map_err(err_handle)?;
-    withdrawal_smt.commit().map_err(err_handle)?;
-    smt_unlock(&withdraw_lock_hash);
+    with_lock(withdraw_lock_hash, || {
+        generate_history_smt(&mut withdrawal_smt, withdraw_lock_hash, withdrawal_smt_root)?;
+        withdrawal_smt.save_root_and_leaves(vec![])?;
+        withdrawal_smt.commit()
+    })?;
 
     let claim_merkle_proof = claim_smt
         .merkle_proof(claim_update_leaves.iter().map(|leave| leave.0).collect())
