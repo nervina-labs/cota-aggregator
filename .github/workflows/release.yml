@@ -35,11 +35,11 @@ jobs:
         if: matrix.os == 'macos-12'
 
       - name: Install macos dependencies (diesel_cli)
-        run: RUSTFLAGS='-L/opt/homebrew/opt/mysql-client/lib' cargo install diesel_cli --no-default-features --features mysql
+        run: RUSTFLAGS='-L/usr/local/opt/mysql-client/lib' cargo install diesel_cli --no-default-features --features mysql
         if: matrix.os == 'macos-12'
 
       - name: Build macos
-        run: RUSTFLAGS='-L/opt/homebrew/opt/mysql-client/lib' cargo build --verbose --release
+        run: RUSTFLAGS='-L/usr/local/opt/mysql-client/lib' cargo build --verbose --release
         if: matrix.os == 'macos-12'
 
       - name: Install linux dependencies (libmysqlclient)
@@ -63,7 +63,7 @@ jobs:
         if: matrix.os == 'macos-12'
 
       - name: Create archive for MacOS
-        run: 7z a -tzip ./artifacts/${{ env.RELEASE_BIN }}-mac.zip ./target/release/${{ env.RELEASE_BIN }} ${{ env.RELEASE_ADDS }}
+        run: 7z a -tzip ./artifacts/${{ env.RELEASE_BIN }}-mac-x86_64.zip ./target/release/${{ env.RELEASE_BIN }} ${{ env.RELEASE_ADDS }}
         if: matrix.os == 'macos-12'
 
       - name: Upload Release Asset
@@ -74,4 +74,4 @@ jobs:
           name: ${{ env.RELEASE_BIN }} ${{ env.RELEASE_VERSION }}
           files: |
             ./artifacts/${{ env.RELEASE_BIN }}-linux-x86_64.tar.gz
-            ./artifacts/${{ env.RELEASE_BIN }}-mac.zip
+            ./artifacts/${{ env.RELEASE_BIN }}-mac-x86_64.zip
