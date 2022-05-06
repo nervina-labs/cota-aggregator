@@ -1,10 +1,9 @@
 use crate::entries::helper::{
     generate_claim_key, generate_claim_value, generate_hold_key, generate_hold_value,
     generate_withdrawal_key, generate_withdrawal_key_v1, generate_withdrawal_value,
-    generate_withdrawal_value_v1,
+    generate_withdrawal_value_v1, with_lock,
 };
-use crate::entries::smt::generate_history_smt;
-use crate::entries::SMT_LOCK;
+use crate::entries::smt::{generate_history_smt, init_smt};
 use crate::indexer::index::get_cota_smt_root;
 use crate::models::withdrawal::{get_withdrawal_cota_by_lock_hash, WithdrawDb};
 use crate::request::claim::ClaimUpdateReq;
@@ -32,11 +31,9 @@ pub async fn generate_claim_update_smt(
             .map(|nft| (nft.cota_id, nft.token_index))
             .collect(),
     );
-    let sender_withdrawals = get_withdrawal_cota_by_lock_hash(
-        blake2b_256(claim_update_req.withdrawal_lock_script.as_slice()),
-        cota_id_and_token_index_pairs,
-    )?
-    .0;
+    let withdraw_lock_hash = blake2b_256(&claim_update_req.withdrawal_lock_script);
+    let sender_withdrawals =
+        get_withdrawal_cota_by_lock_hash(withdraw_lock_hash, cota_id_and_token_index_pairs)?.0;
     if sender_withdrawals.is_empty() || sender_withdrawals.len() != nfts_len {
         return Err(Error::CotaIdAndTokenIndexHasNotWithdrawn);
     }
@@ -120,32 +117,30 @@ pub async fn generate_claim_update_smt(
         previous_leaves.push((key, H256::zero()));
     }
 
-    let claim_smt_root = get_cota_smt_root(claim_update_req.lock_script.as_slice()).await?;
-    let withdrawal_smt_root =
-        get_cota_smt_root(claim_update_req.withdrawal_lock_script.as_slice()).await?;
+    let claim_smt_root = get_cota_smt_root(&claim_update_req.lock_script).await?;
+    let withdrawal_smt_root = get_cota_smt_root(&claim_update_req.withdrawal_lock_script).await?;
+
+    let claim_lock_hash = blake2b_256(&claim_update_req.lock_script);
+    let transaction = &StoreTransaction::new(db.transaction());
+    let mut claim_smt = init_smt(transaction, claim_lock_hash)?;
+    // Add lock to smt
+    with_lock(claim_lock_hash, || {
+        generate_history_smt(&mut claim_smt, claim_lock_hash, claim_smt_root)?;
+        claim_smt
+            .update_all(claim_update_leaves.clone())
+            .map_err(|e| Error::SMTError(e.to_string()))?;
+        claim_smt.save_root_and_leaves(previous_leaves.clone())?;
+        claim_smt.commit()
+    })?;
 
     let transaction = &StoreTransaction::new(db.transaction());
-    let mut claim_smt = generate_history_smt(
-        transaction,
-        claim_update_req.lock_script.as_slice(),
-        claim_smt_root,
-    )?;
-    claim_smt
-        .update_all(claim_update_leaves.clone())
-        .expect("claim SMT update leave error");
-    claim_smt.save_root_and_leaves(previous_leaves)?;
-    transaction.commit()?;
-
-    let lock = SMT_LOCK.lock();
-    let transaction = &StoreTransaction::new(db.transaction());
-    let withdrawal_smt = generate_history_smt(
-        transaction,
-        claim_update_req.withdrawal_lock_script.as_slice(),
-        withdrawal_smt_root,
-    )?;
-    withdrawal_smt.save_root_and_leaves(vec![])?;
-    transaction.commit()?;
-    drop(lock);
+    let mut withdrawal_smt = init_smt(transaction, withdraw_lock_hash)?;
+    // Add lock to withdraw smt
+    with_lock(withdraw_lock_hash, || {
+        generate_history_smt(&mut withdrawal_smt, withdraw_lock_hash, withdrawal_smt_root)?;
+        withdrawal_smt.save_root_and_leaves(vec![])?;
+        withdrawal_smt.commit()
+    })?;
 
     let claim_update_merkle_proof = claim_smt
         .merkle_proof(claim_update_leaves.iter().map(|leave| leave.0).collect())

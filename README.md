@@ -65,6 +65,8 @@ https://cota.nervina.dev/aggregator
 
 ### generate_define_cota_smt
 
+Generate smt data(`smt_entry` for `witness_args.input_type` and `smt_root` for cell data) for CoTA define transaction
+
 ```shell
 echo '{
     "id":2,
@@ -96,6 +98,9 @@ http://127.0.0.1:3030
 ```
 
 ### generate_mint_cota_smt
+
+Generate smt data(`smt_entry` for `witness_args.input_type` and `smt_root` for cell data) for CoTA mint transaction
+
 ```shell
 echo '{
     "id":2,
@@ -139,6 +144,9 @@ http://127.0.0.1:3030
 ```
 
 ### generate_transfer_cota_smt
+
+Generate smt data(`smt_entry` for `witness_args.input_type` and `smt_root` for cell data) for CoTA transfer transaction
+
 ```shell
 echo '{
     "id":2,
@@ -175,6 +183,8 @@ http://127.0.0.1:3030
 ```
 
 ### get_hold_cota_nft
+
+Get CoTA NFT list held(not include withdrew) by someone
 
 - Without `cota_id` parameter
 
@@ -288,6 +298,8 @@ http://127.0.0.1:3030
 ```
 
 ### get_withdrawal_cota_nft
+
+Get CoTA NFT list withdrew(not include held) by someone
 
 - Without `cota_id` parameter
 
@@ -431,6 +443,9 @@ http://127.0.0.1:3030
 ```
 
 ### get_mint_cota_nft
+
+Get CoTA NFT list minted by issuer
+
 ```shell
 echo '{
     "id":2,
@@ -495,6 +510,8 @@ http://127.0.0.1:3030
 
 ### is_claimed
 
+Check whether an NFT is claimed
+
 ```shell
  echo '{
     "id":2,
@@ -524,6 +541,8 @@ http://127.0.0.1:3030
 
 ### get_cota_nft_sender
 
+Get the sender lock hash of the CoTA NFT
+
 ```shell
 echo '{
     "id":2,
@@ -552,6 +571,8 @@ http://127.0.0.1:3030
 ```
 
 ### get_define_info
+
+Get define CoTA NFT information by cota_id
 
 ```shell
 echo '{
@@ -590,6 +611,8 @@ http://127.0.0.1:3030
 
 ### get_issuer_info
 
+Get issuer information
+
 ```shell
 echo '{
     "id":2,
@@ -618,6 +641,8 @@ http://127.0.0.1:3030
 ```
 
 ### parse_witness
+
+Parse CoTA witness
 
 ```shell
 echo '{
@@ -677,6 +702,8 @@ http://127.0.0.1:3030
 ```
 
 ### get_cota_count
+
+Get the count of NFTs held and withdrew by someone
 
 ```shell
 echo '{

@@ -63,7 +63,7 @@ pub fn get_script_id_by_lock_script(lock_script: &[u8]) -> Result<Option<i64>, E
     let conn = &POOL.clone().get().expect("Mysql pool connection error");
     let lock = LockScript::from_slice(lock_script).unwrap();
 
-    let lock_code_hash = hex::encode(lock.code_hash().as_slice().to_vec());
+    let lock_code_hash = hex::encode(lock.code_hash().as_slice());
     let lock_code_hash_crc = generate_crc(lock_code_hash.as_bytes());
 
     let lock_args = hex::encode(lock.args().raw_data().to_vec());

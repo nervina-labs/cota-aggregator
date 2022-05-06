@@ -1,0 +1,12 @@
+{
+  "name": "aggregator-tests",
+  "version": "1.0.0",
+  "type": "commonjs",
+  "main": "index.js",
+  "license": "MIT",
+
+  "dependencies": {
+    "@nervina-labs/cota-sdk": "0.4.7",
+    "@nervosnetwork/ckb-sdk-utils": "^0.102.3"
+  }
+}

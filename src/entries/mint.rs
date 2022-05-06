@@ -1,6 +1,6 @@
-use crate::entries::helper::{generate_define_key, generate_define_value};
+use crate::entries::helper::{generate_define_key, generate_define_value, with_lock};
 use crate::entries::helper::{generate_withdrawal_key_v1, generate_withdrawal_value_v1};
-use crate::entries::smt::generate_history_smt;
+use crate::entries::smt::{generate_history_smt, init_smt};
 use crate::indexer::index::get_cota_smt_root;
 use crate::models::define::{get_define_cota_by_lock_hash_and_cota_id, DefineDb};
 use crate::request::mint::{MintReq, MintWithdrawal};
@@ -39,10 +39,6 @@ pub async fn generate_mint_smt(
     let mut withdrawal_keys: Vec<WithdrawalCotaNFTKeyV1> = Vec::new();
     let mut withdrawal_values: Vec<WithdrawalCotaNFTValueV1> = Vec::new();
 
-    let transaction = &StoreTransaction::new(db.transaction());
-    let smt_root = get_cota_smt_root(mint_req.lock_script.as_slice()).await?;
-    let mut smt = generate_history_smt(transaction, mint_req.lock_script.as_slice(), smt_root)?;
-
     let mut update_leaves: Vec<(H256, H256)> = Vec::with_capacity(withdrawals_len + 1);
     let mut previous_leaves: Vec<(H256, H256)> = Vec::with_capacity(withdrawals_len + 1);
     let DefineDb {
@@ -65,7 +61,6 @@ pub async fn generate_mint_smt(
 
     previous_leaves.push((key, old_value));
     update_leaves.push((key, value));
-    smt.update(key, value).expect("mint SMT update leave error");
 
     let mut action_vec: Vec<u8> = Vec::new();
     if withdrawals_len == 1 {
@@ -94,12 +89,21 @@ pub async fn generate_mint_smt(
 
         previous_leaves.push((key, H256::zero()));
         update_leaves.push((key, value));
-        smt.update(key, value).expect("mint SMT update leave error");
     }
     diff_time(start_time, "Generate mint smt object with update leaves");
 
-    smt.save_root_and_leaves(previous_leaves)?;
-    transaction.commit()?;
+    let smt_root = get_cota_smt_root(&mint_req.lock_script).await?;
+    let lock_hash = blake2b_256(&mint_req.lock_script);
+    let transaction = &StoreTransaction::new(db.transaction());
+    let mut smt = init_smt(transaction, lock_hash)?;
+    // Add lock to smt
+    with_lock(lock_hash, || {
+        generate_history_smt(&mut smt, lock_hash, smt_root)?;
+        smt.update_all(update_leaves.clone())
+            .map_err(|e| Error::SMTError(e.to_string()))?;
+        smt.save_root_and_leaves(previous_leaves.clone())?;
+        smt.commit()
+    })?;
 
     let start_time = Local::now().timestamp_millis();
     let mint_merkle_proof = smt

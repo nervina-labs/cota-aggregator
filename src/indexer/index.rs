@@ -11,7 +11,7 @@ const TESTNET_COTA_CODE_HASH: &str =
 const MAINNET_COTA_CODE_HASH: &str =
     "0x1122a4fb54697cf2e6e3a96c9d80fd398a936559b90954c6e88eb7ba0cf652df";
 
-pub async fn get_cota_smt_root(lock_script: &[u8]) -> Result<Option<Vec<u8>>, Error> {
+pub async fn get_cota_smt_root(lock_script: &[u8]) -> Result<Option<[u8; 32]>, Error> {
     let ckb_indexer_url =
         env::var("CKB_INDEXER").map_err(|_e| Error::Other("CKB_INDEXER must be set".to_owned()))?;
 
@@ -49,7 +49,11 @@ pub async fn get_cota_smt_root(lock_script: &[u8]) -> Result<Option<Vec<u8>>, Er
     let cell_data = result.objects.first().unwrap().output_data.as_bytes();
     match cell_data.len() {
         1 => Ok(None),
-        33 => Ok(Some(cell_data[1..].to_vec())),
+        33 => {
+            let mut ret = [0u8; 32];
+            ret.copy_from_slice(&cell_data[1..]);
+            Ok(Some(ret))
+        }
         _ => Err(Error::CKBIndexerError(
             "CoTA cell data length error".to_owned(),
         )),

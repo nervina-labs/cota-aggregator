@@ -14,6 +14,7 @@ pub type CotaSMT<'a> = SparseMerkleTree<Blake2bHasher, H256, SMTStore<'a>>;
 
 pub trait RootSaver {
     fn save_root_and_leaves(&self, leaves: Vec<(H256, H256)>) -> Result<(), Error>;
+    fn commit(&self) -> Result<(), Error>;
 }
 
 impl<'a> RootSaver for CotaSMT<'a> {
@@ -26,5 +27,9 @@ impl<'a> RootSaver for CotaSMT<'a> {
         }
         debug!("Save latest smt root: {:?} and leaves", self.root());
         Ok(())
+    }
+
+    fn commit(&self) -> Result<(), Error> {
+        self.store().commit()
     }
 }
