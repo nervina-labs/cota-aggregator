@@ -1,8 +1,8 @@
 use crate::entries::helper::{
     generate_empty_value, generate_hold_key, generate_hold_value, generate_withdrawal_key_v1,
-    generate_withdrawal_value_v1,
+    generate_withdrawal_value_v1, with_lock,
 };
-use crate::entries::smt::generate_history_smt;
+use crate::entries::smt::{generate_history_smt, init_smt};
 use crate::indexer::index::get_cota_smt_root;
 use crate::models::hold::get_hold_cota_by_lock_hash;
 use crate::request::withdrawal::WithdrawalReq;
@@ -20,11 +20,6 @@ pub async fn generate_withdrawal_smt(
     db: &RocksDB,
     withdrawal_req: WithdrawalReq,
 ) -> Result<(H256, WithdrawalCotaNFTV1Entries), Error> {
-    let transaction = &StoreTransaction::new(db.transaction());
-    let smt_root = get_cota_smt_root(withdrawal_req.lock_script.as_slice()).await?;
-    let mut smt =
-        generate_history_smt(transaction, withdrawal_req.lock_script.as_slice(), smt_root)?;
-
     let withdrawals = withdrawal_req.withdrawals;
     if withdrawals.is_empty() {
         return Err(Error::RequestParamNotFound("withdrawals".to_string()));
@@ -59,9 +54,6 @@ pub async fn generate_withdrawal_smt(
         update_leaves.push((key, value));
         previous_leaves.push((key, old_value));
 
-        smt.update(key, value)
-            .expect("withdraw SMT update leave error");
-
         let (withdrawal_key, key) = generate_withdrawal_key_v1(
             hold_db.cota_id,
             hold_db.token_index,
@@ -78,12 +70,20 @@ pub async fn generate_withdrawal_smt(
         withdrawal_values.push(withdrawal_value);
         update_leaves.push((key, value));
         previous_leaves.push((key, H256::zero()));
-        smt.update(key, value)
-            .expect("withdraw SMT update leave error");
     }
 
-    smt.save_root_and_leaves(previous_leaves)?;
-    transaction.commit()?;
+    let smt_root = get_cota_smt_root(&withdrawal_req.lock_script).await?;
+    let transaction = &StoreTransaction::new(db.transaction());
+    let lock_hash = blake2b_256(&withdrawal_req.lock_script);
+    let mut smt = init_smt(transaction, lock_hash)?;
+    // Add lock to smt
+    with_lock(lock_hash, || {
+        generate_history_smt(&mut smt, lock_hash, smt_root)?;
+        smt.update_all(update_leaves.clone())
+            .map_err(|e| Error::SMTError(e.to_string()))?;
+        smt.save_root_and_leaves(previous_leaves.clone())?;
+        smt.commit()
+    })?;
 
     let withdrawal_merkle_proof = smt
         .merkle_proof(update_leaves.iter().map(|leave| leave.0).collect())

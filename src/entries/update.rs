@@ -1,5 +1,5 @@
-use crate::entries::helper::{generate_hold_key, generate_hold_value};
-use crate::entries::smt::generate_history_smt;
+use crate::entries::helper::{generate_hold_key, generate_hold_value, with_lock};
+use crate::entries::smt::{generate_history_smt, init_smt};
 use crate::indexer::index::get_cota_smt_root;
 use crate::models::hold::get_hold_cota_by_lock_hash;
 use crate::request::update::UpdateReq;
@@ -17,10 +17,6 @@ pub async fn generate_update_smt(
     db: &RocksDB,
     update_req: UpdateReq,
 ) -> Result<(H256, UpdateCotaNFTEntries), Error> {
-    let transaction = &StoreTransaction::new(db.transaction());
-    let smt_root = get_cota_smt_root(update_req.lock_script.as_slice()).await?;
-    let mut smt = generate_history_smt(transaction, update_req.lock_script.as_slice(), smt_root)?;
-
     let nfts = update_req.nfts;
     if nfts.is_empty() {
         return Err(Error::RequestParamNotFound("nfts".to_string()));
@@ -31,7 +27,7 @@ pub async fn generate_update_smt(
             .collect(),
     );
     let db_holds = get_hold_cota_by_lock_hash(
-        blake2b_256(&update_req.lock_script.as_slice()),
+        blake2b_256(&update_req.lock_script),
         cota_id_and_token_index_pairs,
     )?
     .0;
@@ -54,11 +50,20 @@ pub async fn generate_update_smt(
         hold_values.push(hold_value);
         update_leaves.push((key, value));
         previous_leaves.push((key, old_value));
-        smt.update(key, value).expect("hold SMT update leave error");
     }
 
-    smt.save_root_and_leaves(previous_leaves)?;
-    transaction.commit()?;
+    let smt_root = get_cota_smt_root(&update_req.lock_script).await?;
+    let transaction = &StoreTransaction::new(db.transaction());
+    let lock_hash = blake2b_256(&update_req.lock_script);
+    let mut smt = init_smt(transaction, lock_hash)?;
+    // Add lock to smt
+    with_lock(lock_hash, || {
+        generate_history_smt(&mut smt, lock_hash, smt_root)?;
+        smt.update_all(update_leaves.clone())
+            .map_err(|e| Error::SMTError(e.to_string()))?;
+        smt.save_root_and_leaves(previous_leaves.clone())?;
+        smt.commit()
+    })?;
 
     let update_merkle_proof = smt
         .merkle_proof(update_leaves.iter().map(|leave| leave.0).collect())

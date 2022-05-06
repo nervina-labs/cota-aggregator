@@ -49,6 +49,10 @@ impl<'a> SMTStore<'a> {
         Ok(())
     }
 
+    pub fn commit(&self) -> Result<(), Error> {
+        self.store.commit()
+    }
+
     pub fn get_root(&self) -> Result<Option<H256>, SMTError> {
         match self.store.get(self.root_col, &self.lock_hash) {
             Some(slice) => {
