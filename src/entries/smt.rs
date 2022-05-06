@@ -49,7 +49,7 @@ pub fn init_smt<'a>(
 pub fn generate_history_smt<'a>(
     mut smt: CotaSMT<'a>,
     lock_hash: [u8; 32],
-    smt_root_opt: Option<Vec<u8>>,
+    smt_root_opt: Option<[u8; 32]>,
 ) -> Result<CotaSMT<'a>, Error> {
     let root = *smt.root();
     if root == H256::zero() {
