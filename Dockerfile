@@ -33,6 +33,7 @@ ENV MAX_POOL 20
 ENV THREADS 3
 ENV CKB_INDEXER http://localhost:8116
 ENV IS_MAINNET false
+ENV SENTRY_DSN https://key@sentry.io/1234
 
 EXPOSE 3030
 

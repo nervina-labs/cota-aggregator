@@ -38,6 +38,14 @@ fn main() {
     env_logger::Builder::from_default_env()
         .format_timestamp(Some(env_logger::fmt::TimestampPrecision::Millis))
         .init();
+
+    if let Ok(dsn) = env::var("SENTRY_DSN") {
+        let _guard = sentry::init((dsn, sentry::ClientOptions {
+            release: sentry::release_name!(),
+            ..Default::default()
+        }));
+    }
+
     let mut io = IoHandler::default();
     io.add_method("generate_define_cota_smt", |req| define_rpc(req, &DB));
     io.add_method("generate_mint_cota_smt", |req| mint_rpc(req, &DB));
