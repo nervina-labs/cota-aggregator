@@ -54,7 +54,7 @@ jobs:
         run: mkdir artifacts
 
       - name: Create archive for Linux
-        run: 7z a -ttar -so -an ./target/release/${{ env.RELEASE_BIN }} ${{ env.RELEASE_ADDS }} | 7z a -si ./artifacts/${{ env.RELEASE_BIN }}-linux-x86_64.tar.gz
+        run: 7z a -ttar -so -an ./target/release/${{ env.RELEASE_BIN }} | 7z a -si ./artifacts/${{ env.RELEASE_BIN }}-linux-x86_64.tar.gz
         if: matrix.os == 'ubuntu-20.04'
 
       - name: Install p7zip
@@ -63,7 +63,7 @@ jobs:
         if: matrix.os == 'macos-12'
 
       - name: Create archive for MacOS
-        run: 7z a -tzip ./artifacts/${{ env.RELEASE_BIN }}-mac-x86_64.zip ./target/release/${{ env.RELEASE_BIN }} ${{ env.RELEASE_ADDS }}
+        run: 7z a -tzip ./artifacts/${{ env.RELEASE_BIN }}-mac-x86_64.zip ./target/release/${{ env.RELEASE_BIN }}
         if: matrix.os == 'macos-12'
 
       - name: Upload Release Asset
