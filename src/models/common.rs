@@ -56,13 +56,13 @@ pub fn get_withdrawal_cota(
     }?;
     withdrawal_nfts = withdrawal_nfts
         .into_iter()
-        .take_while(|withdrawal| {
-            return !is_exist_in_claim(
+        .filter(|withdrawal| {
+            !is_exist_in_claim(
                 lock_hash,
                 withdrawal.cota_id,
                 withdrawal.token_index,
                 withdrawal.out_point,
-            );
+            )
         })
         .collect();
     let total = withdrawal_nfts.len() as i64;
@@ -135,13 +135,13 @@ pub fn get_owned_cota_count(lock_script: &[u8], cota_id: [u8; 20]) -> Result<(i6
     }?;
     let withdrawal_count = withdrawal_nfts
         .into_iter()
-        .take_while(|withdrawal| {
-            return !is_exist_in_claim(
+        .filter(|withdrawal| {
+            !is_exist_in_claim(
                 lock_hash,
                 withdrawal.cota_id,
                 withdrawal.token_index,
                 withdrawal.out_point,
-            );
+            )
         })
         .count() as i64;
 
