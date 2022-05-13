@@ -71,10 +71,9 @@ pub fn generate_history_smt<'a>(
                 return Ok(());
             }
         }
-    } else {
-        // Remove leaves and branches of lock_hash in rocksdb
-        smt.store().delete_leaf_and_branch(lock_hash)?;
     }
+    // Remove leaves and branches of lock_hash in rocksdb
+    smt.store().delete_leaf_and_branch(lock_hash)?;
     generate_mysql_smt(smt, lock_hash)
 }
 
