@@ -1,5 +1,7 @@
 use super::serde::{branch_key_to_vec, branch_node_to_vec, slice_to_branch_node};
-use crate::smt::db::schema::{Col, COLUMN_SMT_BRANCH, COLUMN_SMT_LEAF, COLUMN_SMT_ROOT, COLUMN_SMT_TEMP_LEAVES};
+use crate::smt::db::schema::{
+    Col, COLUMN_SMT_BRANCH, COLUMN_SMT_LEAF, COLUMN_SMT_ROOT, COLUMN_SMT_TEMP_LEAVES,
+};
 use crate::smt::store::serde::leaf_key_to_vec;
 use crate::smt::transaction::store_transaction::StoreTransaction;
 use crate::smt::types::leaf::{Byte32, SMTLeaf, SMTLeafBuilder, SMTLeafVec, SMTLeafVecBuilder};
