@@ -37,7 +37,7 @@ impl RocksDBTransaction {
         let mut iter = self
             .db
             .prefix_iterator_cf(cf, prefix)
-            .map_err(|_e| Error::RocksDBError("transaction delete_cf".to_owned()))?;
+            .map_err(|_e| Error::RocksDBError("transaction delete_batch".to_owned()))?;
         while iter.valid() {
             if let Some(kv) = iter.next() {
                 self.delete(col, &kv.0)?;

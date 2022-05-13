@@ -110,7 +110,7 @@ impl<'a> SMTStore<'a> {
         }
     }
 
-    pub fn delete_prefix(&self, lock_hash: [u8; 32]) -> Result<(), Error> {
+    pub fn delete_leaf_and_branch(&self, lock_hash: [u8; 32]) -> Result<(), Error> {
         self.store.delete_batch(COLUMN_SMT_LEAF, &lock_hash)?;
         self.store.delete_batch(COLUMN_SMT_BRANCH, &lock_hash)
     }
