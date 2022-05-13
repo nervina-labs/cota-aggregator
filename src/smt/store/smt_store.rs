@@ -1,5 +1,5 @@
 use super::serde::{branch_key_to_vec, branch_node_to_vec, slice_to_branch_node};
-use crate::smt::db::schema::{Col, COLUMN_SMT_BRANCH, COLUMN_SMT_LEAF};
+use crate::smt::db::schema::{Col, COLUMN_SMT_BRANCH, COLUMN_SMT_LEAF, COLUMN_SMT_ROOT, COLUMN_SMT_TEMP_LEAVES};
 use crate::smt::store::serde::leaf_key_to_vec;
 use crate::smt::transaction::store_transaction::StoreTransaction;
 use crate::smt::types::leaf::{Byte32, SMTLeaf, SMTLeafBuilder, SMTLeafVec, SMTLeafVecBuilder};
@@ -112,7 +112,9 @@ impl<'a> SMTStore<'a> {
 
     pub fn delete_leaf_and_branch(&self, lock_hash: [u8; 32]) -> Result<(), Error> {
         self.store.delete_batch(COLUMN_SMT_LEAF, &lock_hash)?;
-        self.store.delete_batch(COLUMN_SMT_BRANCH, &lock_hash)
+        self.store.delete_batch(COLUMN_SMT_BRANCH, &lock_hash)?;
+        self.store.delete_batch(COLUMN_SMT_ROOT, &lock_hash)?;
+        self.store.delete_batch(COLUMN_SMT_TEMP_LEAVES, &lock_hash)
     }
 }
 
