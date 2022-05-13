@@ -1,6 +1,6 @@
+use crate::ckb::indexer::get_cota_smt_root;
 use crate::entries::helper::{generate_hold_key, generate_hold_value, with_lock};
 use crate::entries::smt::{generate_history_smt, init_smt};
-use crate::indexer::index::get_cota_smt_root;
 use crate::models::hold::get_hold_cota_by_lock_hash;
 use crate::request::update::UpdateReq;
 use crate::smt::db::db::RocksDB;

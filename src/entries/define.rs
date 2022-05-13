@@ -1,6 +1,6 @@
+use crate::ckb::indexer::get_cota_smt_root;
 use crate::entries::helper::{generate_define_key, generate_define_value, with_lock};
 use crate::entries::smt::{generate_history_smt, init_smt};
-use crate::indexer::index::get_cota_smt_root;
 use crate::models::block::get_syncer_tip_block_number;
 use crate::request::define::DefineReq;
 use crate::smt::db::db::RocksDB;

@@ -1,9 +1,9 @@
+use crate::ckb::indexer::get_cota_smt_root;
 use crate::entries::helper::{
     generate_claim_key, generate_claim_value, generate_withdrawal_key, generate_withdrawal_key_v1,
     generate_withdrawal_value, generate_withdrawal_value_v1, with_lock,
 };
 use crate::entries::smt::{generate_history_smt, init_smt};
-use crate::indexer::index::get_cota_smt_root;
 use crate::models::withdrawal::{get_withdrawal_cota_by_lock_hash, WithdrawDb};
 use crate::request::transfer::TransferReq;
 use crate::request::withdrawal::TransferWithdrawal;

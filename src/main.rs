@@ -15,8 +15,8 @@ use log::info;
 use std::env;
 
 pub mod api;
+mod ckb;
 mod entries;
-mod indexer;
 mod models;
 mod request;
 mod response;
