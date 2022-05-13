@@ -26,6 +26,10 @@ impl StoreTransaction {
         self.inner.delete(col, key)
     }
 
+    pub fn delete_batch(&self, col: Col, prefix: &[u8]) -> Result<(), Error> {
+        self.inner.delete_batch(col, prefix)
+    }
+
     pub fn commit(&self) -> Result<(), Error> {
         self.inner.commit()
     }
