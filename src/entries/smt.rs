@@ -72,6 +72,7 @@ pub fn generate_history_smt<'a>(
             }
         }
     }
+    reset_smt_temp_leaves(smt)?;
     generate_mysql_smt(smt, lock_hash)
 }
 
