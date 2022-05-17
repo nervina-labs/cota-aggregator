@@ -47,6 +47,13 @@ pub async fn generate_claim_smt(
     let mut claim_values: Vec<Byte32> = Vec::new();
     let mut claim_update_leaves: Vec<(H256, H256)> = Vec::with_capacity(claims_len * 2);
     let mut previous_leaves: Vec<(H256, H256)> = Vec::with_capacity(claims_len * 2);
+    let withdrawal_block_number = sender_withdrawals.first().unwrap().block_number;
+    if sender_withdrawals[1..]
+        .iter()
+        .any(|withdrawal| withdrawal.block_number != withdrawal_block_number)
+    {
+        return Err(Error::WithdrawCotaNFTsNotInOneTx);
+    }
     for withdrawal in sender_withdrawals {
         let WithdrawDb {
             cota_id,

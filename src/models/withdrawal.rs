@@ -23,6 +23,7 @@ pub struct WithdrawCotaNft {
     pub characteristic:          String,
     pub receiver_lock_script_id: i64,
     pub version:                 u8,
+    pub block_number:            u64,
 }
 
 #[derive(Debug, Clone, Eq, PartialEq)]
@@ -35,6 +36,7 @@ pub struct WithdrawDb {
     pub characteristic:       [u8; 20],
     pub receiver_lock_script: Vec<u8>,
     pub version:              u8,
+    pub block_number:         u64,
 }
 
 #[derive(Debug, Clone, Eq, PartialEq)]
@@ -247,6 +249,7 @@ fn parse_withdraw_db(withdrawals: Vec<WithdrawCotaNft>) -> DBResult<WithdrawDb> 
             receiver_lock_script: lock_script,
             out_point:            parse_bytes_n::<24>(withdrawal.out_point).unwrap(),
             version:              withdrawal.version,
+            block_number:         withdrawal.block_number,
         })
     }
     Ok((withdraw_db_vec, block_height))
@@ -279,6 +282,7 @@ fn get_selection() -> (
     characteristic,
     receiver_lock_script_id,
     version,
+    block_number,
 ) {
     (
         cota_id,
@@ -289,5 +293,6 @@ fn get_selection() -> (
         characteristic,
         receiver_lock_script_id,
         version,
+        block_number,
     )
 }

@@ -125,6 +125,7 @@ fn generate_mysql_smt<'a>(smt: &mut CotaSMT<'a>, lock_hash: [u8; 32]) -> Result<
             receiver_lock_script,
             out_point,
             version,
+            ..
         } = withdrawal_db;
         let (key, value) = if version == 0 {
             (
