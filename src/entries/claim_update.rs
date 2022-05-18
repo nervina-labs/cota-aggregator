@@ -26,11 +26,10 @@ pub async fn generate_claim_update_smt(
     if nfts_len == 0 {
         return Err(Error::RequestParamNotFound("nfts".to_string()));
     }
-    let cota_id_and_token_index_pairs = Some(
-        nfts.iter()
-            .map(|nft| (nft.cota_id, nft.token_index))
-            .collect(),
-    );
+    let cota_id_and_token_index_pairs = nfts
+        .iter()
+        .map(|nft| (nft.cota_id, nft.token_index))
+        .collect();
     let withdraw_lock_hash = blake2b_256(&claim_update_req.withdrawal_lock_script);
     let sender_withdrawals =
         get_withdrawal_cota_by_lock_hash(withdraw_lock_hash, cota_id_and_token_index_pairs)?.0;

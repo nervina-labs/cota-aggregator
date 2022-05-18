@@ -29,12 +29,10 @@ pub async fn generate_transfer_smt(
     if transfers_len == 0 {
         return Err(Error::RequestParamNotFound("transfers".to_string()));
     }
-    let cota_id_and_token_index_pairs = Some(
-        transfers
-            .iter()
-            .map(|transfer| (transfer.cota_id, transfer.token_index))
-            .collect(),
-    );
+    let cota_id_and_token_index_pairs = transfers
+        .iter()
+        .map(|transfer| (transfer.cota_id, transfer.token_index))
+        .collect();
     let withdraw_lock_hash = blake2b_256(&transfer_req.withdrawal_lock_script);
     let sender_withdrawals =
         get_withdrawal_cota_by_lock_hash(withdraw_lock_hash, cota_id_and_token_index_pairs)?.0;
