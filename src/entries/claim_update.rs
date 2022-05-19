@@ -20,7 +20,7 @@ use log::error;
 pub async fn generate_claim_update_smt(
     db: &RocksDB,
     claim_update_req: ClaimUpdateReq,
-) -> Result<(H256, ClaimUpdateCotaNFTV2Entries), Error> {
+) -> Result<(H256, ClaimUpdateCotaNFTV2Entries, H256), Error> {
     let nfts = claim_update_req.nfts;
     let nfts_len = nfts.len();
     if nfts_len == 0 {
@@ -173,5 +173,9 @@ pub async fn generate_claim_update_smt(
         .tx_proof(withdraw_info.tx_proof)
         .build();
 
-    Ok((*claim_smt.root(), claim_update_entries))
+    Ok((
+        *claim_smt.root(),
+        claim_update_entries,
+        withdraw_info.block_hash,
+    ))
 }

@@ -2,11 +2,11 @@ use crate::utils::error::Error;
 use ckb_jsonrpc_types::{TransactionProof as JSONRPCTxProof, TransactionView, Uint64};
 use ckb_sdk::CkbRpcClient;
 use ckb_types::packed::{BytesVec, Transaction};
-use ckb_types::H256;
 use cota_smt::common::{
     Byte32, Byte32VecBuilder, Bytes, MerkleProofBuilder, TransactionProof, TransactionProofBuilder,
     Uint32, Uint32VecBuilder,
 };
+use cota_smt::smt::H256;
 use molecule::prelude::{Builder, Entity};
 use std::env;
 
@@ -52,7 +52,7 @@ pub fn get_withdraw_info(
     let tx_proof = get_tx_proof(transaction_proof);
 
     let withdraw_info = WithdrawRawTx {
-        block_hash,
+        block_hash: H256::from(block_hash.0),
         raw_tx,
         tx_proof,
         witnesses: tx.witnesses(),

@@ -24,7 +24,7 @@ use molecule::hex_string;
 pub async fn generate_transfer_update_smt(
     db: &RocksDB,
     transfer_update_req: TransferUpdateReq,
-) -> Result<(H256, TransferUpdateCotaNFTV2Entries), Error> {
+) -> Result<(H256, TransferUpdateCotaNFTV2Entries, H256), Error> {
     let transfers = transfer_update_req.transfers;
     let transfers_len = transfers.len();
     if transfers_len == 0 {
@@ -201,5 +201,9 @@ pub async fn generate_transfer_update_smt(
         .tx_proof(withdraw_info.tx_proof)
         .build();
 
-    Ok((*transfer_update_smt.root(), transfer_update_entries))
+    Ok((
+        *transfer_update_smt.root(),
+        transfer_update_entries,
+        withdraw_info.block_hash,
+    ))
 }

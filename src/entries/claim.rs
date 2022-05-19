@@ -20,7 +20,7 @@ use log::error;
 pub async fn generate_claim_smt(
     db: &RocksDB,
     claim_req: ClaimReq,
-) -> Result<(H256, ClaimCotaNFTV2Entries), Error> {
+) -> Result<(H256, ClaimCotaNFTV2Entries, H256), Error> {
     let claims = claim_req.claims;
     let claims_len = claims.len();
     if claims_len == 0 {
@@ -160,5 +160,5 @@ pub async fn generate_claim_smt(
         .tx_proof(withdraw_info.tx_proof)
         .build();
 
-    Ok((*claim_smt.root(), claim_entries))
+    Ok((*claim_smt.root(), claim_entries, withdraw_info.block_hash))
 }

@@ -25,7 +25,7 @@ use molecule::hex_string;
 pub async fn generate_transfer_smt(
     db: &RocksDB,
     transfer_req: TransferReq,
-) -> Result<(H256, TransferCotaNFTV2Entries), Error> {
+) -> Result<(H256, TransferCotaNFTV2Entries, H256), Error> {
     let transfers = transfer_req.transfers;
     let transfers_len = transfers.len();
     if transfers_len == 0 {
@@ -180,5 +180,9 @@ pub async fn generate_transfer_smt(
         .tx_proof(withdraw_info.tx_proof)
         .build();
 
-    Ok((*transfer_smt.root(), transfer_entries))
+    Ok((
+        *transfer_smt.root(),
+        transfer_entries,
+        withdraw_info.block_hash,
+    ))
 }
