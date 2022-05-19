@@ -1,4 +1,4 @@
-use super::helper::{parse_cota_id_and_token_index_pairs, parse_lock_hash};
+use super::helper::{parse_cota_id_index_pairs, parse_lock_hash};
 use crate::models::block::get_syncer_tip_block_number;
 use crate::models::helper::PAGE_SIZE;
 use crate::models::{DBResult, DBTotalResult};
@@ -32,39 +32,14 @@ pub struct HoldDb {
 
 pub fn get_hold_cota_by_lock_hash(
     lock_hash_: [u8; 32],
-    cota_id_and_token_index_pairs: Option<Vec<([u8; 20], [u8; 4])>>,
+    cota_id_index_pairs: &[([u8; 20], [u8; 4])],
 ) -> DBResult<HoldDb> {
     let start_time = Local::now().timestamp_millis();
     let conn = &POOL.clone().get().expect("Mysql pool connection error");
     let (lock_hash_hex, lock_hash_crc_) = parse_lock_hash(lock_hash_);
     let mut hold_vec: Vec<HoldDb> = vec![];
-    let holds: Vec<HoldDb> = match cota_id_and_token_index_pairs {
-        Some(pairs) => {
-            let pair_vec = parse_cota_id_and_token_index_pairs(pairs);
-            for (cota_id_str, token_index_u32) in pair_vec.into_iter() {
-                let holds_: Vec<HoldDb> = hold_cota_nft_kv_pairs
-                    .select(get_selection())
-                    .filter(lock_hash_crc.eq(lock_hash_crc_))
-                    .filter(lock_hash.eq(lock_hash_hex.clone()))
-                    .filter(cota_id.eq(cota_id_str))
-                    .filter(token_index.eq(token_index_u32))
-                    .order(updated_at.desc())
-                    .limit(1)
-                    .load::<HoldCotaNft>(conn)
-                    .map_or_else(
-                        |e| {
-                            error!("Query hold error: {}", e.to_string());
-                            Err(Error::DatabaseQueryError(e.to_string()))
-                        },
-                        |holds| Ok(parse_hold_cota_nfts(holds)),
-                    )?;
-                if !holds_.is_empty() {
-                    hold_vec.push(holds_[0]);
-                }
-            }
-            hold_vec
-        }
-        None => {
+    let holds: Vec<HoldDb> = match cota_id_index_pairs.len() {
+        0 => {
             let mut page: i64 = 0;
             loop {
                 let holds_page: Vec<HoldDb> = hold_cota_nft_kv_pairs
@@ -87,6 +62,31 @@ pub fn get_hold_cota_by_lock_hash(
                     break;
                 }
                 page += 1;
+            }
+            hold_vec
+        }
+        _ => {
+            let pair_vec = parse_cota_id_index_pairs(cota_id_index_pairs);
+            for (cota_id_str, token_index_u32) in pair_vec.into_iter() {
+                let holds_: Vec<HoldDb> = hold_cota_nft_kv_pairs
+                    .select(get_selection())
+                    .filter(lock_hash_crc.eq(lock_hash_crc_))
+                    .filter(lock_hash.eq(lock_hash_hex.clone()))
+                    .filter(cota_id.eq(cota_id_str))
+                    .filter(token_index.eq(token_index_u32))
+                    .order(updated_at.desc())
+                    .limit(1)
+                    .load::<HoldCotaNft>(conn)
+                    .map_or_else(
+                        |e| {
+                            error!("Query hold error: {}", e.to_string());
+                            Err(Error::DatabaseQueryError(e.to_string()))
+                        },
+                        |holds| Ok(parse_hold_cota_nfts(holds)),
+                    )?;
+                if !holds_.is_empty() {
+                    hold_vec.push(holds_[0]);
+                }
             }
             hold_vec
         }

@@ -1,4 +1,4 @@
-use super::helper::{parse_cota_id_and_token_index_pairs, parse_lock_hash};
+use super::helper::{parse_cota_id_index_pairs, parse_lock_hash};
 use crate::models::block::get_syncer_tip_block_number;
 use crate::models::helper::{generate_crc, PAGE_SIZE};
 use crate::models::scripts::get_script_map_by_ids;
@@ -51,7 +51,7 @@ pub struct WithdrawNFTDb {
 
 pub fn get_withdrawal_cota_by_lock_hash(
     lock_hash_: [u8; 32],
-    cota_id_index_pairs: Vec<([u8; 20], [u8; 4])>,
+    cota_id_index_pairs: &[([u8; 20], [u8; 4])],
 ) -> DBResult<WithdrawDb> {
     let start_time = Local::now().timestamp_millis();
     let conn = &POOL.clone().get().expect("Mysql pool connection error");
@@ -81,7 +81,7 @@ pub fn get_withdrawal_cota_by_lock_hash(
             }
         }
         _ => {
-            let pair_vec = parse_cota_id_and_token_index_pairs(cota_id_index_pairs);
+            let pair_vec = parse_cota_id_index_pairs(cota_id_index_pairs);
             for (cota_id_str, token_index_u32) in pair_vec.into_iter() {
                 let cota_id_crc_ = generate_crc(cota_id_str.as_bytes());
                 let withdrawals: Vec<WithdrawCotaNft> = withdraw_cota_nft_kv_pairs

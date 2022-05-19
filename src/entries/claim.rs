@@ -32,7 +32,7 @@ pub async fn generate_claim_smt(
         .collect();
     let withdraw_lock_hash = blake2b_256(&claim_req.withdrawal_lock_script);
     let sender_withdrawals =
-        get_withdrawal_cota_by_lock_hash(withdraw_lock_hash, cota_id_index_pairs.clone())?.0;
+        get_withdrawal_cota_by_lock_hash(withdraw_lock_hash, &cota_id_index_pairs)?.0;
     if sender_withdrawals.is_empty() || sender_withdrawals.len() != claims_len {
         return Err(Error::CotaIdAndTokenIndexHasNotWithdrawn);
     }

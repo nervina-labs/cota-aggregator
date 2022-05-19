@@ -25,15 +25,13 @@ pub async fn generate_withdrawal_smt(
     if withdrawals.is_empty() {
         return Err(Error::RequestParamNotFound("withdrawals".to_string()));
     }
-    let cota_id_and_token_index_pairs = Some(
-        withdrawals
-            .iter()
-            .map(|withdrawal| (withdrawal.cota_id, withdrawal.token_index))
-            .collect(),
-    );
+    let cota_id_index_pairs: Vec<([u8; 20], [u8; 4])> = withdrawals
+        .iter()
+        .map(|withdrawal| (withdrawal.cota_id, withdrawal.token_index))
+        .collect();
     let db_holds = get_hold_cota_by_lock_hash(
         blake2b_256(&withdrawal_req.lock_script.clone()),
-        cota_id_and_token_index_pairs,
+        &cota_id_index_pairs,
     )?
     .0;
     if db_holds.is_empty() || db_holds.len() != withdrawals.len() {

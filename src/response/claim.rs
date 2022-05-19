@@ -2,7 +2,7 @@ use crate::response::helper::Inserter;
 use ckb_types::prelude::Entity;
 use cota_smt::smt::H256;
 use cota_smt::transfer::ClaimCotaNFTV2Entries;
-use cota_smt::transfer_update::ClaimUpdateCotaNFTEntries;
+use cota_smt::transfer_update::ClaimUpdateCotaNFTV2Entries;
 use jsonrpc_http_server::jsonrpc_core::serde_json::Map;
 use jsonrpc_http_server::jsonrpc_core::Value;
 
@@ -27,7 +27,7 @@ pub fn parse_claimed_smt(
 }
 
 pub fn parse_claimed_update_smt(
-    (root_hash, claim_update_entries): (H256, ClaimUpdateCotaNFTEntries),
+    (root_hash, claim_update_entries): (H256, ClaimUpdateCotaNFTV2Entries),
     block_number: u64,
 ) -> Map<String, Value> {
     let claim_update_entry = hex::encode(claim_update_entries.as_slice());

@@ -21,16 +21,12 @@ pub async fn generate_update_smt(
     if nfts.is_empty() {
         return Err(Error::RequestParamNotFound("nfts".to_string()));
     }
-    let cota_id_and_token_index_pairs = Some(
-        nfts.iter()
-            .map(|nft| (nft.cota_id, nft.token_index))
-            .collect(),
-    );
-    let db_holds = get_hold_cota_by_lock_hash(
-        blake2b_256(&update_req.lock_script),
-        cota_id_and_token_index_pairs,
-    )?
-    .0;
+    let cota_id_index_pairs: Vec<([u8; 20], [u8; 4])> = nfts
+        .iter()
+        .map(|nft| (nft.cota_id, nft.token_index))
+        .collect();
+    let db_holds =
+        get_hold_cota_by_lock_hash(blake2b_256(&update_req.lock_script), &cota_id_index_pairs)?.0;
     if db_holds.is_empty() || db_holds.len() != nfts.len() {
         return Err(Error::CotaIdAndTokenIndexHasNotHeld);
     }
