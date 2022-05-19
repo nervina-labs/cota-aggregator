@@ -1,9 +1,11 @@
 use crate::ckb::indexer::get_cota_smt_root;
+use crate::ckb::rpc::get_withdraw_info;
 use crate::entries::helper::{
-    generate_claim_key, generate_claim_value, generate_withdrawal_key, generate_withdrawal_key_v1,
-    generate_withdrawal_value, generate_withdrawal_value_v1, with_lock,
+    generate_claim_key, generate_claim_value, generate_withdrawal_key_v1,
+    generate_withdrawal_value_v1, with_lock,
 };
 use crate::entries::smt::{generate_history_smt, init_smt};
+use crate::entries::witness::parse_withdraw_witness;
 use crate::models::withdrawal::{get_withdrawal_cota_by_lock_hash, WithdrawDb};
 use crate::request::transfer::{TransferUpdate, TransferUpdateReq};
 use crate::smt::db::db::RocksDB;
@@ -14,7 +16,7 @@ use cota_smt::common::*;
 use cota_smt::molecule::prelude::*;
 use cota_smt::smt::{blake2b_256, H256};
 use cota_smt::transfer_update::{
-    TransferUpdateCotaNFTV1Entries, TransferUpdateCotaNFTV1EntriesBuilder,
+    TransferUpdateCotaNFTV2Entries, TransferUpdateCotaNFTV2EntriesBuilder,
 };
 use log::error;
 use molecule::hex_string;
@@ -22,21 +24,29 @@ use molecule::hex_string;
 pub async fn generate_transfer_update_smt(
     db: &RocksDB,
     transfer_update_req: TransferUpdateReq,
-) -> Result<(H256, TransferUpdateCotaNFTV1Entries), Error> {
+) -> Result<(H256, TransferUpdateCotaNFTV2Entries), Error> {
     let transfers = transfer_update_req.transfers;
     let transfers_len = transfers.len();
     if transfers_len == 0 {
         return Err(Error::RequestParamNotFound("transfers".to_string()));
     }
-    let cota_id_and_token_index_pairs: Vec<([u8; 20], [u8; 4])> = transfers
+    let cota_id_index_pairs: Vec<([u8; 20], [u8; 4])> = transfers
         .iter()
         .map(|transfer| (transfer.cota_id, transfer.token_index))
         .collect();
     let withdraw_lock_hash = blake2b_256(&transfer_update_req.withdrawal_lock_script);
     let sender_withdrawals =
-        get_withdrawal_cota_by_lock_hash(withdraw_lock_hash, &cota_id_and_token_index_pairs)?.0;
+        get_withdrawal_cota_by_lock_hash(withdraw_lock_hash, &cota_id_index_pairs)?.0;
     if sender_withdrawals.is_empty() || sender_withdrawals.len() != transfers_len {
         return Err(Error::CotaIdAndTokenIndexHasNotWithdrawn);
+    }
+    let withdrawal_block_number = sender_withdrawals.first().unwrap().block_number;
+    let withdrawal_out_point = sender_withdrawals.first().unwrap().out_point;
+    if sender_withdrawals[1..]
+        .iter()
+        .any(|withdrawal| withdrawal.block_number != withdrawal_block_number)
+    {
+        return Err(Error::WithdrawCotaNFTsNotInOneTx);
     }
 
     let mut action_vec: Vec<u8> = Vec::new();
@@ -59,7 +69,6 @@ pub async fn generate_transfer_update_smt(
     let mut withdrawal_values: Vec<WithdrawalCotaNFTValueV1> = Vec::new();
     let mut transfer_update_leaves: Vec<(H256, H256)> = Vec::with_capacity(transfers_len * 2);
     let mut previous_leaves: Vec<(H256, H256)> = Vec::with_capacity(transfers_len * 2);
-    let mut withdrawal_update_leaves: Vec<(H256, H256)> = Vec::with_capacity(transfers_len);
     for (withdrawal_db, transfer) in sender_withdrawals.into_iter().zip(transfers.clone()) {
         let WithdrawDb {
             cota_id,
@@ -83,32 +92,6 @@ pub async fn generate_transfer_update_smt(
         claimed_infos.push(claimed_info);
 
         let TransferUpdate { to_lock_script, .. } = transfer;
-
-        let (key, value) = if version == 0 {
-            (
-                generate_withdrawal_key(cota_id, token_index).1,
-                generate_withdrawal_value(
-                    configure,
-                    state,
-                    characteristic,
-                    &transfer_update_req.lock_script,
-                    out_point,
-                )
-                .1,
-            )
-        } else {
-            (
-                generate_withdrawal_key_v1(cota_id, token_index, out_point).1,
-                generate_withdrawal_value_v1(
-                    configure,
-                    state,
-                    characteristic,
-                    &transfer_update_req.lock_script,
-                )
-                .1,
-            )
-        };
-        withdrawal_update_leaves.push((key, value));
 
         let (withdrawal_key, key) = generate_withdrawal_key_v1(
             cota_id,
@@ -136,8 +119,6 @@ pub async fn generate_transfer_update_smt(
     }
 
     let transfer_smt_root = get_cota_smt_root(&transfer_update_req.lock_script).await?;
-    let withdrawal_smt_root =
-        get_cota_smt_root(&transfer_update_req.withdrawal_lock_script).await?;
 
     let transaction = &StoreTransaction::new(db.transaction());
     let transfer_lock_hash = blake2b_256(&transfer_update_req.lock_script);
@@ -154,15 +135,6 @@ pub async fn generate_transfer_update_smt(
             .map_err(|e| Error::SMTError(e.to_string()))?;
         transfer_update_smt.save_root_and_leaves(previous_leaves.clone())?;
         transfer_update_smt.commit()
-    })?;
-
-    let transaction = &StoreTransaction::new(db.transaction());
-    let mut withdrawal_smt = init_smt(transaction, withdraw_lock_hash)?;
-    // Add lock to withdraw smt
-    with_lock(withdraw_lock_hash, || {
-        generate_history_smt(&mut withdrawal_smt, withdraw_lock_hash, withdrawal_smt_root)?;
-        withdrawal_smt.save_root_and_leaves(vec![])?;
-        transaction.commit()
     })?;
 
     let transfer_update_merkle_proof = transfer_update_smt
@@ -187,30 +159,11 @@ pub async fn generate_transfer_update_smt(
         )
         .build();
 
-    let withdrawal_merkle_proof = withdrawal_smt
-        .merkle_proof(
-            withdrawal_update_leaves
-                .iter()
-                .map(|leave| leave.0)
-                .collect(),
-        )
-        .map_err(|e| {
-            error!("Transfer SMT proof error: {:?}", e.to_string());
-            Error::SMTProofError("Transfer update".to_string())
-        })?;
-    let withdrawal_merkle_proof_compiled = withdrawal_merkle_proof
-        .compile(withdrawal_update_leaves.clone())
-        .map_err(|e| {
-            error!("Transfer update SMT proof error: {:?}", e.to_string());
-            Error::SMTProofError("Transfer update".to_string())
-        })?;
+    let withdraw_info = get_withdraw_info(withdrawal_block_number, withdrawal_out_point)?;
+    let withdraw_leaf_proof =
+        parse_withdraw_witness(withdraw_info.witnesses, &cota_id_index_pairs)?;
 
-    let withdrawal_merkel_proof_vec: Vec<u8> = withdrawal_merkle_proof_compiled.into();
-    let withdrawal_merkel_proof_bytes = BytesBuilder::default()
-        .extend(withdrawal_merkel_proof_vec.iter().map(|v| Byte::from(*v)))
-        .build();
-
-    let transfer_update_entries = TransferUpdateCotaNFTV1EntriesBuilder::default()
+    let transfer_update_entries = TransferUpdateCotaNFTV2EntriesBuilder::default()
         .claim_keys(
             ClaimCotaNFTKeyVecBuilder::default()
                 .set(claimed_keys)
@@ -232,8 +185,20 @@ pub async fn generate_transfer_update_smt(
                 .build(),
         )
         .proof(transfer_update_merkel_proof_bytes)
-        .withdrawal_proof(withdrawal_merkel_proof_bytes)
         .action(action_bytes)
+        .withdrawal_proof(withdraw_leaf_proof.withdraw_proof)
+        .leaf_keys(
+            Byte32VecBuilder::default()
+                .set(withdraw_leaf_proof.leaf_keys)
+                .build(),
+        )
+        .leaf_values(
+            Byte32VecBuilder::default()
+                .set(withdraw_leaf_proof.leaf_values)
+                .build(),
+        )
+        .raw_tx(withdraw_info.raw_tx)
+        .tx_proof(withdraw_info.tx_proof)
         .build();
 
     Ok((*transfer_update_smt.root(), transfer_update_entries))
