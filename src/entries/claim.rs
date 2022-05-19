@@ -83,7 +83,6 @@ pub async fn generate_claim_smt(
             )
         };
         withdrawal_update_leaves.push((key, value));
-        previous_leaves.push((key, H256::zero()));
 
         let (hold_key, key) = generate_hold_key(cota_id, token_index);
         let (hold_value, value) = generate_hold_value(configure, state, characteristic);
@@ -100,7 +99,8 @@ pub async fn generate_claim_smt(
     for (key, version) in key_vec {
         let (claim_value, value) = generate_claim_value(version);
         claim_values.push(claim_value);
-        claim_update_leaves.push((key, value))
+        claim_update_leaves.push((key, value));
+        previous_leaves.push((key, H256::zero()));
     }
 
     let claim_smt_root = get_cota_smt_root(&claim_req.lock_script).await?;
