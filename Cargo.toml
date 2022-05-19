@@ -1,6 +1,6 @@
 [package]
 name = "cota-aggregator"
-version = "0.5.10"
+version = "0.5.11"
 edition = "2018"
 
 [dependencies]
