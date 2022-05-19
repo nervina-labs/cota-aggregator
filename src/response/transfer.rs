@@ -1,13 +1,13 @@
 use crate::response::helper::Inserter;
 use ckb_types::prelude::Entity;
 use cota_smt::smt::H256;
-use cota_smt::transfer::TransferCotaNFTV1Entries;
+use cota_smt::transfer::TransferCotaNFTV2Entries;
 use cota_smt::transfer_update::TransferUpdateCotaNFTV1Entries;
 use jsonrpc_http_server::jsonrpc_core::serde_json::Map;
 use jsonrpc_http_server::jsonrpc_core::Value;
 
 pub fn parse_transfer_smt(
-    (root_hash, transfer_entries): (H256, TransferCotaNFTV1Entries),
+    (root_hash, transfer_entries): (H256, TransferCotaNFTV2Entries),
     block_number: u64,
 ) -> Map<String, Value> {
     let transfer_entry = hex::encode(transfer_entries.as_slice());
