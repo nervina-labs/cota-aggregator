@@ -2,6 +2,7 @@ use crate::entries::helper::{generate_define_key, generate_define_value, with_lo
 use crate::entries::helper::{generate_withdrawal_key_v1, generate_withdrawal_value_v1};
 use crate::entries::smt::{generate_history_smt, init_smt};
 use crate::indexer::index::get_cota_smt_root;
+use crate::models::block::get_syncer_tip_block_number;
 use crate::models::define::{get_define_cota_by_lock_hash_and_cota_id, DefineDb};
 use crate::request::mint::{MintReq, MintWithdrawal};
 use crate::smt::db::db::RocksDB;
@@ -46,17 +47,27 @@ pub async fn generate_mint_smt(
         total,
         issued,
         configure,
+        block_number,
     } = db_define.unwrap();
     let (define_key, key) = generate_define_key(cota_id);
     define_keys.push(define_key);
 
-    let (define_old_value, old_value) =
-        generate_define_value(total.to_be_bytes(), issued.to_be_bytes(), configure);
+    let (define_old_value, old_value) = generate_define_value(
+        total.to_be_bytes(),
+        issued.to_be_bytes(),
+        configure,
+        block_number,
+    );
     define_old_values.push(define_old_value);
 
     let new_issued = issued + withdrawals_len as u32;
-    let (define_new_value, value) =
-        generate_define_value(total.to_be_bytes(), new_issued.to_be_bytes(), configure);
+    let latest_block_number = get_syncer_tip_block_number()?;
+    let (define_new_value, value) = generate_define_value(
+        total.to_be_bytes(),
+        new_issued.to_be_bytes(),
+        configure,
+        latest_block_number,
+    );
     define_new_values.push(define_new_value);
 
     previous_leaves.push((key, old_value));
