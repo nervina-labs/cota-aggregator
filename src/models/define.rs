@@ -13,18 +13,20 @@ use serde::{Deserialize, Serialize};
 
 #[derive(Serialize, Deserialize, Queryable, Debug)]
 struct DefineCotaNft {
-    pub cota_id:   String,
-    pub total:     u32,
-    pub issued:    u32,
-    pub configure: u8,
+    pub cota_id:      String,
+    pub total:        u32,
+    pub issued:       u32,
+    pub configure:    u8,
+    pub block_number: u64,
 }
 
 #[derive(Debug, Copy, Clone, Eq, PartialEq)]
 pub struct DefineDb {
-    pub cota_id:   [u8; 20],
-    pub total:     u32,
-    pub issued:    u32,
-    pub configure: u8,
+    pub cota_id:      [u8; 20],
+    pub total:        u32,
+    pub issued:       u32,
+    pub configure:    u8,
+    pub block_number: u64,
 }
 
 pub fn get_define_cota_by_lock_hash(lock_hash_: [u8; 32]) -> DBResult<DefineDb> {
@@ -110,14 +112,15 @@ fn parse_define_cota_nft(defines: Vec<DefineCotaNft>) -> Vec<DefineDb> {
     defines
         .into_iter()
         .map(|define| DefineDb {
-            cota_id:   parse_bytes_n::<20>(define.cota_id).unwrap(),
-            total:     define.total,
-            issued:    define.issued,
-            configure: define.configure,
+            cota_id:      parse_bytes_n::<20>(define.cota_id).unwrap(),
+            total:        define.total,
+            issued:       define.issued,
+            configure:    define.configure,
+            block_number: define.block_number,
         })
         .collect()
 }
 
-fn get_selection() -> (cota_id, total, issued, configure) {
-    (cota_id, total, issued, configure)
+fn get_selection() -> (cota_id, total, issued, configure, block_number) {
+    (cota_id, total, issued, configure, block_number)
 }

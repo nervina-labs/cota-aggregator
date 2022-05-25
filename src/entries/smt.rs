@@ -91,10 +91,15 @@ fn generate_mysql_smt<'a>(smt: &mut CotaSMT<'a>, lock_hash: [u8; 32]) -> Result<
             total,
             issued,
             configure,
+            block_number,
         } = define_db;
         let (_, key) = generate_define_key(cota_id);
-        let (_, value) =
-            generate_define_value(total.to_be_bytes(), issued.to_be_bytes(), configure);
+        let (_, value) = generate_define_value(
+            total.to_be_bytes(),
+            issued.to_be_bytes(),
+            configure,
+            block_number,
+        );
         smt.update(key, value).expect("SMT update leave error");
     }
     for hold_db in holds {

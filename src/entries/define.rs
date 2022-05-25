@@ -1,6 +1,7 @@
 use crate::entries::helper::{generate_define_key, generate_define_value, with_lock};
 use crate::entries::smt::{generate_history_smt, init_smt};
 use crate::indexer::index::get_cota_smt_root;
+use crate::models::block::get_syncer_tip_block_number;
 use crate::request::define::DefineReq;
 use crate::smt::db::db::RocksDB;
 use crate::smt::transaction::store_transaction::StoreTransaction;
@@ -26,7 +27,8 @@ pub async fn generate_define_smt(
         ..
     } = define_req;
     let (define_key, key) = generate_define_key(cota_id);
-    let (define_value, value) = generate_define_value(total, issued, configure);
+    let block_number = get_syncer_tip_block_number()?;
+    let (define_value, value) = generate_define_value(total, issued, configure, block_number);
     update_leaves.push((key, value));
     previous_leaves.push((key, H256::zero()));
 
