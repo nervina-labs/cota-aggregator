@@ -29,4 +29,4 @@ sentry = "0.25.0"
 cota-smt = {package = "cota-smt", git = "https://github.com/nervina-labs/cota-smt", tag = "0.1.0"}
 
 [target.'cfg(all(not(target_env = "msvc"), not(target_os="macos")))'.dependencies]
-tikv-jemallocator = { version = "0.4.3", features = ["unprefixed_malloc_on_supported_platforms"] }
+tikv-jemallocator = { version = "0.5.0", features = ["unprefixed_malloc_on_supported_platforms"] }
