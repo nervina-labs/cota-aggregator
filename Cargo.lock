@@ -520,8 +520,9 @@ dependencies = [
 
 [[package]]
 name = "ckb-sdk"
-version = "1.0.0"
-source = "git+https://github.com/nervosnetwork/ckb-sdk-rust.git?tag=v1.0.0#ebea65ab8376370bcf9cf5ad043382c93a78a7fd"
+version = "1.0.1"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "5c89d5a9733ae7e8cd9312dc130ba91cf44dba52e37b2844fa9758c1f4a78079"
 dependencies = [
  "bech32",
  "bytes",
@@ -669,12 +670,13 @@ dependencies = [
  "serde_json",
  "sparse-merkle-tree",
  "tikv-jemallocator",
+ "tokio",
 ]
 
 [[package]]
 name = "cota-smt"
 version = "0.4.0"
-source = "git+https://github.com/nervina-labs/cota-smt?branch=header-deps#40cfa888eb8878662851b99f2964f29e7f468262"
+source = "git+https://github.com/nervina-labs/cota-smt?rev=8c3441f#8c3441f10990db415e5bfc2fcf967eb0072a7bbc"
 dependencies = [
  "blake2b-ref 0.3.0",
  "cfg-if 1.0.0",

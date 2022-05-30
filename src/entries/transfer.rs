@@ -42,7 +42,6 @@ pub async fn generate_transfer_smt(
         return Err(Error::CotaIdAndTokenIndexHasNotWithdrawn);
     }
     let withdrawal_block_number = sender_withdrawals.first().unwrap().block_number;
-    let withdrawal_out_point = sender_withdrawals.first().unwrap().out_point;
     if sender_withdrawals[1..]
         .iter()
         .any(|withdrawal| withdrawal.block_number != withdrawal_block_number)
@@ -138,7 +137,8 @@ pub async fn generate_transfer_smt(
         .extend(transfer_merkel_proof_vec.iter().map(|v| Byte::from(*v)))
         .build();
 
-    let withdraw_info = get_withdraw_info(withdrawal_block_number, withdrawal_out_point)?;
+    let withdraw_info =
+        get_withdraw_info(withdrawal_block_number, transfer_req.withdrawal_lock_script).await?;
     let withdraw_leaf_proof =
         parse_withdraw_witness(withdraw_info.witnesses, &cota_id_index_pairs)?;
 
@@ -177,6 +177,7 @@ pub async fn generate_transfer_smt(
                 .build(),
         )
         .raw_tx(withdraw_info.raw_tx)
+        .output_index(withdraw_info.output_index)
         .tx_proof(withdraw_info.tx_proof)
         .build();
 

@@ -1,3 +1,4 @@
+use crate::ckb::constants::{MAINNET_COTA_CODE_HASH, TESTNET_COTA_CODE_HASH};
 use crate::utils::error::Error;
 use ckb_jsonrpc_types::{BlockNumber, CellOutput, JsonBytes, OutPoint, Uint32};
 use ckb_types::packed::Script;
@@ -5,11 +6,6 @@ use ckb_types::prelude::Entity;
 use serde::Deserialize;
 use serde_json::{from_str, json, Map, Value};
 use std::env;
-
-const TESTNET_COTA_CODE_HASH: &str =
-    "0x89cd8003a0eaf8e65e0c31525b7d1d5c1becefd2ea75bb4cff87810ae37764d8";
-const MAINNET_COTA_CODE_HASH: &str =
-    "0x1122a4fb54697cf2e6e3a96c9d80fd398a936559b90954c6e88eb7ba0cf652df";
 
 pub async fn get_cota_smt_root(lock_script: &[u8]) -> Result<Option<[u8; 32]>, Error> {
     let ckb_indexer_url =
