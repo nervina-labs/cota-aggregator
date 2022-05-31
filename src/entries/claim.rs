@@ -119,8 +119,11 @@ pub async fn generate_claim_smt(
 
     let withdraw_info =
         get_withdraw_info(withdrawal_block_number, claim_req.withdrawal_lock_script).await?;
-    let withdraw_leaf_proof =
-        parse_withdraw_witness(withdraw_info.witnesses, &cota_id_index_pairs)?;
+    let withdraw_leaf_proof = parse_withdraw_witness(
+        withdraw_info.witnesses,
+        &cota_id_index_pairs,
+        withdraw_info.block_number,
+    )?;
 
     let mut action_vec: Vec<u8> = Vec::new();
     action_vec.extend("Claim ".as_bytes());

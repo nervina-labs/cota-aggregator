@@ -163,8 +163,11 @@ pub async fn generate_transfer_update_smt(
         transfer_update_req.withdrawal_lock_script,
     )
     .await?;
-    let withdraw_leaf_proof =
-        parse_withdraw_witness(withdraw_info.witnesses, &cota_id_index_pairs)?;
+    let withdraw_leaf_proof = parse_withdraw_witness(
+        withdraw_info.witnesses,
+        &cota_id_index_pairs,
+        withdraw_info.block_number,
+    )?;
 
     let transfer_update_entries = TransferUpdateCotaNFTV2EntriesBuilder::default()
         .claim_keys(

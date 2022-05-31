@@ -70,9 +70,9 @@ fn generate_params(lock_script: &[u8]) -> Result<Value, Error> {
         Err(_e) => false,
     };
     let code_hash = if is_mainnet {
-        MAINNET_COTA_CODE_HASH
+        format!("0x{}", MAINNET_COTA_CODE_HASH)
     } else {
-        TESTNET_COTA_CODE_HASH
+        format!("0x{}", TESTNET_COTA_CODE_HASH)
     };
 
     Ok(json!([

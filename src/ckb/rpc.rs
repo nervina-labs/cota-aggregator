@@ -7,11 +7,11 @@ use ckb_jsonrpc_types::{
 use ckb_sdk::CkbRpcClient;
 use ckb_types::packed::{BytesVec, Script, Transaction};
 use cota_smt::common::{
-    Byte32, Byte32VecBuilder, Bytes, MerkleProofBuilder, TransactionProof, TransactionProofBuilder,
-    Uint32, Uint32VecBuilder,
+    Byte32, Byte32VecBuilder, Bytes, BytesBuilder, MerkleProofBuilder, TransactionProof,
+    TransactionProofBuilder, Uint32, Uint32VecBuilder,
 };
-use cota_smt::smt::H256;
-use molecule::prelude::{Builder, Entity};
+use cota_smt::smt::{blake2b_256, H256};
+use molecule::prelude::{Builder, Byte, Entity};
 use serde_json::from_str;
 use std::env;
 
@@ -21,6 +21,7 @@ pub struct WithdrawRawTx {
     pub output_index: Uint32,
     pub tx_proof:     TransactionProof,
     pub block_hash:   H256,
+    pub block_number: u64,
     pub witnesses:    BytesVec,
 }
 
@@ -47,6 +48,7 @@ pub async fn get_withdraw_info(
             .map_err(|_e| Error::CKBRPCError("get_block_by_number".to_string()))?
             .ok_or(Error::CKBRPCError("get_block error".to_string()))?;
         let block_hash = block.header.hash;
+        let block_number = block.header.inner.number.value();
         let mut output_index = Uint32::default();
         let txs: Vec<TransactionView> = block
             .transactions
@@ -76,7 +78,15 @@ pub async fn get_withdraw_info(
         let tx_view = txs.get(0).cloned().unwrap();
 
         let tx: Transaction = tx_view.inner.into();
-        let raw_tx: Bytes = Bytes::from_slice(tx.raw().as_slice()).unwrap();
+        let raw_tx: Bytes = BytesBuilder::default()
+            .set(
+                tx.raw()
+                    .as_slice()
+                    .into_iter()
+                    .map(|v| Byte::from(*v))
+                    .collect(),
+            )
+            .build();
 
         let transaction_proof = client
             .get_transaction_proof(vec![tx_view.hash], Some(block_hash.clone()))
@@ -85,6 +95,7 @@ pub async fn get_withdraw_info(
 
         let withdraw_info = WithdrawRawTx {
             block_hash: H256::from(block_hash.0),
+            block_number,
             raw_tx,
             tx_proof,
             output_index,

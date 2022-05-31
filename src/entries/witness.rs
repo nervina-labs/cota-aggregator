@@ -1,3 +1,4 @@
+use crate::entries::helper::get_value_padding_block_height;
 use crate::utils::error::Error;
 use ckb_types::packed::{BytesVec, WitnessArgs};
 use cota_smt::common::{
@@ -14,6 +15,7 @@ use cota_smt::transfer::{
 use cota_smt::transfer_update::{
     TransferUpdateCotaNFTEntries, TransferUpdateCotaNFTV1Entries, TransferUpdateCotaNFTV2Entries,
 };
+use log::debug;
 use molecule::prelude::Entity;
 
 const MINT: u8 = 2;
@@ -33,6 +35,7 @@ pub struct WithdrawLeafProof {
 pub fn parse_withdraw_witness(
     witnesses: BytesVec,
     pairs: Pairs,
+    block_number: u64,
 ) -> Result<WithdrawLeafProof, Error> {
     let mut leaf_keys: Vec<Byte32> = vec![];
     let mut leaf_values: Vec<Byte32> = vec![];
@@ -41,7 +44,7 @@ pub fn parse_withdraw_witness(
         if witness.is_none() {
             continue;
         }
-        if let Ok(witness_args) = WitnessArgs::from_slice(witness.unwrap().as_slice()) {
+        if let Ok(witness_args) = WitnessArgs::from_slice(&witness.unwrap().raw_data().to_vec()) {
             let input_type_opt = witness_args.input_type();
             if input_type_opt.is_none() {
                 continue;
@@ -57,6 +60,7 @@ pub fn parse_withdraw_witness(
                             .count();
                         if count == pairs.len() {
                             parse_define(
+                                block_number,
                                 &mut leaf_keys,
                                 &mut leaf_values,
                                 entries_v0.define_keys(),
@@ -79,6 +83,7 @@ pub fn parse_withdraw_witness(
                     if let Ok(entries_v1) = MintCotaNFTV1Entries::from_slice(&input_type[1..]) {
                         let withdrawal_keys = entries_v1.withdrawal_keys();
                         parse_define(
+                            block_number,
                             &mut leaf_keys,
                             &mut leaf_values,
                             entries_v1.define_keys(),
@@ -184,7 +189,7 @@ pub fn parse_withdraw_witness(
                         });
                     }
                     return Err(Error::WitnessParseError(
-                        "Withdraw witness parse error".to_string(),
+                        "Transfer witness parse error".to_string(),
                     ));
                 }
                 TRANSFER_UPDATE => {
@@ -240,7 +245,7 @@ pub fn parse_withdraw_witness(
                         });
                     }
                     return Err(Error::WitnessParseError(
-                        "Withdraw witness parse error".to_string(),
+                        "Transfer-update witness parse error".to_string(),
                     ));
                 }
                 _ => continue,
@@ -261,22 +266,27 @@ fn match_cota_id_index(id: &CotaNFTId, pairs: Pairs) -> bool {
 }
 
 fn parse_define(
+    block_number: u64,
     leaf_keys: &mut Vec<Byte32>,
     leaf_values: &mut Vec<Byte32>,
     define_keys: DefineCotaNFTKeyVec,
     define_values: DefineCotaNFTValueVec,
 ) {
+    let after_padding = block_number > get_value_padding_block_height();
     for index in 0..define_keys.len() {
         let define_key = define_keys.get(index).unwrap();
         let mut key = [0u8; 32];
-        key.copy_from_slice(define_key.as_slice());
+        key[0..22].copy_from_slice(define_key.as_slice());
 
         let define_value = define_values.get(index).unwrap();
         let mut value = [0u8; 32];
-        value.copy_from_slice(define_value.as_slice());
+        value[0..9].copy_from_slice(define_value.as_slice());
+        if after_padding || value == [0u8; 32] {
+            value[31] = 255u8;
+        }
 
         leaf_keys.push(Byte32::from_slice(&key).unwrap());
-        leaf_values.push(Byte32::default());
+        leaf_values.push(Byte32::from_slice(&value).unwrap());
     }
 }
 
@@ -288,7 +298,8 @@ fn parse_hold(
     for index in 0..hold_keys.len() {
         let hold_key = hold_keys.get(index).unwrap();
         let mut key = [0u8; 32];
-        key.copy_from_slice(hold_key.as_slice());
+        key[0..22].copy_from_slice(hold_key.as_slice());
+        key[31] = 255u8;
         leaf_keys.push(Byte32::from_slice(&key).unwrap());
         leaf_values.push(Byte32::default());
     }
