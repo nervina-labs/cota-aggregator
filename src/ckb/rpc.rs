@@ -10,7 +10,7 @@ use cota_smt::common::{
     Byte32, Byte32VecBuilder, Bytes, BytesBuilder, MerkleProofBuilder, TransactionProof,
     TransactionProofBuilder, Uint32, Uint32VecBuilder,
 };
-use cota_smt::smt::{blake2b_256, H256};
+use cota_smt::smt::H256;
 use molecule::prelude::{Builder, Byte, Entity};
 use serde_json::from_str;
 use std::env;

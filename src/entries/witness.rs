@@ -15,7 +15,6 @@ use cota_smt::transfer::{
 use cota_smt::transfer_update::{
     TransferUpdateCotaNFTEntries, TransferUpdateCotaNFTV1Entries, TransferUpdateCotaNFTV2Entries,
 };
-use log::debug;
 use molecule::prelude::Entity;
 
 const MINT: u8 = 2;
@@ -298,8 +297,7 @@ fn parse_hold(
     for index in 0..hold_keys.len() {
         let hold_key = hold_keys.get(index).unwrap();
         let mut key = [0u8; 32];
-        key[0..22].copy_from_slice(hold_key.as_slice());
-        key[31] = 255u8;
+        key[0..26].copy_from_slice(hold_key.as_slice());
         leaf_keys.push(Byte32::from_slice(&key).unwrap());
         leaf_values.push(Byte32::default());
     }
