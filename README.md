@@ -45,6 +45,8 @@ RUST_LOG=info DATABASE_URL=mysql://root:passport@localhost:3306/db_name CKB_INDE
 
 ### docker
 
+> The RocksDB data of SMT will be saved into `src/store.db`, so the store.db should be mounted into docker. E.g. `-v "$(pwd)":/app/store.db`
+
 ```shell
 # Build cota-aggregator images from the Dockerfile and run cota-aggregator via docker
 docker build -t cota-aggregator .
