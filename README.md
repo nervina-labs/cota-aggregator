@@ -63,6 +63,10 @@ testnet:
 https://cota.nervina.dev/aggregator
 ```
 
+## SDK
+
+[SDK](https://github.com/nervina-labs/cota-sdk-js) can help you implement RPC APIs call and build ckb transactions
+
 ## APIs
 
 ### generate_define_cota_smt
