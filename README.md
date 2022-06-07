@@ -67,6 +67,16 @@ https://cota.nervina.dev/aggregator
 
 Generate smt data(`smt_entry` for `witness_args.input_type` and `smt_root` for cell data) for CoTA define transaction
 
+#### Parameters
+
+```
+lock_script - The definer's lock script
+cota_id - CoTA NFT Class Unique ID
+total - The total of CoTA NFT Class
+issued - The issued count (default to zero)
+configure - A bitmap variable to constrain the behavior of the NFT items issued by the NFT Class
+```
+
 ```shell
 echo '{
     "id":2,
@@ -85,6 +95,14 @@ echo '{
 http://127.0.0.1:3030
 ```
 
+#### Response
+
+```
+block_number - The latest block number of cota-nft-entries-syncer
+define_smt_entry - The SMT define information (origin SMT leaves, SMT proof and other information)
+smt_root_hash - The latest SMT root hash after defining
+```
+
 ```shell
 {
     "jsonrpc":"2.0",
@@ -100,6 +118,19 @@ http://127.0.0.1:3030
 ### generate_mint_cota_smt
 
 Generate smt data(`smt_entry` for `witness_args.input_type` and `smt_root` for cell data) for CoTA mint transaction
+
+#### Parameters
+
+```
+lock_script - The minter's lock script
+cota_id - CoTA NFT Class Unique ID
+out_point - The out_point([12..]) of minter's live cell
+withdrawals - The information of withdrawers
+  token_index - The index of the NFT Class (increment from zero)
+  state - Used for indication of current NFT state
+  characteristic - A user defined variable to set up the NFT, we could consider it as the DNA of the items
+  to_lock_script - The receiver's lock script
+```
 
 ```shell
 echo '{
@@ -131,6 +162,14 @@ echo '{
 http://127.0.0.1:3030
 ```
 
+#### Response
+
+```
+block_number - The latest block number of cota-nft-entries-syncer
+mint_smt_entry - The SMT mint information (origin SMT leaves, SMT proof and other information)
+smt_root_hash - The latest SMT root hash after minting
+```
+
 ```shell
 {
     "jsonrpc":"2.0",
@@ -146,6 +185,18 @@ http://127.0.0.1:3030
 ### generate_transfer_cota_smt
 
 Generate smt data(`smt_entry` for `witness_args.input_type` and `smt_root` for cell data) for CoTA transfer transaction
+
+#### Parameters
+
+```
+lock_script - The sender's lock script
+withdrawal_lock_script - The withdrawal's lock script of the NFTs
+transfer_out_point - The out_point([12..]) of sender's live cell
+transfers - The information of transfer
+  cota_id - CoTA NFT Class Unique ID
+  token_index - The index of the NFT Class (increment from zero)
+  to_lock_script - The receiver's lock script
+```
 
 ```shell
 echo '{
@@ -170,6 +221,14 @@ echo '{
 http://127.0.0.1:3030
 ```
 
+#### Response
+
+```
+block_number - The latest block number of cota-nft-entries-syncer
+mint_smt_entry - The SMT transfer information (origin SMT leaves, SMT proof and other information)
+smt_root_hash - The latest SMT root hash after transferring
+```
+
 ```shell
 {
     "jsonrpc":"2.0",
@@ -184,7 +243,16 @@ http://127.0.0.1:3030
 
 ### get_hold_cota_nft
 
-Get CoTA NFT list held(not include withdrew) by someone
+Get CoTA NFT information(name, description, image, configure, state etc.) held(not include withdrew) by someone
+
+#### Parameters
+
+```
+lock_script - The holder's lock script
+page - The page number of the result
+page_size - The page size of the result
+cota_id - CoTA NFT Class Unique ID (optional)
+```
 
 - Without `cota_id` parameter
 
@@ -299,7 +367,16 @@ http://127.0.0.1:3030
 
 ### get_withdrawal_cota_nft
 
-Get CoTA NFT list withdrew(not include held) by someone
+Get CoTA NFT information(name, description, image, configure, state etc.) withdrew(not include held) by someone
+
+#### Parameters
+
+```
+lock_script - The withdrawer's lock script
+page - The page number of the result
+page_size - The page size of the result
+cota_id - CoTA NFT Class Unique ID (optional)
+```
 
 - Without `cota_id` parameter
 
@@ -444,7 +521,15 @@ http://127.0.0.1:3030
 
 ### get_mint_cota_nft
 
-Get CoTA NFT list minted by issuer
+Get CoTA NFT information(name, description, image, configure, state etc.) minted by issuer
+
+#### Parameters
+
+```
+lock_script - The minter's lock script
+page - The page number of the result
+page_size - The page size of the result
+```
 
 ```shell
 echo '{
@@ -512,6 +597,14 @@ http://127.0.0.1:3030
 
 Check whether an NFT is claimed
 
+#### Parameters
+
+```
+lock_script - The checker's lock script
+cota_id - CoTA NFT Class Unique ID
+token_index - The index of the NFT Class (increment from zero)
+```
+
 ```shell
  echo '{
     "id":2,
@@ -526,6 +619,13 @@ Check whether an NFT is claimed
 | tr -d '\n' \
 | curl -H 'content-type: application/json' -d @- \
 http://127.0.0.1:3030
+```
+
+#### Response
+
+```
+block_number - The latest block number of cota-nft-entries-syncer
+claimed - true for claimed and false fot unclaimed
 ```
 
 ```shell
@@ -543,6 +643,14 @@ http://127.0.0.1:3030
 
 Get the sender lock hash of the CoTA NFT
 
+#### Parameters
+
+```
+lock_script - The owner's lock script
+cota_id - CoTA NFT Class Unique ID
+token_index - The index of the NFT Class (increment from zero)
+```
+
 ```shell
 echo '{
     "id":2,
@@ -559,6 +667,13 @@ echo '{
 http://127.0.0.1:3030
 ```
 
+#### Response
+
+```
+block_number - The latest block number of cota-nft-entries-syncer
+sender_lock_hash - The sender lock hash of the NFT
+```
+
 ```shell
 {
     "jsonrpc":"2.0",
@@ -572,7 +687,13 @@ http://127.0.0.1:3030
 
 ### get_define_info
 
-Get define CoTA NFT information by cota_id
+Get define CoTA NFT Class information(name, description, image, total, issued, configure etc.) by the cota_id
+
+#### Parameters
+
+```
+cota_id - CoTA NFT Class Unique ID
+```
 
 ```shell
 echo '{
@@ -611,7 +732,13 @@ http://127.0.0.1:3030
 
 ### get_issuer_info
 
-Get issuer information
+Get issuer's information
+
+#### Parameters
+
+```
+lock_script - The issuer's lock script
+```
 
 ```shell
 echo '{
@@ -625,6 +752,15 @@ echo '{
 | tr -d '\n' \
 | curl -H 'content-type: application/json' -d @- \
 http://127.0.0.1:3030
+```
+
+#### Response
+
+```
+block_number - The latest block number of cota-nft-entries-syncer
+avatar - The issuer's avatar
+name - The issuer's name
+description - The issuer's description
 ```
 
 ```shell
@@ -643,6 +779,13 @@ http://127.0.0.1:3030
 ### parse_witness
 
 Parse CoTA witness
+
+#### Parameters
+
+```
+witness - The CoTA transaction witness
+version - The version of CoTA
+```
 
 ```shell
 echo '{
@@ -703,7 +846,14 @@ http://127.0.0.1:3030
 
 ### get_cota_count
 
-Get the count of NFTs held and withdrew by someone
+Get the count of NFTs held and withdrew by the owner
+
+#### Parameters
+
+```
+lock_script - The owner's lock script
+cota_id - CoTA NFT Class Unique ID
+```
 
 ```shell
 echo '{
@@ -718,6 +868,13 @@ echo '{
 | tr -d '\n' \
 | curl -H 'content-type: application/json' -d @- \
 http://127.0.0.1:3030
+```
+
+#### Response
+
+```
+block_number - The latest block number of cota-nft-entries-syncer
+count - The count of NFTs held and withdrew by the owner
 ```
 
 ```shell
