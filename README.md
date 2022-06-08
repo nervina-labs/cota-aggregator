@@ -16,6 +16,7 @@ The aggregator service of [CoTA](https://talk.nervos.org/t/rfc-cota-a-compact-to
 - `mysql-client` for macOS: `brew install mysql-client`
 
 If the output is as blow:
+
 ```shell
 If you need to have mysql-client first in your PATH, run:
   echo 'export PATH="/opt/homebrew/opt/mysql-client/bin:$PATH"' >> ~/.zshrc
@@ -24,23 +25,25 @@ For compilers to find mysql-client you may need to set:
   export LDFLAGS="-L/opt/homebrew/opt/mysql-client/lib"
   export CPPFLAGS="-I/opt/homebrew/opt/mysql-client/include"
 ```
+
 Then put the `RUSTFLAGS='-L/opt/homebrew/opt/mysql-client/lib' ` before `cargo build` and `cargo test`
 
 ## Quick Start
 
 ### Manual
 
-- Rename `.env.example` to `.env` 
-  - Update the database connection string in `DATABASE_URL` key 
+- Rename `.env.example` to `.env`
+  - Update the database connection string in `DATABASE_URL` key
   - Update the ckb-indexer url string in `CKB_INDEXER`
-  - Update the miannet or testnet in `IS_MAINNET`
+  - Update the ckb-node url string in `CKB_NODE`
+  - Update the mainnet or testnet in `IS_MAINNET`
 - Build with release profile: `make build-release`
 - Run with release profile: `make run-release`
 
 ### Release
 
 ```shell
-RUST_LOG=info DATABASE_URL=mysql://root:passport@localhost:3306/db_name CKB_INDEXER=http://localhost:8116 IS_MAINNET=false ./target/release/cota-aggregator
+RUST_LOG=info DATABASE_URL=mysql://root:password@localhost:3306/db_name CKB_NODE=http://localhost:8114 CKB_INDEXER=http://localhost:8116 IS_MAINNET=false ./cota-aggregator
 ```
 
 ### docker
