@@ -5,7 +5,7 @@
 
 The aggregator service of [CoTA](https://talk.nervos.org/t/rfc-cota-a-compact-token-aggregator-standard-for-extremely-low-cost-nfts-and-fts/6338)
 
-[CoTA Docs](https://developer.mibao.net/docs/develop/cota/overview)
+[CoTA Docs](https://developer.mibao.net/docs/cota/overview)
 
 ## Prerequisites
 
@@ -16,6 +16,7 @@ The aggregator service of [CoTA](https://talk.nervos.org/t/rfc-cota-a-compact-to
 - `mysql-client` for macOS: `brew install mysql-client`
 
 If the output is as blow:
+
 ```shell
 If you need to have mysql-client first in your PATH, run:
   echo 'export PATH="/opt/homebrew/opt/mysql-client/bin:$PATH"' >> ~/.zshrc
@@ -24,14 +25,15 @@ For compilers to find mysql-client you may need to set:
   export LDFLAGS="-L/opt/homebrew/opt/mysql-client/lib"
   export CPPFLAGS="-I/opt/homebrew/opt/mysql-client/include"
 ```
+
 Then put the `RUSTFLAGS='-L/opt/homebrew/opt/mysql-client/lib' ` before `cargo build` and `cargo test`
 
 ## Quick Start
 
 ### Manual
 
-- Rename `.env.example` to `.env` 
-  - Update the database connection string in `DATABASE_URL` key 
+- Rename `.env.example` to `.env`
+  - Update the database connection string in `DATABASE_URL` key
   - Update the ckb-indexer url string in `CKB_INDEXER`
   - Update the miannet or testnet in `IS_MAINNET`
 - Build with release profile: `make build-release`
