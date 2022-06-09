@@ -371,8 +371,7 @@ fn parse_claim(
 ) {
     for index in 0..claim_keys.len() {
         let claim_key = claim_keys.get(index).unwrap();
-        let mut key = [0u8; 32];
-        key.copy_from_slice(&blake2b_256(claim_key.as_slice()));
+        let key = blake2b_256(claim_key.as_slice());
         leaf_keys.push(Byte32::from_slice(&key).unwrap());
         leaf_values.push(Byte32::from_slice(&[255u8; 32]).unwrap());
     }
