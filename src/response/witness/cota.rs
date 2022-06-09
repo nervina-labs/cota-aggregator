@@ -6,6 +6,9 @@ use super::parser::{
 };
 use crate::response::helper::Inserter;
 use crate::response::witness::info::Metadata;
+use crate::response::witness::parser::{
+    parse_claim_update_v2, parse_claim_v2, parse_transfer_update_v2, parse_transfer_v2,
+};
 use crate::utils::error::Error;
 use ckb_types::bytes::Bytes;
 use ckb_types::packed::{BytesOpt, WitnessArgs};
@@ -13,11 +16,12 @@ use ckb_types::prelude::Unpack;
 use cota_smt::define::DefineCotaNFTEntries;
 use cota_smt::mint::{MintCotaNFTEntries, MintCotaNFTV1Entries};
 use cota_smt::transfer::{
-    ClaimCotaNFTEntries, TransferCotaNFTEntries, TransferCotaNFTV1Entries,
-    WithdrawalCotaNFTEntries, WithdrawalCotaNFTV1Entries,
+    ClaimCotaNFTEntries, ClaimCotaNFTV2Entries, TransferCotaNFTEntries, TransferCotaNFTV1Entries,
+    TransferCotaNFTV2Entries, WithdrawalCotaNFTEntries, WithdrawalCotaNFTV1Entries,
 };
 use cota_smt::transfer_update::{
-    ClaimUpdateCotaNFTEntries, TransferUpdateCotaNFTEntries, TransferUpdateCotaNFTV1Entries,
+    ClaimUpdateCotaNFTEntries, ClaimUpdateCotaNFTV2Entries, TransferUpdateCotaNFTEntries,
+    TransferUpdateCotaNFTV1Entries, TransferUpdateCotaNFTV2Entries,
 };
 use cota_smt::update::UpdateCotaNFTEntries;
 use jsonrpc_http_server::jsonrpc_core::serde_json::Map;
@@ -29,7 +33,7 @@ use serde_json::{from_slice, json};
 type CotaMap = Map<String, Value>;
 
 pub fn parse_cota_witness(witness: Vec<u8>, version: u8) -> Result<CotaMap, Error> {
-    if version > 1 {
+    if version > 2 {
         return Err(Error::WitnessParseError("Version invalid".to_string()));
     }
     let witness_args = WitnessArgs::from_slice(&witness)
@@ -58,7 +62,7 @@ fn parse_cota(input_type: BytesOpt, version: u8, mut cota_map: CotaMap) -> Resul
             if tx_type > TRANSFER_UPDATE || tx_type == 0 {
                 return Err(Error::WitnessParseError("Not cota witness".to_string()));
             }
-            let cota_entries = match tx_type {
+            let cota_entries: Map<String, Value> = match tx_type {
                 CREATE => {
                     parse_define(DefineCotaNFTEntries::from_slice(slice).map_err(entries_error)?)
                 }
@@ -76,9 +80,14 @@ fn parse_cota(input_type: BytesOpt, version: u8, mut cota_map: CotaMap) -> Resul
                         WithdrawalCotaNFTV1Entries::from_slice(slice).map_err(entries_error)?,
                     ),
                 },
-                CLAIM => {
-                    parse_claim(ClaimCotaNFTEntries::from_slice(slice).map_err(entries_error)?)
-                }
+                CLAIM => match version {
+                    0 => {
+                        parse_claim(ClaimCotaNFTEntries::from_slice(slice).map_err(entries_error)?)
+                    }
+                    _ => parse_claim_v2(
+                        ClaimCotaNFTV2Entries::from_slice(slice).map_err(entries_error)?,
+                    ),
+                },
                 UPDATE => {
                     parse_update(UpdateCotaNFTEntries::from_slice(slice).map_err(entries_error)?)
                 }
@@ -86,19 +95,30 @@ fn parse_cota(input_type: BytesOpt, version: u8, mut cota_map: CotaMap) -> Resul
                     0 => parse_transfer(
                         TransferCotaNFTEntries::from_slice(slice).map_err(entries_error)?,
                     ),
-                    _ => parse_transfer_v1(
+                    1 => parse_transfer_v1(
                         TransferCotaNFTV1Entries::from_slice(slice).map_err(entries_error)?,
                     ),
+                    _ => parse_transfer_v2(
+                        TransferCotaNFTV2Entries::from_slice(slice).map_err(entries_error)?,
+                    ),
                 },
-                CLAIM_UPDATE => parse_claim_update(
-                    ClaimUpdateCotaNFTEntries::from_slice(slice).map_err(entries_error)?,
-                ),
+                CLAIM_UPDATE => match version {
+                    0 => parse_claim_update(
+                        ClaimUpdateCotaNFTEntries::from_slice(slice).map_err(entries_error)?,
+                    ),
+                    _ => parse_claim_update_v2(
+                        ClaimUpdateCotaNFTV2Entries::from_slice(slice).map_err(entries_error)?,
+                    ),
+                },
                 _ => match version {
                     0 => parse_transfer_update(
                         TransferUpdateCotaNFTEntries::from_slice(slice).map_err(entries_error)?,
                     ),
-                    _ => parse_transfer_update_v1(
+                    1 => parse_transfer_update_v1(
                         TransferUpdateCotaNFTV1Entries::from_slice(slice).map_err(entries_error)?,
+                    ),
+                    _ => parse_transfer_update_v2(
+                        TransferUpdateCotaNFTV2Entries::from_slice(slice).map_err(entries_error)?,
                     ),
                 },
             };
