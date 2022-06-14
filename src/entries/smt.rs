@@ -84,6 +84,7 @@ fn generate_mysql_smt<'a>(smt: &mut CotaSMT<'a>, lock_hash: [u8; 32]) -> Result<
         "Load all history smt leaves from mysql database",
     );
 
+    let mut leaves: Vec<(H256, H256)> = vec![];
     let start_time = Local::now().timestamp_millis();
     for define_db in defines {
         let DefineDb {
@@ -100,7 +101,7 @@ fn generate_mysql_smt<'a>(smt: &mut CotaSMT<'a>, lock_hash: [u8; 32]) -> Result<
             configure,
             block_number,
         );
-        smt.update(key, value).expect("SMT update leave error");
+        leaves.push((key, value));
     }
     for hold_db in holds {
         let HoldDb {
@@ -112,7 +113,7 @@ fn generate_mysql_smt<'a>(smt: &mut CotaSMT<'a>, lock_hash: [u8; 32]) -> Result<
         } = hold_db;
         let (_, key) = generate_hold_key(cota_id, token_index);
         let (_, value) = generate_hold_value(configure, state, characteristic);
-        smt.update(key, value).expect("SMT update leave error");
+        leaves.push((key, value));
     }
     let mut withdrawal_map: HashMap<Vec<u8>, u8> = HashMap::new();
     for withdrawal_db in withdrawals {
@@ -152,7 +153,7 @@ fn generate_mysql_smt<'a>(smt: &mut CotaSMT<'a>, lock_hash: [u8; 32]) -> Result<
             )
         };
         withdrawal_map.insert(generate_cota_index(cota_id, token_index), version);
-        smt.update(key, value).expect("SMT update leave error");
+        leaves.push((key, value));
     }
     for claim_db in claims {
         let ClaimDb {
@@ -166,8 +167,9 @@ fn generate_mysql_smt<'a>(smt: &mut CotaSMT<'a>, lock_hash: [u8; 32]) -> Result<
             .unwrap_or_default();
         let (_, key) = generate_claim_key(cota_id, token_index, out_point);
         let (_, value) = generate_claim_value(version);
-        smt.update(key, value).expect("SMT update leave error");
+        leaves.push((key, value));
     }
+    smt.update_all(leaves).expect("SMT update leave error");
     diff_time(start_time, "Push all history leaves to smt");
     debug!("The smt root of all leaves from mysql: {:?}", smt.root());
     Ok(())
