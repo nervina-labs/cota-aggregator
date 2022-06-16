@@ -169,7 +169,6 @@ fn generate_mysql_smt<'a>(smt: &mut CotaSMT<'a>, lock_hash: [u8; 32]) -> Result<
         let (_, value) = generate_claim_value(version);
         leaves.push((key, value));
     }
-    debug!("leaves: {:?}", leaves);
     if !leaves.is_empty() {
         smt.update_all(leaves).expect("SMT update leave error");
     }
