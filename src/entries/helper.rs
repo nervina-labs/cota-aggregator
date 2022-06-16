@@ -217,7 +217,7 @@ where
     Ok(())
 }
 
-fn get_value_padding_block_height() -> u64 {
+pub fn get_value_padding_block_height() -> u64 {
     let is_mainnet: bool = match env::var("IS_MAINNET") {
         Ok(mainnet) => from_str::<bool>(&mainnet).unwrap(),
         Err(_e) => false,

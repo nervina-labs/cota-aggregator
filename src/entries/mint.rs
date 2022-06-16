@@ -1,7 +1,7 @@
+use crate::ckb::indexer::get_cota_smt_root;
 use crate::entries::helper::{generate_define_key, generate_define_value, with_lock};
 use crate::entries::helper::{generate_withdrawal_key_v1, generate_withdrawal_value_v1};
 use crate::entries::smt::{generate_history_smt, init_smt};
-use crate::indexer::index::get_cota_smt_root;
 use crate::models::block::get_syncer_tip_block_number;
 use crate::models::define::{get_define_cota_by_lock_hash_and_cota_id, DefineDb};
 use crate::request::mint::{MintReq, MintWithdrawal};
@@ -16,6 +16,7 @@ use cota_smt::mint::{MintCotaNFTV1Entries, MintCotaNFTV1EntriesBuilder};
 use cota_smt::molecule::prelude::*;
 use cota_smt::smt::{blake2b_256, H256};
 use log::error;
+use molecule::hex_string;
 
 pub async fn generate_mint_smt(
     db: &RocksDB,
@@ -26,6 +27,7 @@ pub async fn generate_mint_smt(
     if withdrawals_len == 0 {
         return Err(Error::RequestParamNotFound("withdrawals".to_string()));
     }
+    let first_withdrawal = withdrawals.first().unwrap().clone();
     let db_define = get_define_cota_by_lock_hash_and_cota_id(
         blake2b_256(&mint_req.lock_script),
         mint_req.cota_id,
@@ -73,15 +75,6 @@ pub async fn generate_mint_smt(
     previous_leaves.push((key, old_value));
     update_leaves.push((key, value));
 
-    let mut action_vec: Vec<u8> = Vec::new();
-    if withdrawals_len == 1 {
-        action_vec.extend("Mint the NFT ".as_bytes());
-        action_vec.extend(&cota_id);
-        action_vec.extend(&withdrawals.first().unwrap().token_index);
-        action_vec.extend(" to ".as_bytes());
-        action_vec.extend(&withdrawals.first().unwrap().to_lock_script);
-    }
-
     let start_time = Local::now().timestamp_millis();
     for MintWithdrawal {
         token_index,
@@ -102,6 +95,16 @@ pub async fn generate_mint_smt(
         update_leaves.push((key, value));
     }
     diff_time(start_time, "Generate mint smt object with update leaves");
+
+    let mut action_vec: Vec<u8> = Vec::new();
+    if withdrawals_len == 1 {
+        action_vec.extend("Mint the NFT ".as_bytes());
+        action_vec.extend(
+            hex_string(&withdrawal_keys.first().unwrap().nft_id().as_slice()[2..]).as_bytes(),
+        );
+        action_vec.extend(" to ".as_bytes());
+        action_vec.extend(hex_string(&first_withdrawal.to_lock_script).as_bytes());
+    }
 
     let smt_root = get_cota_smt_root(&mint_req.lock_script).await?;
     let lock_hash = blake2b_256(&mint_req.lock_script);
