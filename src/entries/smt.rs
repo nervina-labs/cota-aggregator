@@ -169,7 +169,9 @@ fn generate_mysql_smt<'a>(smt: &mut CotaSMT<'a>, lock_hash: [u8; 32]) -> Result<
         let (_, value) = generate_claim_value(version);
         leaves.push((key, value));
     }
-    smt.update_all(leaves).expect("SMT update leave error");
+    if !leaves.is_empty() {
+        smt.update_all(leaves).expect("SMT update leave error");
+    }
     diff_time(start_time, "Push all history leaves to smt");
     debug!("The smt root of all leaves from mysql: {:?}", smt.root());
     Ok(())
