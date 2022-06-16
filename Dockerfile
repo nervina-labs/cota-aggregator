@@ -32,6 +32,7 @@ ENV DATABASE_URL mysql://root:password@localhost:3306/db_name
 ENV MAX_POOL 20
 ENV THREADS 3
 ENV CKB_INDEXER http://localhost:8116
+ENV CKB_NODE http://localhost:8114
 ENV IS_MAINNET false
 ENV SENTRY_DSN https://key@sentry.io/1234
 

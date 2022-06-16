@@ -1,9 +1,9 @@
+use crate::ckb::indexer::get_cota_smt_root;
 use crate::entries::helper::{
     generate_empty_value, generate_hold_key, generate_hold_value, generate_withdrawal_key_v1,
     generate_withdrawal_value_v1, with_lock,
 };
 use crate::entries::smt::{generate_history_smt, init_smt};
-use crate::indexer::index::get_cota_smt_root;
 use crate::models::hold::get_hold_cota_by_lock_hash;
 use crate::request::withdrawal::WithdrawalReq;
 use crate::smt::db::db::RocksDB;
@@ -15,6 +15,7 @@ use cota_smt::molecule::prelude::*;
 use cota_smt::smt::{blake2b_256, H256};
 use cota_smt::transfer::{WithdrawalCotaNFTV1Entries, WithdrawalCotaNFTV1EntriesBuilder};
 use log::error;
+use molecule::hex_string;
 
 pub async fn generate_withdrawal_smt(
     db: &RocksDB,
@@ -24,15 +25,13 @@ pub async fn generate_withdrawal_smt(
     if withdrawals.is_empty() {
         return Err(Error::RequestParamNotFound("withdrawals".to_string()));
     }
-    let cota_id_and_token_index_pairs = Some(
-        withdrawals
-            .iter()
-            .map(|withdrawal| (withdrawal.cota_id, withdrawal.token_index))
-            .collect(),
-    );
+    let cota_id_index_pairs: Vec<([u8; 20], [u8; 4])> = withdrawals
+        .iter()
+        .map(|withdrawal| (withdrawal.cota_id, withdrawal.token_index))
+        .collect();
     let db_holds = get_hold_cota_by_lock_hash(
         blake2b_256(&withdrawal_req.lock_script.clone()),
-        cota_id_and_token_index_pairs,
+        &cota_id_index_pairs,
     )?
     .0;
     if db_holds.is_empty() || db_holds.len() != withdrawals.len() {
@@ -106,10 +105,10 @@ pub async fn generate_withdrawal_smt(
     let mut action_vec: Vec<u8> = Vec::new();
     if withdrawals.len() == 1 {
         action_vec.extend("Transfer the NFT ".as_bytes());
-        action_vec.extend(&withdrawals.first().unwrap().cota_id);
-        action_vec.extend(&withdrawals.first().unwrap().token_index);
+        action_vec.extend(hex_string(&withdrawals.first().unwrap().cota_id).as_bytes());
+        action_vec.extend(hex_string(&withdrawals.first().unwrap().token_index).as_bytes());
         action_vec.extend(" to ".as_bytes());
-        action_vec.extend(&withdrawals.get(0).unwrap().to_lock_script);
+        action_vec.extend(hex_string(&withdrawals.first().unwrap().to_lock_script).as_bytes());
     }
     let action_bytes = BytesBuilder::default()
         .set(action_vec.iter().map(|v| Byte::from(*v)).collect())

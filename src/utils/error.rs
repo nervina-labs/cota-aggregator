@@ -34,6 +34,9 @@ pub enum Error {
     #[fail(display = "The cota_id and token_index has not held")]
     CotaIdAndTokenIndexHasNotHeld,
 
+    #[fail(display = "The withdrawal CoTA NFTs are not in one transaction")]
+    WithdrawCotaNFTsNotInOneTx,
+
     #[fail(display = "Database '{}' query error", _0)]
     DatabaseQueryError(String),
 
@@ -48,6 +51,9 @@ pub enum Error {
 
     #[fail(display = "CKB Indexer error: {}", _0)]
     CKBIndexerError(String),
+
+    #[fail(display = "CKB RPC error: {}", _0)]
+    CKBRPCError(String),
 
     #[fail(display = "Witness Parse error: {}", _0)]
     WitnessParseError(String),
@@ -88,9 +94,13 @@ impl Error {
             Self::CotaIdAndTokenIndexHasNotHeld => {
                 "The cota_id and token_index has not held".into()
             }
+            Self::WithdrawCotaNFTsNotInOneTx => {
+                "The withdrawal CoTA NFTs are not in one transaction".into()
+            }
             Self::DatabaseQueryError(msg) => format!("Database query error: {}", msg),
             Self::SMTProofError(msg) => format!("'{}' SMT proof error", msg),
             Self::CKBIndexerError(msg) => format!("CKB Indexer error: {}", msg),
+            Self::CKBRPCError(msg) => format!("CKB RPC error: {}", msg),
             Self::SMTError(msg) => format!("SMT error: {}", msg),
             Self::RocksDBError(msg) => format!("RocksDB error: {}", msg),
             Self::WitnessParseError(msg) => format!("Witness parse error: {}", msg),

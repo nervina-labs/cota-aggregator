@@ -1,6 +1,6 @@
+use crate::ckb::indexer::get_cota_smt_root;
 use crate::entries::helper::{generate_define_key, generate_define_value, with_lock};
 use crate::entries::smt::{generate_history_smt, init_smt};
-use crate::indexer::index::get_cota_smt_root;
 use crate::models::block::get_syncer_tip_block_number;
 use crate::request::define::DefineReq;
 use crate::smt::db::db::RocksDB;
@@ -66,12 +66,13 @@ pub async fn generate_define_smt(
 
     let mut action_vec: Vec<u8> = Vec::new();
     action_vec.extend("Create a new NFT collection with ".as_bytes());
-    let define_total = if u32::from_be_bytes(define_req.total) == 0u32 {
-        "unlimited".as_bytes()
+    let total = u32::from_be_bytes(define_req.total);
+    let define_total = if total == 0u32 {
+        "unlimited".to_string()
     } else {
-        &define_req.total
+        total.to_string()
     };
-    action_vec.extend(define_total);
+    action_vec.extend(define_total.as_bytes());
     action_vec.extend(" edition".as_bytes());
     let action_bytes = BytesBuilder::default()
         .set(action_vec.iter().map(|v| Byte::from(*v)).collect())

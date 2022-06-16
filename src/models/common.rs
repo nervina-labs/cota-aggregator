@@ -19,8 +19,8 @@ type DBAllResult = Result<(Vec<DefineDb>, Vec<HoldDb>, Vec<WithdrawDb>, Vec<Clai
 
 pub fn get_all_cota_by_lock_hash(lock_hash: [u8; 32]) -> DBAllResult {
     let defines = get_define_cota_by_lock_hash(lock_hash)?;
-    let holds = get_hold_cota_by_lock_hash(lock_hash, None)?;
-    let withdrawals = get_withdrawal_cota_by_lock_hash(lock_hash, None)?;
+    let holds = get_hold_cota_by_lock_hash(lock_hash, &vec![])?;
+    let withdrawals = get_withdrawal_cota_by_lock_hash(lock_hash, &vec![])?;
     let claims = get_claim_cota_by_lock_hash(lock_hash)?;
     Ok((defines.0, holds.0, withdrawals.0, claims.0))
 }

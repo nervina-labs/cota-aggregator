@@ -38,4 +38,5 @@ jobs:
         run: cargo build --verbose --release
 
       - name: Test aggregator
+        if: github.ref == 'refs/heads/master'
         run: cargo test --all

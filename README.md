@@ -35,14 +35,15 @@ Then put the `RUSTFLAGS='-L/opt/homebrew/opt/mysql-client/lib' ` before `cargo b
 - Rename `.env.example` to `.env`
   - Update the database connection string in `DATABASE_URL` key
   - Update the ckb-indexer url string in `CKB_INDEXER`
-  - Update the miannet or testnet in `IS_MAINNET`
+  - Update the ckb-node url string in `CKB_NODE`
+  - Update the mainnet or testnet in `IS_MAINNET`
 - Build with release profile: `make build-release`
 - Run with release profile: `make run-release`
 
 ### Release
 
 ```shell
-RUST_LOG=info DATABASE_URL=mysql://root:passport@localhost:3306/db_name CKB_INDEXER=http://localhost:8116 IS_MAINNET=false ./target/release/cota-aggregator
+RUST_LOG=info DATABASE_URL=mysql://root:password@localhost:3306/db_name CKB_NODE=http://localhost:8114 CKB_INDEXER=http://localhost:8116 IS_MAINNET=false ./cota-aggregator
 ```
 
 ### docker
@@ -233,16 +234,18 @@ http://127.0.0.1:3030
 
 ```
 block_number - The latest block number of cota-nft-entries-syncer
-mint_smt_entry - The SMT transfer information (origin SMT leaves, SMT proof and other information)
 smt_root_hash - The latest SMT root hash after transferring
+withdraw_block_hash - The block hash containing the withdraw transaction
+mint_smt_entry - The SMT transfer information (origin SMT leaves, SMT proof and other information)
 ```
 
 ```shell
 {
     "jsonrpc":"2.0",
     "result":{
-        "block_number":4427822,
-        "smt_root_hash":"035dfe06d8aaf28daec16f394b226f1357bfa857b436b506274a32b024b15507",
+        "block_number": 5648377,
+        "smt_root_hash": "035dfe06d8aaf28daec16f394b226f1357bfa857b436b506274a32b024b15507",
+        "withdraw_block_hash": "0x1e5ee51aee1bcb6ee45400147fb57162fb47941641e66e44b8186752a04cacfe",
         "transfer_smt_entry":"4b03000020000000560000007a000000980000002b01000036010000d10200000100000081034f3b21fc113bfc423f1185ba6c37f16d02c6c71e00000000fb22817c592d8e96982e708d4a6c2135627ee8950000000001000000ffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff0100000081024f3b21fc113bfc423f1185ba6c37f16d02c6c71e0000000093000000080000008b000000100000002600000073000000c00000000000000000000000000000000000000000004900000049000000100000003000000031000000577a5e5930e2ecdd6200765f3442e6119dc99e87df474f22f13cab819c80b24201140000009cc2405a07d067c98bf6824134b2759b44079629777347181a25dc39c31ad290b9e2d52ded42295000000000070000004c4fff4c4fff48970100004c4f095109d2beef40bb50b06b1701f6bbae63be2b4123a9a57171b35f794926ef26c9735381000000000000000000000000000000000000000000000000000000000000004fa051a00000e96fe831821c10fe6cfec6e6d334688a5e7e11c6d263e3d900b0702b8664000054c0f76c724f432ff9b0b1f282ed81a17f342301000000000000000000004f0451018e9e5d7cfc6fe1c855d97930ea5737f4aae49897a79765515ff02ed27a53c88900000000000000000000000000000000000000000000000000000000000000004f185118fdc39dedf04b0a51bc3f190a0bab16aa78e36a171a944a799520a4151ed9495900000000000000000000000000000000000000000000000000000000000000005034c98329580d675bc226969e982888bf506dc2fce273b3a9df7d7adb5fc0541d5098969dc267aa28b349b9beacae7edc7ee10faf8d9f68ca13385c1a331be900e451021ae9d0fc52005e139df54ad1b4581f0537028a339558d7d6c639975f3f5b4a8600000000000000000000000000000000000000000000000000000000000000004f34760000005472616e7366657220746865204e4654204f3b21fc113bfc423f1185ba6c37f16d02c6c71e0000000020746f2049000000100000003000000031000000577a5e5930e2ecdd6200765f3442e6119dc99e87df474f22f13cab819c80b24201140000009cc2405a07d067c98bf6824134b2759b44079629"
     },
     "id":2

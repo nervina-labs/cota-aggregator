@@ -7,11 +7,12 @@ use cota_smt::common::{
 use cota_smt::define::DefineCotaNFTEntries;
 use cota_smt::mint::{MintCotaNFTEntries, MintCotaNFTV1Entries};
 use cota_smt::transfer::{
-    ClaimCotaNFTEntries, TransferCotaNFTEntries, TransferCotaNFTV1Entries,
-    WithdrawalCotaNFTEntries, WithdrawalCotaNFTV1Entries,
+    ClaimCotaNFTEntries, ClaimCotaNFTV2Entries, TransferCotaNFTEntries, TransferCotaNFTV1Entries,
+    TransferCotaNFTV2Entries, WithdrawalCotaNFTEntries, WithdrawalCotaNFTV1Entries,
 };
 use cota_smt::transfer_update::{
-    ClaimUpdateCotaNFTEntries, TransferUpdateCotaNFTEntries, TransferUpdateCotaNFTV1Entries,
+    ClaimUpdateCotaNFTEntries, ClaimUpdateCotaNFTV2Entries, TransferUpdateCotaNFTEntries,
+    TransferUpdateCotaNFTV1Entries, TransferUpdateCotaNFTV2Entries,
 };
 use cota_smt::update::UpdateCotaNFTEntries;
 use jsonrpc_http_server::jsonrpc_core::serde_json::Map;
@@ -225,6 +226,39 @@ pub fn parse_claim(obj: ClaimCotaNFTEntries) -> Map<String, Value> {
     map
 }
 
+pub fn parse_claim_v2(obj: ClaimCotaNFTV2Entries) -> Map<String, Value> {
+    let mut map = Map::new();
+    map.insert_str("type", "claim".to_owned());
+    map.insert_obj_vec(
+        "hold_keys",
+        obj.hold_keys().into_iter().map(parse_cota_nft_id).collect(),
+    );
+    map.insert_obj_vec(
+        "hold_values",
+        obj.hold_values()
+            .into_iter()
+            .map(parse_cota_nft_info)
+            .collect(),
+    );
+    map.insert_obj_vec(
+        "claim_keys",
+        obj.claim_keys()
+            .into_iter()
+            .map(parse_claim_cota_nft_key)
+            .collect(),
+    );
+    map.insert_array(
+        "claim_values",
+        obj.claim_values()
+            .into_iter()
+            .map(|value| Value::String(slice_to_hex(value.as_slice())))
+            .collect(),
+    );
+    map.insert_str("proof", slice_to_hex(&obj.proof().raw_data().to_vec()));
+    map.insert_str("action", slice_to_hex(&obj.action().raw_data().to_vec()));
+    map
+}
+
 pub fn parse_transfer(obj: TransferCotaNFTEntries) -> Map<String, Value> {
     let mut map = Map::new();
     map.insert_str("type", "transfer".to_owned());
@@ -266,6 +300,46 @@ pub fn parse_transfer(obj: TransferCotaNFTEntries) -> Map<String, Value> {
 }
 
 pub fn parse_transfer_v1(obj: TransferCotaNFTV1Entries) -> Map<String, Value> {
+    let mut map = Map::new();
+    map.insert_str("type", "transfer".to_owned());
+    map.insert_obj_vec(
+        "claim_keys",
+        obj.claim_keys()
+            .into_iter()
+            .map(parse_claim_cota_nft_key)
+            .collect(),
+    );
+    map.insert_array(
+        "claim_values",
+        obj.claim_values()
+            .into_iter()
+            .map(|value| Value::String(slice_to_hex(value.as_slice())))
+            .collect(),
+    );
+    map.insert_obj_vec(
+        "withdrawal_keys",
+        obj.withdrawal_keys()
+            .into_iter()
+            .map(parse_withdrawal_cota_nft_key_v1)
+            .collect(),
+    );
+    map.insert_obj_vec(
+        "withdrawal_values",
+        obj.withdrawal_values()
+            .into_iter()
+            .map(parse_withdrawal_cota_nft_value_v1)
+            .collect(),
+    );
+    map.insert_str("proof", slice_to_hex(&obj.proof().raw_data().to_vec()));
+    map.insert_str(
+        "withdrawal_proof",
+        slice_to_hex(&obj.withdrawal_proof().raw_data().to_vec()),
+    );
+    map.insert_str("action", slice_to_hex(&obj.action().raw_data().to_vec()));
+    map
+}
+
+pub fn parse_transfer_v2(obj: TransferCotaNFTV2Entries) -> Map<String, Value> {
     let mut map = Map::new();
     map.insert_str("type", "transfer".to_owned());
     map.insert_obj_vec(
@@ -368,6 +442,43 @@ pub fn parse_claim_update(obj: ClaimUpdateCotaNFTEntries) -> Map<String, Value> 
     map
 }
 
+pub fn parse_claim_update_v2(obj: ClaimUpdateCotaNFTV2Entries) -> Map<String, Value> {
+    let mut map = Map::new();
+    map.insert_str("type", "claim_update".to_owned());
+    map.insert_obj_vec(
+        "hold_keys",
+        obj.hold_keys().into_iter().map(parse_cota_nft_id).collect(),
+    );
+    map.insert_obj_vec(
+        "hold_new_values",
+        obj.hold_values()
+            .into_iter()
+            .map(parse_cota_nft_info)
+            .collect(),
+    );
+    map.insert_obj_vec(
+        "claim_keys",
+        obj.claim_keys()
+            .into_iter()
+            .map(parse_claim_cota_nft_key)
+            .collect(),
+    );
+    map.insert_obj_vec(
+        "claim_infos",
+        obj.claim_infos()
+            .into_iter()
+            .map(parse_claim_cota_nft_info)
+            .collect(),
+    );
+    map.insert_str("proof", slice_to_hex(&obj.proof().raw_data().to_vec()));
+    map.insert_str(
+        "withdrawal_proof",
+        slice_to_hex(&obj.withdrawal_proof().raw_data().to_vec()),
+    );
+    map.insert_str("action", slice_to_hex(&obj.action().raw_data().to_vec()));
+    map
+}
+
 pub fn parse_transfer_update(obj: TransferUpdateCotaNFTEntries) -> Map<String, Value> {
     let mut map = Map::new();
     map.insert_str("type", "transfer_update".to_owned());
@@ -409,6 +520,46 @@ pub fn parse_transfer_update(obj: TransferUpdateCotaNFTEntries) -> Map<String, V
 }
 
 pub fn parse_transfer_update_v1(obj: TransferUpdateCotaNFTV1Entries) -> Map<String, Value> {
+    let mut map = Map::new();
+    map.insert_str("type", "transfer_update".to_owned());
+    map.insert_obj_vec(
+        "claim_keys",
+        obj.claim_keys()
+            .into_iter()
+            .map(parse_claim_cota_nft_key)
+            .collect(),
+    );
+    map.insert_obj_vec(
+        "claim_infos",
+        obj.claim_infos()
+            .into_iter()
+            .map(parse_claim_cota_nft_info)
+            .collect(),
+    );
+    map.insert_obj_vec(
+        "withdrawal_keys",
+        obj.withdrawal_keys()
+            .into_iter()
+            .map(parse_withdrawal_cota_nft_key_v1)
+            .collect(),
+    );
+    map.insert_obj_vec(
+        "withdrawal_values",
+        obj.withdrawal_values()
+            .into_iter()
+            .map(parse_withdrawal_cota_nft_value_v1)
+            .collect(),
+    );
+    map.insert_str("proof", slice_to_hex(&obj.proof().raw_data().to_vec()));
+    map.insert_str(
+        "withdrawal_proof",
+        slice_to_hex(&obj.withdrawal_proof().raw_data().to_vec()),
+    );
+    map.insert_str("action", slice_to_hex(&obj.action().raw_data().to_vec()));
+    map
+}
+
+pub fn parse_transfer_update_v2(obj: TransferUpdateCotaNFTV2Entries) -> Map<String, Value> {
     let mut map = Map::new();
     map.insert_str("type", "transfer_update".to_owned());
     map.insert_obj_vec(
