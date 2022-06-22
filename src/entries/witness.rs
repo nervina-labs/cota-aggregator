@@ -319,7 +319,7 @@ fn parse_withdraw_v0(
         }
 
         let mut key = [0u8; 32];
-        key.copy_from_slice(withdrawal_key.as_slice());
+        key[0..26].copy_from_slice(withdrawal_key.as_slice());
         leaf_keys.push(Byte32::from_slice(&key).unwrap());
 
         let withdrawal_value = withdrawal_value.get(index).unwrap();
