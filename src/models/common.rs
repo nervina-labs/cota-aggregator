@@ -54,6 +54,7 @@ pub fn get_withdrawal_cota(
         Some(script_id) => get_withdrawal_cota_by_script_id(script_id, cota_id_opt),
         None => Ok((vec![], 0, 0)),
     }?;
+    debug!("withdrawal_nfts: {:?}", withdrawal_nfts);
     withdrawal_nfts = withdrawal_nfts
         .into_iter()
         .filter(|withdrawal| {
@@ -75,6 +76,7 @@ pub fn get_withdrawal_cota(
             nfts.push((withdrawal, class_info))
         }
     }
+    debug!("withdraw: {:?}", nfts);
 
     Ok((nfts, total, block_height))
 }
