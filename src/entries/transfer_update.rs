@@ -6,6 +6,7 @@ use crate::entries::helper::{
 };
 use crate::entries::smt::{generate_history_smt, init_smt};
 use crate::entries::witness::parse_withdraw_witness;
+use crate::models::claim::is_exist_in_claim;
 use crate::models::withdrawal::{get_withdrawal_cota_by_lock_hash, WithdrawDb};
 use crate::request::transfer::{TransferUpdate, TransferUpdateReq};
 use crate::smt::db::db::RocksDB;
@@ -38,6 +39,18 @@ pub async fn generate_transfer_update_smt(
     let sender_withdrawals =
         get_withdrawal_cota_by_lock_hash(withdraw_lock_hash, &cota_id_index_pairs)?.0;
     if sender_withdrawals.is_empty() || sender_withdrawals.len() != transfers_len {
+        return Err(Error::CotaIdAndTokenIndexHasNotWithdrawn);
+    }
+    let transfer_lock_hash = blake2b_256(&transfer_update_req.lock_script);
+    let is_claimed = sender_withdrawals.iter().any(|withdrawal| {
+        is_exist_in_claim(
+            transfer_lock_hash,
+            withdrawal.cota_id,
+            withdrawal.token_index,
+            withdrawal.out_point,
+        )
+    });
+    if is_claimed {
         return Err(Error::CotaIdAndTokenIndexHasNotWithdrawn);
     }
     let withdrawal_block_number = sender_withdrawals.first().unwrap().block_number;
