@@ -2,6 +2,7 @@ pub mod claim;
 pub mod define;
 mod helper;
 pub mod hold;
+pub mod info;
 pub mod issuer;
 pub mod mint;
 pub mod transfer;

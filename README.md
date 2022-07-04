@@ -5,7 +5,7 @@
 
 The aggregator service of [CoTA](https://talk.nervos.org/t/rfc-cota-a-compact-token-aggregator-standard-for-extremely-low-cost-nfts-and-fts/6338)
 
-[CoTA Docs](https://developer.mibao.net/docs/cota/overview)
+[CoTA Docs](https://cotadev.io)
 
 ## Prerequisites
 
@@ -26,7 +26,7 @@ For compilers to find mysql-client you may need to set:
   export CPPFLAGS="-I/opt/homebrew/opt/mysql-client/include"
 ```
 
-Then put the `RUSTFLAGS='-L/opt/homebrew/opt/mysql-client/lib' ` before `cargo build` and `cargo test`
+Then put the `RUSTFLAGS='-L/opt/homebrew/opt/mysql-client/lib' ` in front of `cargo build` and `cargo test`
 
 ## Quick Start
 
