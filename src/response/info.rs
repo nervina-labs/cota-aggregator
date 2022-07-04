@@ -12,7 +12,7 @@ pub async fn generate_aggregator_info(block_number: u64) -> Result<Map<String, V
         "indexer_block_number",
         get_indexer_tip_block_number().await?,
     );
-    map.insert_str("version", version.to_owned());
+    map.insert_str("version", format!("v{:}", version));
     map.insert_u64("syncer_block_number", block_number);
     Ok(map)
 }
