@@ -3,42 +3,15 @@ use crate::utils::error::Error;
 use ckb_jsonrpc_types::{BlockNumber, CellOutput, JsonBytes, OutPoint, Uint32};
 use ckb_types::packed::Script;
 use ckb_types::prelude::Entity;
+use ckb_types::H256;
+use serde::de::DeserializeOwned;
 use serde::Deserialize;
 use serde_json::{from_str, json, Map, Value};
 use std::env;
 
 pub async fn get_cota_smt_root(lock_script: &[u8]) -> Result<Option<[u8; 32]>, Error> {
-    let ckb_indexer_url =
-        env::var("CKB_INDEXER").map_err(|_e| Error::Other("CKB_INDEXER must be set".to_owned()))?;
-
-    let mut req_json = Map::new();
-    req_json.insert("id".to_owned(), json!("1"));
-    req_json.insert("jsonrpc".to_owned(), json!("2.0"));
-    req_json.insert("method".to_owned(), json!("get_cells"));
-    req_json.insert("params".to_owned(), generate_params(lock_script)?);
-
-    let client = reqwest::Client::new();
-
-    let resp = client
-        .post(ckb_indexer_url)
-        .json(&req_json)
-        .send()
-        .await
-        .map_err(|e| Error::Other(format!("CKB Indexer rpc error: {:?}", e.to_string())))?;
-    let output = resp
-        .json::<jsonrpc_core::response::Output>()
-        .await
-        .map_err(|e| Error::Other(format!("CKB Indexer rpc error: {:?}", e.to_string())))?;
-
-    let result: CellPagination = match output {
-        jsonrpc_core::response::Output::Success(success) => {
-            serde_json::from_value::<CellPagination>(success.result)
-                .map_err(|_e| Error::CKBIndexerError("Parse response error".to_owned()))
-        }
-        jsonrpc_core::response::Output::Failure(failure) => {
-            Err(Error::CKBIndexerError(failure.error.message))
-        }
-    }?;
+    let result =
+        build_rpc::<CellPagination>("get_cells", Some(generate_params(lock_script)?)).await?;
     if result.objects.is_empty() {
         return Ok(None);
     }
@@ -53,6 +26,46 @@ pub async fn get_cota_smt_root(lock_script: &[u8]) -> Result<Option<[u8; 32]>, E
         _ => Err(Error::CKBIndexerError(
             "CoTA cell data length error".to_owned(),
         )),
+    }
+}
+
+pub async fn get_indexer_tip_block_number() -> Result<u64, Error> {
+    let result = build_rpc::<Tip>("get_tip", None).await?;
+    Ok(u64::from(result.block_number))
+}
+
+async fn build_rpc<T: DeserializeOwned>(method: &str, params: Option<Value>) -> Result<T, Error> {
+    let ckb_indexer_url =
+        env::var("CKB_INDEXER").map_err(|_e| Error::Other("CKB_INDEXER must be set".to_owned()))?;
+
+    let mut req_json = Map::new();
+    req_json.insert("id".to_owned(), json!("1"));
+    req_json.insert("jsonrpc".to_owned(), json!("2.0"));
+    req_json.insert("method".to_owned(), json!(method));
+    if let Some(param) = params {
+        req_json.insert("params".to_owned(), param);
+    }
+
+    let client = reqwest::Client::new();
+
+    let resp = client
+        .post(ckb_indexer_url)
+        .json(&req_json)
+        .send()
+        .await
+        .map_err(|e| Error::Other(format!("CKB Indexer rpc error: {:?}", e.to_string())))?;
+    let output = resp
+        .json::<jsonrpc_core::response::Output>()
+        .await
+        .map_err(|e| Error::Other(format!("CKB Indexer rpc error: {:?}", e.to_string())))?;
+    match output {
+        jsonrpc_core::response::Output::Success(success) => {
+            serde_json::from_value::<T>(success.result)
+                .map_err(|_e| Error::CKBIndexerError("Parse response error".to_owned()))
+        }
+        jsonrpc_core::response::Output::Failure(failure) => {
+            Err(Error::CKBIndexerError(failure.error.message))
+        }
     }
 }
 
@@ -114,4 +127,11 @@ struct CellPagination {
     objects:      Vec<Cell>,
     #[serde(skip_deserializing)]
     _last_cursor: JsonBytes,
+}
+
+#[derive(Deserialize)]
+pub struct Tip {
+    #[serde(skip_deserializing)]
+    _block_hash:  H256,
+    block_number: BlockNumber,
 }

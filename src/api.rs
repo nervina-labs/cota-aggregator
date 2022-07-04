@@ -23,6 +23,7 @@ use crate::request::witness::WitnessReq;
 use crate::response::claim::{parse_claimed_response, parse_claimed_smt, parse_claimed_update_smt};
 use crate::response::define::{parse_define_info, parse_define_smt};
 use crate::response::hold::{parse_hold_response, parse_owned_nft_count};
+use crate::response::info::generate_aggregator_info;
 use crate::response::issuer::parse_issuer_response;
 use crate::response::mint::{parse_mint_response, parse_mint_smt};
 use crate::response::transfer::{parse_transfer_smt, parse_transfer_update_smt};
@@ -237,6 +238,14 @@ pub async fn get_cota_count(params: Params) -> Result<Value, Error> {
     let (count, block_height) =
         get_owned_cota_count(&lock_script, cota_id).map_err(|err| err.into())?;
     let response = parse_owned_nft_count(count, block_height);
+    Ok(Value::Object(response))
+}
+
+pub async fn get_aggregator_info(_params: Params) -> Result<Value, Error> {
+    info!("Get aggregator info request");
+    let response = generate_aggregator_info(get_block_number()?)
+        .await
+        .map_err(|err| err.into())?;
     Ok(Value::Object(response))
 }
 
