@@ -40,9 +40,7 @@ pub async fn get_withdraw_info(
     };
 
     tokio::task::spawn_blocking(move || {
-        let ckb_node_url =
-            env::var("CKB_NODE").map_err(|_e| Error::Other("CKB_NODE must be set".to_owned()))?;
-        let mut client = CkbRpcClient::new(&ckb_node_url);
+        let mut client = ckb_node_client()?;
         let block = client
             .get_block_by_number(Uint64::from(block_number))
             .map_err(|_e| Error::CKBRPCError("get_block_by_number".to_string()))?
@@ -108,6 +106,18 @@ pub async fn get_withdraw_info(
     .unwrap()
 }
 
+pub async fn get_node_tip_block_number() -> Result<u64, Error> {
+    tokio::task::spawn_blocking(move || {
+        let mut client = ckb_node_client()?;
+        let block_number = client
+            .get_tip_block_number()
+            .map_err(|_e| Error::CKBRPCError("get_tip_block_number".to_string()))?;
+        Ok(u64::from(block_number))
+    })
+    .await
+    .unwrap()
+}
+
 fn get_tx_proof(transaction_proof: JSONRPCTxProof) -> TransactionProof {
     let indices = Uint32VecBuilder::default()
         .set(
@@ -138,4 +148,10 @@ fn get_tx_proof(transaction_proof: JSONRPCTxProof) -> TransactionProof {
                 .build(),
         )
         .build()
+}
+
+fn ckb_node_client() -> Result<CkbRpcClient, Error> {
+    let ckb_node_url =
+        env::var("CKB_NODE").map_err(|_e| Error::Other("CKB_NODE must be set".to_owned()))?;
+    Ok(CkbRpcClient::new(&ckb_node_url))
 }
