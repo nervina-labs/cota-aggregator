@@ -27,6 +27,7 @@ pub async fn generate_claim_update_smt(
     if nfts_len == 0 {
         return Err(Error::RequestParamNotFound("nfts".to_string()));
     }
+    let claim_lock_script = claim_update_req.lock_script;
     let cota_id_index_pairs: Vec<([u8; 20], [u8; 4])> = nfts
         .iter()
         .map(|nft| (nft.cota_id, nft.token_index))
@@ -37,7 +38,13 @@ pub async fn generate_claim_update_smt(
     if sender_withdrawals.is_empty() || sender_withdrawals.len() != nfts_len {
         return Err(Error::CotaIdAndTokenIndexHasNotWithdrawn);
     }
-    let claim_lock_hash = blake2b_256(&claim_update_req.lock_script);
+    let is_receiver = sender_withdrawals
+        .iter()
+        .any(|withdrawal| &withdrawal.receiver_lock_script == &claim_lock_script);
+    if !is_receiver {
+        return Err(Error::CotaIdAndTokenIndexHasNotWithdrawn);
+    }
+    let claim_lock_hash = blake2b_256(&claim_lock_script);
     let is_claimed = sender_withdrawals.iter().any(|withdrawal| {
         is_exist_in_claim(
             claim_lock_hash,
@@ -110,9 +117,9 @@ pub async fn generate_claim_update_smt(
         previous_leaves.push((key, H256::zero()));
     }
 
-    let claim_smt_root = get_cota_smt_root(&claim_update_req.lock_script).await?;
+    let claim_smt_root = get_cota_smt_root(&claim_lock_script).await?;
 
-    let claim_lock_hash = blake2b_256(&claim_update_req.lock_script);
+    let claim_lock_hash = blake2b_256(&claim_lock_script);
     let transaction = &StoreTransaction::new(db.transaction());
     let mut claim_smt = init_smt(transaction, claim_lock_hash)?;
     // Add lock to smt
