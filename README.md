@@ -898,3 +898,46 @@ count - The count of NFTs held and withdrew by the owner
     "id":2
 }
 ```
+
+### get_aggregator_info
+
+Get the cota-aggregator information
+
+#### Parameters
+
+None
+
+```shell
+echo '{
+    "id":2,
+    "jsonrpc":"2.0",
+    "method":"get_aggregator_info"
+}' \
+| tr -d '\n' \
+| curl -H 'content-type: application/json' -d @- \
+http://127.0.0.1:3030
+```
+
+#### Response
+
+```
+indexer_block_number - The latest block number of ckb-indexer
+node_block_number - The latest block number of ckb-node
+syncer_block_number - The latest block number of cota-nft-entries-syncer
+version - The current version of cota-aggregator
+is_mainnet - The environment variable to indicate ckb network
+```
+
+```shell
+{
+    "jsonrpc":"2.0",
+    "result":{
+        "indexer_block_number":7561075,
+        "node_block_number":7561075,
+        "syncer_block_number":7561075,
+        "version":"v0.6.5",
+        "is_mainnet": true
+    },
+    "id":2
+}
+```
