@@ -28,6 +28,7 @@ pub async fn generate_transfer_smt(
     transfer_req: TransferReq,
 ) -> Result<(H256, TransferCotaNFTV2Entries, H256), Error> {
     let transfers = transfer_req.transfers;
+    let transfer_lock_script = transfer_req.lock_script;
     let transfers_len = transfers.len();
     if transfers_len == 0 {
         return Err(Error::RequestParamNotFound("transfers".to_string()));
@@ -42,7 +43,13 @@ pub async fn generate_transfer_smt(
     if sender_withdrawals.is_empty() || sender_withdrawals.len() != transfers_len {
         return Err(Error::CotaIdAndTokenIndexHasNotWithdrawn);
     }
-    let transfer_lock_hash = blake2b_256(&transfer_req.lock_script);
+    let is_receiver = sender_withdrawals
+        .iter()
+        .any(|withdrawal| &withdrawal.receiver_lock_script == &transfer_lock_script);
+    if !is_receiver {
+        return Err(Error::CotaIdAndTokenIndexHasNotWithdrawn);
+    }
+    let transfer_lock_hash = blake2b_256(&transfer_lock_script);
     let is_claimed = sender_withdrawals.iter().any(|withdrawal| {
         is_exist_in_claim(
             transfer_lock_hash,
@@ -115,10 +122,10 @@ pub async fn generate_transfer_smt(
         "Generate transfer smt object with update leaves",
     );
 
-    let transfer_smt_root = get_cota_smt_root(&transfer_req.lock_script).await?;
+    let transfer_smt_root = get_cota_smt_root(&transfer_lock_script).await?;
 
     let transaction = &StoreTransaction::new(db.transaction());
-    let transfer_lock_hash = blake2b_256(&transfer_req.lock_script);
+    let transfer_lock_hash = blake2b_256(&transfer_lock_script);
     let mut transfer_smt = init_smt(transaction, transfer_lock_hash)?;
     // Add lock to transfer smt
     with_lock(transfer_lock_hash, || {
