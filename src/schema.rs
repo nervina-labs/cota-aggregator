@@ -228,7 +228,7 @@ table! {
         token_index -> Unsigned<Integer>,
         out_point -> Char,
         out_point_crc -> Unsigned<Integer>,
-        tx_hash -> Nullable<Char>,
+        tx_hash -> Char,
         state -> Unsigned<Tinyint>,
         configure -> Unsigned<Tinyint>,
         characteristic -> Char,
