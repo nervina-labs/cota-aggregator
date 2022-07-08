@@ -66,3 +66,22 @@ impl FetchCountReq {
         })
     }
 }
+
+#[derive(Clone, Copy, Eq, PartialEq)]
+pub struct FetchHistoryTxsReq {
+    pub cota_id:     [u8; 20],
+    pub token_index: [u8; 4],
+    pub page:        i64,
+    pub page_size:   i64,
+}
+
+impl FetchHistoryTxsReq {
+    pub fn from_map(map: &Map<String, Value>) -> Result<Self, Error> {
+        Ok(FetchHistoryTxsReq {
+            cota_id:     map.get_hex_bytes_filed::<20>("cota_id")?,
+            token_index: map.get_hex_bytes_filed::<4>("token_index")?,
+            page:        map.get_i64_filed("page")?,
+            page_size:   map.get_i64_filed("page_size")?,
+        })
+    }
+}
