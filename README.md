@@ -72,6 +72,21 @@ https://cota.nervina.dev/aggregator
 
 ## APIs
 
+- [generate_define_cota_smt](#generate_define_cota_smt)
+- [generate_mint_cota_smt](#generate_mint_cota_smt)
+- [generate_transfer_cota_smt](#generate_transfer_cota_smt)
+- [get_hold_cota_nft](#get_hold_cota_nft)
+- [get_withdrawal_cota_nft](#get_withdrawal_cota_nft)
+- [get_mint_cota_nft](#get_mint_cota_nft)
+- [is_claimed](#is_claimed)
+- [get_cota_nft_sender](#get_cota_nft_sender)
+- [get_define_info](#get_define_info)
+- [get_issuer_info](#get_issuer_info)
+- [parse_witness](#parse_witness)
+- [get_cota_count](#get_cota_count)
+- [get_history_transactions](#get_history_transactions)
+- [get_aggregator_info](#get_aggregator_info)
+
 ### generate_define_cota_smt
 
 Generate smt data(`smt_entry` for `witness_args.input_type` and `smt_root` for cell data) for CoTA define transaction
