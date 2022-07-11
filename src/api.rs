@@ -10,7 +10,7 @@ use crate::entries::withdrawal::generate_withdrawal_smt;
 use crate::models::block::get_syncer_tip_block_number;
 use crate::models::common::{
     check_cota_claimed, get_define_info_by_cota_id, get_hold_cota, get_mint_cota,
-    get_owned_cota_count, get_sender_lock_hash_by_cota_nft, get_withdrawal_cota,
+    get_owned_cota_count, get_sender_account_by_cota_nft, get_withdrawal_cota,
 };
 use crate::models::issuer::get_issuer_info_by_lock_hash;
 use crate::request::claim::{ClaimReq, ClaimUpdateReq, IsClaimedReq};
@@ -187,17 +187,18 @@ pub async fn is_claimed_rpc(params: Params) -> Result<Value, Error> {
     Ok(Value::Object(response))
 }
 
-pub async fn get_sender_lock_hash(params: Params) -> Result<Value, Error> {
-    info!("Get sender lock request: {:?}", params);
+pub async fn get_sender_account(params: Params) -> Result<Value, Error> {
+    info!("Get sender account request: {:?}", params);
     let map: Map<String, Value> = Params::parse(params)?;
     let SenderLockReq {
         lock_script,
         cota_id,
         token_index,
     } = SenderLockReq::from_map(&map).map_err(|err| err.into())?;
-    let sender_lock_hash = get_sender_lock_hash_by_cota_nft(&lock_script, cota_id, token_index)
+    let sender_account = get_sender_account_by_cota_nft(&lock_script, cota_id, token_index)
         .map_err(|err| err.into())?;
-    let response = parse_sender_response(sender_lock_hash, get_block_number()?);
+    let block_number = get_block_number()?;
+    let response = parse_sender_response(sender_account, block_number).map_err(|err| err.into())?;
     Ok(Value::Object(response))
 }
 

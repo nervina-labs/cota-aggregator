@@ -106,11 +106,11 @@ pub fn check_cota_claimed(
     check_hold_cota_by_lock_hash(lock_hash, (cota_id, index))
 }
 
-pub fn get_sender_lock_hash_by_cota_nft(
+pub fn get_sender_account_by_cota_nft(
     lock_script: &[u8],
     cota_id: [u8; 20],
     token_index: [u8; 4],
-) -> Result<Option<String>, Error> {
+) -> Result<Option<(String, Vec<u8>)>, Error> {
     let lock_script_id_opt = get_script_id_by_lock_script(lock_script)?;
     if lock_script_id_opt.is_none() {
         return Ok(None);

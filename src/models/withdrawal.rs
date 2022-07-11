@@ -306,31 +306,43 @@ pub fn get_first_transaction(
     Ok(db_history_txs.first().cloned())
 }
 
+#[derive(Serialize, Deserialize, Queryable, Debug, Clone)]
+struct SenderLockDb {
+    pub lock_hash:      String,
+    pub lock_script_id: i64,
+}
 pub fn get_sender_lock_by_script_id(
     script_id: i64,
     cota_id_: [u8; 20],
     token_index_: [u8; 4],
-) -> Result<Option<String>, Error> {
+) -> Result<Option<(String, Vec<u8>)>, Error> {
     let start_time = Local::now().timestamp_millis();
     let conn = &POOL.clone().get().expect("Mysql pool connection error");
     let cota_id_hex = hex::encode(cota_id_);
     let token_index_u32 = u32::from_be_bytes(token_index_);
     let cota_id_crc_u32 = generate_crc(cota_id_hex.as_bytes());
-    let lock_hashes: Vec<String> = withdraw_cota_nft_kv_pairs
-        .select(lock_hash)
+    let sender_locks: Vec<SenderLockDb> = withdraw_cota_nft_kv_pairs
+        .select((lock_hash, lock_script_id))
         .filter(cota_id_crc.eq(cota_id_crc_u32))
         .filter(token_index.eq(token_index_u32))
         .filter(cota_id.eq(cota_id_hex))
         .filter(receiver_lock_script_id.eq(script_id))
         .order(updated_at.desc())
         .limit(1)
-        .load::<String>(conn)
+        .load::<SenderLockDb>(conn)
         .map_err(|e| {
             error!("Query withdraw error: {}", e.to_string());
             Error::DatabaseQueryError(e.to_string())
         })?;
     diff_time(start_time, "SQL get_sender_lock_by_script_id");
-    Ok(lock_hashes.first().cloned())
+    if let Some(sender_lock) = sender_locks.first().cloned() {
+        let lock_opt = get_script_map_by_ids(vec![sender_lock.lock_script_id])?
+            .get(&sender_lock.lock_script_id)
+            .cloned();
+        Ok(lock_opt.map(|lock| (sender_lock.lock_hash, lock)))
+    } else {
+        Ok(None)
+    }
 }
 
 fn parse_withdraw_db(withdrawals: Vec<WithdrawCotaNft>) -> DBResult<WithdrawDb> {
