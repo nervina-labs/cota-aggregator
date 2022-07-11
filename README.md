@@ -698,6 +698,7 @@ http://127.0.0.1:3030
 ```
 block_number - The latest block number of cota-nft-entries-syncer
 sender_lock_hash - The sender lock hash of the NFT
+sender_address - The sender ckb address of the NFT
 ```
 
 ```shell
@@ -705,7 +706,8 @@ sender_lock_hash - The sender lock hash of the NFT
     "jsonrpc":"2.0",
     "result":{
         "block_number":4397997,
-        "sender_lock_hash":"0x8a8f45a094cbe050d1a612924901b11edc1bce28c0fd8d96cdc8779889f28aa8"
+        "sender_lock_hash":"0x8a8f45a094cbe050d1a612924901b11edc1bce28c0fd8d96cdc8779889f28aa8",
+        "sender_address": "ckt1qzda0cr08m85hc8jlnfp3zer7xulejywt49kt2rr0vthywaa50xwsq0xzmg5vrtrge5t3tvpjuwr55l8qh63ucqhqne0u"
     },
     "id":2
 }
