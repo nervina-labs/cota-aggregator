@@ -29,12 +29,10 @@ pub async fn get_history_transactions(
             get_all_transactions(cota_id, token_index, page, page_size)?;
         let mut txs: Vec<HistoryTransaction> = Vec::with_capacity(history_txs.len());
         for tx in history_txs {
-            let timestamp = get_block_timestamp(tx.block_number).await?;
-            println!("timestamp1: {:?}, 2: {:?}", mint_timestamp, timestamp);
-            let age = timestamp - mint_timestamp;
+            let age = get_block_timestamp(tx.block_number).await?;
             let to = address_from_script(&tx.receiver_lock_script)?;
             let from = address_from_script(&tx.lock_script)?;
-            let tx_type = if timestamp == mint_timestamp {
+            let tx_type = if age == mint_timestamp {
                 "mint".to_string()
             } else {
                 "transfer".to_string()
