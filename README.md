@@ -953,7 +953,7 @@ block_number - The latest block number of cota-nft-entries-syncer
 page_size - page_size - The page size of the CoTA NFT transaction list
 total - The total amount of the CoTA NFT transaction list
 transactions - The transaction list of the sepcific CoTA NFT
-    age - The timestamp of the CoTA NFT from the mint block to the transfer block (millisecond)
+    age - The block timestamp of the mint or transfer transaction (millisecond)
     block_number - The CoTA NFT transfer or mint block number
     from - The sender address of the CoTA NFT transfer or mint transaction
     to - The receiver address of the CoTA NFT transfer or mint transaction
@@ -969,7 +969,7 @@ transactions - The transaction list of the sepcific CoTA NFT
         "total":6,
         "transactions":[
             {
-                "age":4803822759,
+                "age":1650608618595,
                 "block_number":6960258,
                 "from":"ckb1qqypm0l63rdt2jayymfrrjnyadmqe630a8skwcdpmfqqmgdje0sjsqt3emxu792v2yatrwfgp48huss2yg4yq9g083utk",
                 "to":"ckb1qrgp752jcfnm0uemj723grpyva6zappyuj0tuge3etkpjlmjsxmq5qt7jq0g09af5m0yqjncd5v9mg3p2yuu5es2w57jj",
@@ -977,7 +977,7 @@ transactions - The transaction list of the sepcific CoTA NFT
                 "type":"transfer"
             },
             {
-                "age":1808601358,
+                "age":1647613397194,
                 "block_number":6727018,
                 "from":"ckb1qzl58smqy32hnrq6vxjedcxe2fugvnz497h7yvwqvwel40uh4rltcqvuj4m34cfxmz74jlsk0dkp6yrwf7q2z4q9puchc",
                 "to":"ckb1qqypm0l63rdt2jayymfrrjnyadmqe630a8skwcdpmfqqmgdje0sjsqt3emxu792v2yatrwfgp48huss2yg4yq9g083utk",
@@ -985,7 +985,7 @@ transactions - The transaction list of the sepcific CoTA NFT
                 "type":"transfer"
             },
             {
-                "age":1808486011,
+                "age":1647613281847,
                 "block_number":6727011,
                 "from":"ckb1qqypm0l63rdt2jayymfrrjnyadmqe630a8skwcdpmfqqmgdje0sjsqt3emxu792v2yatrwfgp48huss2yg4yq9g083utk",
                 "to":"ckb1qzl58smqy32hnrq6vxjedcxe2fugvnz497h7yvwqvwel40uh4rltcqvuj4m34cfxmz74jlsk0dkp6yrwf7q2z4q9puchc",
@@ -993,7 +993,7 @@ transactions - The transaction list of the sepcific CoTA NFT
                 "type":"transfer"
             },
             {
-                "age":1808331944,
+                "age":1647613127780,
                 "block_number":6726999,
                 "from":"ckb1qzl58smqy32hnrq6vxjedcxe2fugvnz497h7yvwqvwel40uh4rltcqvuj4m34cfxmz74jlsk0dkp6yrwf7q2z4q9puchc",
                 "to":"ckb1qqypm0l63rdt2jayymfrrjnyadmqe630a8skwcdpmfqqmgdje0sjsqt3emxu792v2yatrwfgp48huss2yg4yq9g083utk",
@@ -1001,7 +1001,7 @@ transactions - The transaction list of the sepcific CoTA NFT
                 "type":"transfer"
             },
             {
-                "age":1807484744,
+                "age":1647612280580,
                 "block_number":6726919,
                 "from":"ckb1qqypm0l63rdt2jayymfrrjnyadmqe630a8skwcdpmfqqmgdje0sjsqt3emxu792v2yatrwfgp48huss2yg4yq9g083utk",
                 "to":"ckb1qzl58smqy32hnrq6vxjedcxe2fugvnz497h7yvwqvwel40uh4rltcqvuj4m34cfxmz74jlsk0dkp6yrwf7q2z4q9puchc",
@@ -1009,7 +1009,7 @@ transactions - The transaction list of the sepcific CoTA NFT
                 "type":"transfer"
             },
             {
-                "age":0,
+                "age":1645804795836,
                 "block_number":6585724,
                 "from":"ckb1qzda0cr08m85hc8jlnfp3zer7xulejywt49kt2rr0vthywaa50xwsqgk2yu24zgcj0dq2vlsshmhg4hqprlm23c4jwrps",
                 "to":"ckb1qqypm0l63rdt2jayymfrrjnyadmqe630a8skwcdpmfqqmgdje0sjsqt3emxu792v2yatrwfgp48huss2yg4yq9g083utk",
