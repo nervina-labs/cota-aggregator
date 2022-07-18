@@ -16,7 +16,7 @@ dotenv = "0.15.0"
 chrono = "0.4"
 molecule = "0.7.2"
 lazy_static = "1.4"
-rocksdb = { package = "ckb-rocksdb", version = "=0.18.2", features = ["snappy"] }
+rocksdb = { package = "ckb-rocksdb", version = "=0.18.3", features = ["snappy"] }
 sparse-merkle-tree = "0.5.3"
 ckb-types = "=0.103.0"
 ckb-jsonrpc-types = ">=0.103.0"
