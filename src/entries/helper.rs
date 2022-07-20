@@ -4,6 +4,7 @@ use crate::entries::constants::{
 };
 use crate::entries::SMT_LOCK;
 use crate::utils::error::Error;
+use crate::utils::helper::is_ckb_mainnet;
 use cota_smt::common::{Uint16, Uint32, *};
 use cota_smt::molecule::prelude::*;
 use cota_smt::smt::{blake2b_256, H256};
@@ -218,11 +219,7 @@ where
 }
 
 pub fn get_value_padding_block_height() -> u64 {
-    let is_mainnet: bool = match env::var("IS_MAINNET") {
-        Ok(mainnet) => from_str::<bool>(&mainnet).unwrap(),
-        Err(_e) => false,
-    };
-    if is_mainnet {
+    if is_ckb_mainnet() {
         BLOCK_HEIGHT_VALUE_PADDING_MAINNET
     } else {
         BLOCK_HEIGHT_VALUE_PADDING_TESTNET

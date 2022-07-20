@@ -1,6 +1,6 @@
 use crate::ckb::constants::{MAINNET_COTA_CODE_HASH, TESTNET_COTA_CODE_HASH};
 use crate::utils::error::Error;
-use crate::utils::helper::parse_bytes_n;
+use crate::utils::helper::{is_ckb_mainnet, parse_bytes_n};
 use ckb_jsonrpc_types::{
     BlockNumber, Script as RPCScript, TransactionProof as JSONRPCTxProof, TransactionView, Uint64,
 };
@@ -29,11 +29,7 @@ pub async fn get_withdraw_info(
     block_number: u64,
     withdrawal_lock_script: Vec<u8>,
 ) -> Result<WithdrawRawTx, Error> {
-    let is_mainnet: bool = match env::var("IS_MAINNET") {
-        Ok(mainnet) => from_str::<bool>(&mainnet).unwrap(),
-        Err(_e) => false,
-    };
-    let cota_code_hash = if is_mainnet {
+    let cota_code_hash = if is_ckb_mainnet() {
         parse_bytes_n::<32>(MAINNET_COTA_CODE_HASH.to_owned()).unwrap()
     } else {
         parse_bytes_n::<32>(TESTNET_COTA_CODE_HASH.to_owned()).unwrap()

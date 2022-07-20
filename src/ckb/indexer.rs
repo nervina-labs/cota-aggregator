@@ -1,5 +1,6 @@
 use crate::ckb::constants::{MAINNET_COTA_CODE_HASH, TESTNET_COTA_CODE_HASH};
 use crate::utils::error::Error;
+use crate::utils::helper::is_ckb_mainnet;
 use ckb_jsonrpc_types::{BlockNumber, CellOutput, JsonBytes, OutPoint, Uint32};
 use ckb_types::packed::Script;
 use ckb_types::prelude::Entity;
@@ -78,11 +79,7 @@ fn generate_params(lock_script: &[u8]) -> Result<Value, Error> {
         2u8 => "data1",
         _ => "0",
     };
-    let is_mainnet: bool = match env::var("IS_MAINNET") {
-        Ok(mainnet) => from_str::<bool>(&mainnet).unwrap(),
-        Err(_e) => false,
-    };
-    let code_hash = if is_mainnet {
+    let code_hash = if is_ckb_mainnet() {
         format!("0x{}", MAINNET_COTA_CODE_HASH)
     } else {
         format!("0x{}", TESTNET_COTA_CODE_HASH)
