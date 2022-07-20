@@ -104,14 +104,12 @@ pub async fn generate_claim_smt(
     }
 
     let claim_smt_root = get_cota_smt_root(&claim_lock_script).await?;
-
-    let claim_lock_hash = blake2b_256(&claim_lock_script);
     let transaction = &StoreTransaction::new(db.transaction());
     let mut claim_smt = init_smt(transaction, claim_lock_hash)?;
 
     // Add lock to claim smt
     with_lock(claim_lock_hash, || {
-        generate_history_smt(&mut claim_smt, claim_lock_hash, claim_smt_root)?;
+        generate_history_smt(&mut claim_smt, claim_lock_script.clone(), claim_smt_root)?;
         claim_smt
             .update_all(claim_update_leaves.clone())
             .map_err(|e| Error::SMTError(e.to_string()))?;

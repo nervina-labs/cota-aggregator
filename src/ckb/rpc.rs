@@ -12,7 +12,6 @@ use cota_smt::common::{
 };
 use cota_smt::smt::H256;
 use molecule::prelude::{Builder, Byte, Entity};
-use serde_json::from_str;
 use std::env;
 
 #[derive(Clone, Debug, Default)]

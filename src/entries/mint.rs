@@ -23,15 +23,14 @@ pub async fn generate_mint_smt(
     mint_req: MintReq,
 ) -> Result<(H256, MintCotaNFTV1Entries), Error> {
     let withdrawals = mint_req.withdrawals;
+    let mint_lock_script = mint_req.lock_script;
     let withdrawals_len = withdrawals.len();
     if withdrawals_len == 0 {
         return Err(Error::RequestParamNotFound("withdrawals".to_string()));
     }
+    let mint_lock_hash = blake2b_256(&mint_lock_script);
     let first_withdrawal = withdrawals.first().unwrap().clone();
-    let db_define = get_define_cota_by_lock_hash_and_cota_id(
-        blake2b_256(&mint_req.lock_script),
-        mint_req.cota_id,
-    )?;
+    let db_define = get_define_cota_by_lock_hash_and_cota_id(mint_lock_hash, mint_req.cota_id)?;
     if db_define.is_none() {
         let cota_id_hex = hex::encode(mint_req.cota_id);
         return Err(Error::CotaIdHasNotDefined(cota_id_hex));
@@ -106,13 +105,13 @@ pub async fn generate_mint_smt(
         action_vec.extend(hex_string(&first_withdrawal.to_lock_script).as_bytes());
     }
 
-    let smt_root = get_cota_smt_root(&mint_req.lock_script).await?;
-    let lock_hash = blake2b_256(&mint_req.lock_script);
+    let smt_root = get_cota_smt_root(&mint_lock_script).await?;
+
     let transaction = &StoreTransaction::new(db.transaction());
-    let mut smt = init_smt(transaction, lock_hash)?;
+    let mut smt = init_smt(transaction, mint_lock_hash)?;
     // Add lock to smt
-    with_lock(lock_hash, || {
-        generate_history_smt(&mut smt, lock_hash, smt_root)?;
+    with_lock(mint_lock_hash, || {
+        generate_history_smt(&mut smt, mint_lock_script.clone(), smt_root)?;
         smt.update_all(update_leaves.clone())
             .map_err(|e| Error::SMTError(e.to_string()))?;
         smt.save_root_and_leaves(previous_leaves.clone())?;

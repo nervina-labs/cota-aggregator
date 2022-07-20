@@ -138,15 +138,13 @@ pub async fn generate_transfer_update_smt(
     }
 
     let transfer_smt_root = get_cota_smt_root(&transfer_lock_script).await?;
-
     let transaction = &StoreTransaction::new(db.transaction());
-    let transfer_lock_hash = blake2b_256(&transfer_lock_script);
     let mut transfer_update_smt = init_smt(transaction, transfer_lock_hash)?;
     // Add lock to transfer smt
     with_lock(transfer_lock_hash, || {
         generate_history_smt(
             &mut transfer_update_smt,
-            transfer_lock_hash,
+            transfer_lock_script.clone(),
             transfer_smt_root,
         )?;
         transfer_update_smt

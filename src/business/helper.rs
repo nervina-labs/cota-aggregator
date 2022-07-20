@@ -3,8 +3,6 @@ use crate::utils::helper::is_ckb_mainnet;
 use ckb_sdk::{Address, AddressPayload, NetworkType};
 use ckb_types::packed::Script;
 use molecule::prelude::Entity;
-use serde_json::from_str;
-use std::env;
 
 pub fn address_from_script(slice: &[u8]) -> Result<String, Error> {
     let payload =

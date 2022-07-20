@@ -7,7 +7,7 @@ use ckb_types::prelude::Entity;
 use ckb_types::H256;
 use serde::de::DeserializeOwned;
 use serde::Deserialize;
-use serde_json::{from_str, json, Map, Value};
+use serde_json::{json, Map, Value};
 use std::env;
 
 pub async fn get_cota_smt_root(lock_script: &[u8]) -> Result<Option<[u8; 32]>, Error> {

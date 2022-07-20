@@ -4,8 +4,9 @@ use crate::entries::helper::{
     generate_withdrawal_key_v1, generate_withdrawal_value, generate_withdrawal_value_v1,
 };
 use crate::models::claim::ClaimDb;
-use crate::models::common::get_all_cota_by_lock_hash;
+use crate::models::common::{get_all_cota_by_lock_hash, get_all_cota_by_secp256k1_batch_lock};
 use crate::models::define::DefineDb;
+use crate::models::helper::get_secp256k1_batch_code_hash;
 use crate::models::hold::HoldDb;
 use crate::models::withdrawal::WithdrawDb;
 use crate::smt::db::schema::{
@@ -17,10 +18,13 @@ use crate::smt::CotaSMT;
 use crate::utils::error::Error;
 use crate::utils::helper::diff_time;
 use chrono::prelude::*;
+use ckb_types::packed::Script;
 use cota_smt::common::*;
-use cota_smt::smt::H256;
+use cota_smt::smt::{blake2b_256, H256};
 use log::debug;
+use molecule::prelude::Entity;
 use std::collections::HashMap;
+use std::convert::TryInto;
 
 pub fn init_smt<'a>(
     transaction: &'a StoreTransaction,
@@ -48,12 +52,14 @@ pub fn init_smt<'a>(
 
 pub fn generate_history_smt<'a>(
     smt: &mut CotaSMT<'a>,
-    lock_hash: [u8; 32],
+    lock_script: Vec<u8>,
     smt_root_opt: Option<[u8; 32]>,
 ) -> Result<(), Error> {
+    let lock_hash = blake2b_256(&lock_script);
+    let master_args = parse_secp256k1_batch_lock_master_args(&lock_script);
     let root = *smt.root();
     if root == H256::zero() {
-        return generate_mysql_smt(smt, lock_hash);
+        return generate_mysql_smt(smt, lock_hash, master_args);
     }
     debug!(
         "cota cell smt root: {:?} of {:?}",
@@ -73,12 +79,32 @@ pub fn generate_history_smt<'a>(
         }
     }
     reset_smt_temp_leaves(smt)?;
-    generate_mysql_smt(smt, lock_hash)
+    generate_mysql_smt(smt, lock_hash, master_args)
 }
 
-fn generate_mysql_smt<'a>(smt: &mut CotaSMT<'a>, lock_hash: [u8; 32]) -> Result<(), Error> {
+fn parse_secp256k1_batch_lock_master_args(lock_script: &[u8]) -> Option<[u8; 20]> {
+    let script = Script::from_slice(lock_script).unwrap();
+    let secp256k1_batch_code_hash = hex::decode(get_secp256k1_batch_code_hash()).unwrap();
+    if script.code_hash().as_slice() == &secp256k1_batch_code_hash && script.args().len() >= 20 {
+        let args: [u8; 20] = script.args().as_slice()[0..20]
+            .try_into()
+            .expect("secp256k1_batch lock args should be valid");
+        return Some(args);
+    }
+    None
+}
+
+fn generate_mysql_smt<'a>(
+    smt: &mut CotaSMT<'a>,
+    lock_hash: [u8; 32],
+    master_args: Option<[u8; 20]>,
+) -> Result<(), Error> {
     let start_time = Local::now().timestamp_millis();
-    let (defines, holds, withdrawals, claims) = get_all_cota_by_lock_hash(lock_hash)?;
+    let (defines, holds, withdrawals, claims) = if let Some(args) = master_args {
+        get_all_cota_by_secp256k1_batch_lock(args)?
+    } else {
+        get_all_cota_by_lock_hash(lock_hash)?
+    };
     diff_time(
         start_time,
         "Load all history smt leaves from mysql database",

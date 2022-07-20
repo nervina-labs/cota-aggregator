@@ -8,8 +8,6 @@ use crate::utils::helper::is_ckb_mainnet;
 use cota_smt::common::{Uint16, Uint32, *};
 use cota_smt::molecule::prelude::*;
 use cota_smt::smt::{blake2b_256, H256};
-use serde_json::from_str;
-use std::env;
 use std::sync::Arc;
 
 pub fn generate_define_key(cota_id: [u8; 20]) -> (DefineCotaNFTId, H256) {

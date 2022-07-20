@@ -4,8 +4,6 @@ use crate::response::helper::Inserter;
 use crate::utils::error::Error;
 use crate::utils::helper::is_ckb_mainnet;
 use jsonrpc_http_server::jsonrpc_core::serde_json::{Map, Value};
-use serde_json::from_str;
-use std::env;
 
 pub async fn generate_aggregator_info(block_number: u64) -> Result<Map<String, Value>, Error> {
     let version = env!("CARGO_PKG_VERSION");
