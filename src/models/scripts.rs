@@ -1,9 +1,10 @@
-use crate::models::helper::{generate_crc, PAGE_SIZE};
+use crate::models::common::SECP256K1_BATCH_HASH_TYPE;
+use crate::models::helper::{generate_crc, get_secp256k1_batch_code_hash, PAGE_SIZE};
 use crate::schema::scripts::dsl::scripts;
 use crate::schema::scripts::*;
 use crate::schema::scripts::{args, code_hash, hash_type};
 use crate::utils::error::Error;
-use crate::utils::helper::{diff_time, parse_bytes, parse_bytes_n};
+use crate::utils::helper::{diff_time, parse_bytes, parse_bytes_n, parse_vec_n};
 use crate::POOL;
 use chrono::prelude::*;
 use cota_smt::ckb_types::packed::{Byte32, BytesBuilder, Script as LockScript, ScriptBuilder};
@@ -84,6 +85,47 @@ pub fn get_script_id_by_lock_script(lock_script: &[u8]) -> Result<Option<i64>, E
         })?;
     diff_time(start_time, "SQL get_script_id_by_lock_script");
     Ok(script_ids.get(0).cloned())
+}
+
+pub fn get_secp256k1_batch_lock_hashes(master_args: [u8; 20]) -> Result<Vec<[u8; 32]>, Error> {
+    let start_time = Local::now().timestamp_millis();
+    let conn = &POOL.clone().get().expect("Mysql pool connection error");
+    let lock_code_hash = get_secp256k1_batch_code_hash();
+    let lock_code_hash_crc = generate_crc(lock_code_hash.as_bytes());
+    let lock_hash_type = SECP256K1_BATCH_HASH_TYPE;
+    let lock_master_args = hex::encode(master_args);
+
+    let args_vec: Vec<String> = scripts
+        .select(args)
+        .filter(code_hash_crc.eq(lock_code_hash_crc))
+        .filter(hash_type.eq(lock_hash_type))
+        .filter(args.ge(lock_master_args))
+        .filter(code_hash.eq(lock_code_hash.clone()))
+        .load::<String>(conn)
+        .map_err(|e| {
+            error!("Query script error: {}", e.to_string());
+            Error::DatabaseQueryError(e.to_string())
+        })?;
+    let lock_hashes: Vec<[u8; 32]> = args_vec
+        .into_iter()
+        .map(|lock_args| {
+            let args_bytes: Vec<Byte> = hex::decode(lock_args)
+                .unwrap()
+                .into_iter()
+                .map(|v| Byte::from_slice(&[v]).unwrap())
+                .collect();
+            let script = ScriptBuilder::default()
+                .code_hash(
+                    Byte32::from_slice(&hex::decode(lock_code_hash.clone()).unwrap()).unwrap(),
+                )
+                .hash_type(Byte::from(lock_hash_type))
+                .args(BytesBuilder::default().set(args_bytes).build())
+                .build();
+            parse_vec_n::<32>(script.calc_script_hash().as_slice().to_vec())
+        })
+        .collect();
+    diff_time(start_time, "SQL get_secp256k1_batch_lock_script_ids");
+    Ok(lock_hashes)
 }
 
 fn parse_script(scripts_: Vec<Script>) -> Vec<ScriptDb> {
