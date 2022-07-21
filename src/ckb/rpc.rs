@@ -1,8 +1,8 @@
 use crate::ckb::constants::{MAINNET_COTA_CODE_HASH, TESTNET_COTA_CODE_HASH};
 use crate::utils::error::Error;
-use crate::utils::helper::parse_bytes_n;
+use crate::utils::helper::{is_ckb_mainnet, parse_bytes_n};
 use ckb_jsonrpc_types::{
-    Script as RPCScript, TransactionProof as JSONRPCTxProof, TransactionView, Uint64,
+    BlockNumber, Script as RPCScript, TransactionProof as JSONRPCTxProof, TransactionView, Uint64,
 };
 use ckb_sdk::CkbRpcClient;
 use ckb_types::packed::{BytesVec, Script, Transaction};
@@ -12,7 +12,6 @@ use cota_smt::common::{
 };
 use cota_smt::smt::H256;
 use molecule::prelude::{Builder, Byte, Entity};
-use serde_json::from_str;
 use std::env;
 
 #[derive(Clone, Debug, Default)]
@@ -29,11 +28,7 @@ pub async fn get_withdraw_info(
     block_number: u64,
     withdrawal_lock_script: Vec<u8>,
 ) -> Result<WithdrawRawTx, Error> {
-    let is_mainnet: bool = match env::var("IS_MAINNET") {
-        Ok(mainnet) => from_str::<bool>(&mainnet).unwrap(),
-        Err(_e) => false,
-    };
-    let cota_code_hash = if is_mainnet {
+    let cota_code_hash = if is_ckb_mainnet() {
         parse_bytes_n::<32>(MAINNET_COTA_CODE_HASH.to_owned()).unwrap()
     } else {
         parse_bytes_n::<32>(TESTNET_COTA_CODE_HASH.to_owned()).unwrap()
@@ -113,6 +108,19 @@ pub async fn get_node_tip_block_number() -> Result<u64, Error> {
             .get_tip_block_number()
             .map_err(|_e| Error::CKBRPCError("get_tip_block_number".to_string()))?;
         Ok(u64::from(block_number))
+    })
+    .await
+    .unwrap()
+}
+
+pub async fn get_block_timestamp(block_number: u64) -> Result<u64, Error> {
+    tokio::task::spawn_blocking(move || {
+        let mut client = ckb_node_client()?;
+        let header = client
+            .get_header_by_number(BlockNumber::from(block_number))
+            .map_err(|_e| Error::CKBRPCError("get_header_by_number".to_string()))?
+            .ok_or(Error::CKBRPCError("get_header_by_number".to_string()))?;
+        Ok(header.inner.timestamp.value())
     })
     .await
     .unwrap()

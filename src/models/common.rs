@@ -5,7 +5,7 @@ use crate::models::hold::{
     check_hold_cota_by_lock_hash, get_hold_cota_by_lock_hash, get_hold_cota_by_lock_hash_and_page,
     get_hold_cota_count_by_lock_hash, HoldDb,
 };
-use crate::models::scripts::get_script_id_by_lock_script;
+use crate::models::scripts::{get_script_id_by_lock_script, get_secp256k1_batch_lock_hashes};
 use crate::models::withdrawal::{
     get_sender_lock_by_script_id, get_withdrawal_cota_by_cota_ids,
     get_withdrawal_cota_by_lock_hash, get_withdrawal_cota_by_script_id, WithdrawDb, WithdrawNFTDb,
@@ -23,6 +23,21 @@ pub fn get_all_cota_by_lock_hash(lock_hash: [u8; 32]) -> DBAllResult {
     let withdrawals = get_withdrawal_cota_by_lock_hash(lock_hash, &vec![])?;
     let claims = get_claim_cota_by_lock_hash(lock_hash)?;
     Ok((defines.0, holds.0, withdrawals.0, claims.0))
+}
+
+pub fn get_all_cota_by_secp256k1_batch_lock(master_args: [u8; 20]) -> DBAllResult {
+    let lock_hashes = get_secp256k1_batch_lock_hashes(master_args)?;
+    let mut defines = vec![];
+    let mut holds = vec![];
+    let mut withdrawals = vec![];
+    let mut claims = vec![];
+    for lock_hash in lock_hashes.into_iter() {
+        defines.extend(get_define_cota_by_lock_hash(lock_hash)?.0);
+        holds.extend(get_hold_cota_by_lock_hash(lock_hash, &vec![])?.0);
+        withdrawals.extend(get_withdrawal_cota_by_lock_hash(lock_hash, &vec![])?.0);
+        claims.extend(get_claim_cota_by_lock_hash(lock_hash)?.0);
+    }
+    Ok((defines, holds, withdrawals, claims))
 }
 
 pub fn get_hold_cota(
@@ -106,11 +121,11 @@ pub fn check_cota_claimed(
     check_hold_cota_by_lock_hash(lock_hash, (cota_id, index))
 }
 
-pub fn get_sender_lock_hash_by_cota_nft(
+pub fn get_sender_account_by_cota_nft(
     lock_script: &[u8],
     cota_id: [u8; 20],
     token_index: [u8; 4],
-) -> Result<Option<String>, Error> {
+) -> Result<Option<(String, Vec<u8>)>, Error> {
     let lock_script_id_opt = get_script_id_by_lock_script(lock_script)?;
     if lock_script_id_opt.is_none() {
         return Ok(None);

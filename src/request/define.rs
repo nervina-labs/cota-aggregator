@@ -1,4 +1,5 @@
 use super::helper::HexParser;
+use crate::request::helper::check_secp256k1_batch_master_lock;
 use crate::utils::error::Error;
 use jsonrpc_http_server::jsonrpc_core::serde_json::Map;
 use jsonrpc_http_server::jsonrpc_core::Value;
@@ -19,12 +20,14 @@ pub struct DefineInfoReq {
 
 impl DefineReq {
     pub fn from_map(map: &Map<String, Value>) -> Result<Self, Error> {
+        let lock_script = map.get_script_field("lock_script")?;
+        check_secp256k1_batch_master_lock(&lock_script)?;
         Ok(DefineReq {
-            lock_script: map.get_hex_vec_filed("lock_script")?,
-            cota_id:     map.get_hex_bytes_filed::<20>("cota_id")?,
-            total:       map.get_hex_bytes_filed::<4>("total")?,
-            issued:      map.get_hex_bytes_filed::<4>("issued")?,
-            configure:   map.get_hex_bytes_filed::<1>("configure")?[0],
+            lock_script,
+            cota_id: map.get_hex_bytes_field::<20>("cota_id")?,
+            total: map.get_hex_bytes_field::<4>("total")?,
+            issued: map.get_hex_bytes_field::<4>("issued")?,
+            configure: map.get_hex_bytes_field::<1>("configure")?[0],
         })
     }
 }
@@ -32,7 +35,7 @@ impl DefineReq {
 impl DefineInfoReq {
     pub fn from_map(map: &Map<String, Value>) -> Result<Self, Error> {
         Ok(DefineInfoReq {
-            cota_id: map.get_hex_bytes_filed::<20>("cota_id")?,
+            cota_id: map.get_hex_bytes_field::<20>("cota_id")?,
         })
     }
 }

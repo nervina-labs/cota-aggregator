@@ -22,6 +22,7 @@ pub async fn generate_withdrawal_smt(
     withdrawal_req: WithdrawalReq,
 ) -> Result<(H256, WithdrawalCotaNFTV1Entries), Error> {
     let withdrawals = withdrawal_req.withdrawals;
+    let withdrawal_lock_script = withdrawal_req.lock_script;
     if withdrawals.is_empty() {
         return Err(Error::RequestParamNotFound("withdrawals".to_string()));
     }
@@ -29,11 +30,8 @@ pub async fn generate_withdrawal_smt(
         .iter()
         .map(|withdrawal| (withdrawal.cota_id, withdrawal.token_index))
         .collect();
-    let db_holds = get_hold_cota_by_lock_hash(
-        blake2b_256(&withdrawal_req.lock_script.clone()),
-        &cota_id_index_pairs,
-    )?
-    .0;
+    let withdrawal_lock_hash = blake2b_256(&withdrawal_lock_script);
+    let db_holds = get_hold_cota_by_lock_hash(withdrawal_lock_hash, &cota_id_index_pairs)?.0;
     if db_holds.is_empty() || db_holds.len() != withdrawals.len() {
         return Err(Error::CotaIdAndTokenIndexHasNotHeld);
     }
@@ -71,13 +69,12 @@ pub async fn generate_withdrawal_smt(
         previous_leaves.push((key, H256::zero()));
     }
 
-    let smt_root = get_cota_smt_root(&withdrawal_req.lock_script).await?;
+    let smt_root = get_cota_smt_root(&withdrawal_lock_script).await?;
     let transaction = &StoreTransaction::new(db.transaction());
-    let lock_hash = blake2b_256(&withdrawal_req.lock_script);
-    let mut smt = init_smt(transaction, lock_hash)?;
+    let mut smt = init_smt(transaction, withdrawal_lock_hash)?;
     // Add lock to smt
-    with_lock(lock_hash, || {
-        generate_history_smt(&mut smt, lock_hash, smt_root)?;
+    with_lock(withdrawal_lock_hash, || {
+        generate_history_smt(&mut smt, withdrawal_lock_script.clone(), smt_root)?;
         smt.update_all(update_leaves.clone())
             .map_err(|e| Error::SMTError(e.to_string()))?;
         smt.save_root_and_leaves(previous_leaves.clone())?;

@@ -18,6 +18,7 @@ pub async fn generate_update_smt(
     update_req: UpdateReq,
 ) -> Result<(H256, UpdateCotaNFTEntries), Error> {
     let nfts = update_req.nfts;
+    let update_lock_script = update_req.lock_script;
     if nfts.is_empty() {
         return Err(Error::RequestParamNotFound("nfts".to_string()));
     }
@@ -25,8 +26,8 @@ pub async fn generate_update_smt(
         .iter()
         .map(|nft| (nft.cota_id, nft.token_index))
         .collect();
-    let db_holds =
-        get_hold_cota_by_lock_hash(blake2b_256(&update_req.lock_script), &cota_id_index_pairs)?.0;
+    let update_lock_hash = blake2b_256(&update_lock_script);
+    let db_holds = get_hold_cota_by_lock_hash(update_lock_hash, &cota_id_index_pairs)?.0;
     if db_holds.is_empty() || db_holds.len() != nfts.len() {
         return Err(Error::CotaIdAndTokenIndexHasNotHeld);
     }
@@ -48,13 +49,12 @@ pub async fn generate_update_smt(
         previous_leaves.push((key, old_value));
     }
 
-    let smt_root = get_cota_smt_root(&update_req.lock_script).await?;
+    let smt_root = get_cota_smt_root(&update_lock_script).await?;
     let transaction = &StoreTransaction::new(db.transaction());
-    let lock_hash = blake2b_256(&update_req.lock_script);
-    let mut smt = init_smt(transaction, lock_hash)?;
+    let mut smt = init_smt(transaction, update_lock_hash)?;
     // Add lock to smt
-    with_lock(lock_hash, || {
-        generate_history_smt(&mut smt, lock_hash, smt_root)?;
+    with_lock(update_lock_hash, || {
+        generate_history_smt(&mut smt, update_lock_script.clone(), smt_root)?;
         smt.update_all(update_leaves.clone())
             .map_err(|e| Error::SMTError(e.to_string()))?;
         smt.save_root_and_leaves(previous_leaves.clone())?;

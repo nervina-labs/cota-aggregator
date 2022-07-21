@@ -1,6 +1,6 @@
 use crc::{Crc, CRC_32_ISO_HDLC};
 use diesel::mysql::MysqlConnection;
-use diesel::r2d2::{self, ConnectionManager, Pool};
+use diesel::r2d2::{ConnectionManager, Pool};
 use jsonrpc_http_server::jsonrpc_core::serde_json::from_str;
 use std::env;
 
@@ -15,7 +15,7 @@ pub fn init_connection_pool() -> SqlConnectionPool {
         Ok(max_) => from_str::<u32>(&max_).unwrap(),
         Err(_e) => 20,
     };
-    r2d2::Pool::builder().max_size(max).build(manager).unwrap()
+    Pool::builder().max_size(max).build(manager).unwrap()
 }
 
 pub fn generate_crc(v: &[u8]) -> u32 {

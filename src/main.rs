@@ -15,6 +15,7 @@ use log::info;
 use std::env;
 
 pub mod api;
+mod business;
 mod ckb;
 mod entries;
 mod models;
@@ -65,11 +66,12 @@ fn main() {
     io.add_method("get_withdrawal_cota_nft", fetch_withdrawal_rpc);
     io.add_method("get_mint_cota_nft", fetch_mint_rpc);
     io.add_method("is_claimed", is_claimed_rpc);
-    io.add_method("get_cota_nft_sender", get_sender_lock_hash);
+    io.add_method("get_cota_nft_sender", get_sender_account);
     io.add_method("get_define_info", get_define_info);
     io.add_method("get_issuer_info", get_issuer_info);
     io.add_method("parse_witness", parse_witness);
     io.add_method("get_cota_count", get_cota_count);
+    io.add_method("get_history_transactions", get_cota_history_transactions);
     io.add_method("get_aggregator_info", get_aggregator_info);
 
     let threads: usize = match env::var("THREADS") {

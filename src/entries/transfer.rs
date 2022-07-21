@@ -37,9 +37,9 @@ pub async fn generate_transfer_smt(
         .iter()
         .map(|transfer| (transfer.cota_id, transfer.token_index))
         .collect();
-    let withdraw_lock_hash = blake2b_256(&transfer_req.withdrawal_lock_script);
+    let transfer_lock_hash = blake2b_256(&transfer_req.withdrawal_lock_script);
     let sender_withdrawals =
-        get_withdrawal_cota_by_lock_hash(withdraw_lock_hash, &cota_id_index_pairs)?.0;
+        get_withdrawal_cota_by_lock_hash(transfer_lock_hash, &cota_id_index_pairs)?.0;
     if sender_withdrawals.is_empty() || sender_withdrawals.len() != transfers_len {
         return Err(Error::CotaIdAndTokenIndexHasNotWithdrawn);
     }
@@ -123,13 +123,15 @@ pub async fn generate_transfer_smt(
     );
 
     let transfer_smt_root = get_cota_smt_root(&transfer_lock_script).await?;
-
     let transaction = &StoreTransaction::new(db.transaction());
-    let transfer_lock_hash = blake2b_256(&transfer_lock_script);
     let mut transfer_smt = init_smt(transaction, transfer_lock_hash)?;
     // Add lock to transfer smt
     with_lock(transfer_lock_hash, || {
-        generate_history_smt(&mut transfer_smt, transfer_lock_hash, transfer_smt_root)?;
+        generate_history_smt(
+            &mut transfer_smt,
+            transfer_lock_script.clone(),
+            transfer_smt_root,
+        )?;
         transfer_smt
             .update_all(transfer_update_leaves.clone())
             .map_err(|e| Error::SMTError(e.to_string()))?;

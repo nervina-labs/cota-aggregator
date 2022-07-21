@@ -1,8 +1,13 @@
 use super::error::Error;
+use crate::utils::constant::{
+    MAINNET_SECP256K1_BATCH_CODE_HASH, TESTNET_SECP256K1_BATCH_CODE_HASH,
+};
 use chrono::prelude::*;
 use hex;
 use log::debug;
+use serde_json::from_str;
 use std::convert::TryInto;
+use std::env;
 
 pub fn remove_0x(str: &str) -> &str {
     if str.contains("0x") {
@@ -39,6 +44,21 @@ pub fn parse_bytes(value: String) -> Result<Vec<u8>, Error> {
 pub fn diff_time(start_time: i64, message: &str) {
     let diff_time = (Local::now().timestamp_millis() - start_time) as f64 / 1000f64;
     debug!("{}: {}s", message, diff_time);
+}
+
+pub fn is_ckb_mainnet() -> bool {
+    match env::var("IS_MAINNET") {
+        Ok(mainnet) => from_str::<bool>(&mainnet).unwrap(),
+        Err(_e) => false,
+    }
+}
+
+pub fn get_secp256k1_batch_code_hash() -> String {
+    if is_ckb_mainnet() {
+        MAINNET_SECP256K1_BATCH_CODE_HASH.to_string()
+    } else {
+        TESTNET_SECP256K1_BATCH_CODE_HASH.to_string()
+    }
 }
 
 #[cfg(test)]

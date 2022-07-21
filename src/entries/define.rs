@@ -24,6 +24,7 @@ pub async fn generate_define_smt(
         total,
         issued,
         configure,
+        lock_script,
         ..
     } = define_req;
     let (define_key, key) = generate_define_key(cota_id);
@@ -32,13 +33,13 @@ pub async fn generate_define_smt(
     update_leaves.push((key, value));
     previous_leaves.push((key, H256::zero()));
 
-    let smt_root = get_cota_smt_root(&define_req.lock_script).await?;
+    let smt_root = get_cota_smt_root(&lock_script).await?;
     let transaction = &StoreTransaction::new(db.transaction());
-    let lock_hash = blake2b_256(&define_req.lock_script);
+    let lock_hash = blake2b_256(&lock_script);
     let mut smt = init_smt(transaction, lock_hash)?;
     // Add lock to smt
     with_lock(lock_hash, || {
-        generate_history_smt(&mut smt, lock_hash, smt_root)?;
+        generate_history_smt(&mut smt, lock_script.clone(), smt_root)?;
         smt.update(key, value)
             .map_err(|e| Error::SMTError(e.to_string()))?;
         smt.save_root_and_leaves(previous_leaves.clone())?;
