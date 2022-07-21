@@ -1,7 +1,5 @@
 use super::helper::HexParser;
 use crate::utils::error::Error;
-use cota_smt::ckb_types::packed::Script;
-use cota_smt::ckb_types::prelude::Entity;
 use jsonrpc_http_server::jsonrpc_core::serde_json::Map;
 use jsonrpc_http_server::jsonrpc_core::Value;
 
@@ -15,18 +13,15 @@ pub struct FetchReq {
 
 impl FetchReq {
     pub fn from_map(map: &Map<String, Value>) -> Result<Self, Error> {
-        let lock_script = map.get_hex_vec_filed("lock_script")?;
-        if Script::from_slice(&lock_script).is_err() {
-            return Err(Error::RequestParamTypeError("Script".to_string()));
-        }
+        let lock_script = map.get_script_field("lock_script")?;
         let cota_id = match map.get("cota_id") {
-            Some(_) => Some(map.get_hex_bytes_filed::<20>("cota_id")?),
+            Some(_) => Some(map.get_hex_bytes_field::<20>("cota_id")?),
             None => None,
         };
         Ok(FetchReq {
             lock_script,
-            page: map.get_i64_filed("page")?,
-            page_size: map.get_i64_filed("page_size")?,
+            page: map.get_i64_field("page")?,
+            page_size: map.get_i64_field("page_size")?,
             cota_id,
         })
     }
@@ -39,11 +34,9 @@ pub struct FetchIssuerReq {
 
 impl FetchIssuerReq {
     pub fn from_map(map: &Map<String, Value>) -> Result<Self, Error> {
-        let lock_script = map.get_hex_vec_filed("lock_script")?;
-        if Script::from_slice(&lock_script).is_err() {
-            return Err(Error::RequestParamTypeError("Script".to_string()));
-        }
-        Ok(FetchIssuerReq { lock_script })
+        Ok(FetchIssuerReq {
+            lock_script: map.get_script_field("lock_script")?,
+        })
     }
 }
 
@@ -55,14 +48,9 @@ pub struct FetchCountReq {
 
 impl FetchCountReq {
     pub fn from_map(map: &Map<String, Value>) -> Result<Self, Error> {
-        let lock_script = map.get_hex_vec_filed("lock_script")?;
-        if Script::from_slice(&lock_script).is_err() {
-            return Err(Error::RequestParamTypeError("Script".to_string()));
-        }
-
         Ok(FetchCountReq {
-            lock_script,
-            cota_id: map.get_hex_bytes_filed::<20>("cota_id")?,
+            lock_script: map.get_script_field("lock_script")?,
+            cota_id:     map.get_hex_bytes_field::<20>("cota_id")?,
         })
     }
 }
@@ -78,10 +66,10 @@ pub struct FetchHistoryTxsReq {
 impl FetchHistoryTxsReq {
     pub fn from_map(map: &Map<String, Value>) -> Result<Self, Error> {
         Ok(FetchHistoryTxsReq {
-            cota_id:     map.get_hex_bytes_filed::<20>("cota_id")?,
-            token_index: map.get_hex_bytes_filed::<4>("token_index")?,
-            page:        map.get_i64_filed("page")?,
-            page_size:   map.get_i64_filed("page_size")?,
+            cota_id:     map.get_hex_bytes_field::<20>("cota_id")?,
+            token_index: map.get_hex_bytes_field::<4>("token_index")?,
+            page:        map.get_i64_field("page")?,
+            page_size:   map.get_i64_field("page_size")?,
         })
     }
 }

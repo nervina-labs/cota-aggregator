@@ -1,5 +1,3 @@
-use crate::models::common::{MAINNET_SECP256K1_BATCH_CODE_HASH, TESTNET_SECP256K1_BATCH_CODE_HASH};
-use crate::utils::helper::is_ckb_mainnet;
 use crc::{Crc, CRC_32_ISO_HDLC};
 use diesel::mysql::MysqlConnection;
 use diesel::r2d2::{ConnectionManager, Pool};
@@ -38,14 +36,6 @@ pub fn parse_cota_id_index_pairs(pairs: &[([u8; 20], [u8; 4])]) -> Vec<(String, 
         .into_iter()
         .map(|pair| (hex::encode(pair.0), u32::from_be_bytes(pair.1)))
         .collect()
-}
-
-pub fn get_secp256k1_batch_code_hash() -> String {
-    if is_ckb_mainnet() {
-        MAINNET_SECP256K1_BATCH_CODE_HASH.to_string()
-    } else {
-        TESTNET_SECP256K1_BATCH_CODE_HASH.to_string()
-    }
 }
 
 #[cfg(test)]

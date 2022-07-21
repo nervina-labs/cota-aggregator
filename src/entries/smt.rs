@@ -6,7 +6,6 @@ use crate::entries::helper::{
 use crate::models::claim::ClaimDb;
 use crate::models::common::{get_all_cota_by_lock_hash, get_all_cota_by_secp256k1_batch_lock};
 use crate::models::define::DefineDb;
-use crate::models::helper::get_secp256k1_batch_code_hash;
 use crate::models::hold::HoldDb;
 use crate::models::withdrawal::WithdrawDb;
 use crate::smt::db::schema::{
@@ -16,7 +15,7 @@ use crate::smt::store::smt_store::SMTStore;
 use crate::smt::transaction::store_transaction::StoreTransaction;
 use crate::smt::CotaSMT;
 use crate::utils::error::Error;
-use crate::utils::helper::diff_time;
+use crate::utils::helper::{diff_time, get_secp256k1_batch_code_hash};
 use chrono::prelude::*;
 use ckb_types::packed::Script;
 use cota_smt::common::*;

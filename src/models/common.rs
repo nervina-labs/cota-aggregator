@@ -15,12 +15,6 @@ use crate::utils::error::Error;
 use cota_smt::smt::blake2b_256;
 use log::debug;
 
-pub const TESTNET_SECP256K1_BATCH_CODE_HASH: &str =
-    "bfb3059fb28ded2cdec0b187e265b40f6cb593ca05d7824ee80993e8b388ec95";
-pub const MAINNET_SECP256K1_BATCH_CODE_HASH: &str =
-    "bfb3059fb28ded2cdec0b187e265b40f6cb593ca05d7824ee80993e8b388ec95";
-pub const SECP256K1_BATCH_HASH_TYPE: u8 = 1;
-
 type DBAllResult = Result<(Vec<DefineDb>, Vec<HoldDb>, Vec<WithdrawDb>, Vec<ClaimDb>), Error>;
 
 pub fn get_all_cota_by_lock_hash(lock_hash: [u8; 32]) -> DBAllResult {

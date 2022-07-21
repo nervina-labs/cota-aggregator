@@ -1,10 +1,11 @@
-use crate::models::common::SECP256K1_BATCH_HASH_TYPE;
-use crate::models::helper::{generate_crc, get_secp256k1_batch_code_hash, PAGE_SIZE};
+use crate::models::helper::{generate_crc, PAGE_SIZE};
 use crate::schema::scripts::dsl::scripts;
 use crate::schema::scripts::*;
 use crate::schema::scripts::{args, code_hash, hash_type};
 use crate::utils::error::Error;
-use crate::utils::helper::{diff_time, parse_bytes, parse_bytes_n, parse_vec_n};
+use crate::utils::helper::{
+    diff_time, get_secp256k1_batch_code_hash, parse_bytes, parse_bytes_n, parse_vec_n,
+};
 use crate::POOL;
 use chrono::prelude::*;
 use cota_smt::ckb_types::packed::{Byte32, BytesBuilder, Script as LockScript, ScriptBuilder};
@@ -87,6 +88,7 @@ pub fn get_script_id_by_lock_script(lock_script: &[u8]) -> Result<Option<i64>, E
     Ok(script_ids.get(0).cloned())
 }
 
+pub const SECP256K1_BATCH_HASH_TYPE: u8 = 1;
 pub fn get_secp256k1_batch_lock_hashes(master_args: [u8; 20]) -> Result<Vec<[u8; 32]>, Error> {
     let start_time = Local::now().timestamp_millis();
     let conn = &POOL.clone().get().expect("Mysql pool connection error");

@@ -43,6 +43,9 @@ pub enum Error {
     #[fail(display = "CKB Script error")]
     CKBScriptError,
 
+    #[fail(display = "Secp256k1 batch lock script args invalid")]
+    Secp256k1BatchLockArgsError,
+
     #[fail(display = "Database '{}' query error", _0)]
     DatabaseQueryError(String),
 
@@ -107,6 +110,7 @@ impl Error {
                 "The NFT of cota_id and token_index has no transactions".into()
             }
             Self::CKBScriptError => "CKB Script error".into(),
+            Self::Secp256k1BatchLockArgsError => "Secp256k1 batch lock script args invalid".into(),
             Self::DatabaseQueryError(msg) => format!("Database query error: {}", msg),
             Self::SMTProofError(msg) => format!("'{}' SMT proof error", msg),
             Self::CKBIndexerError(msg) => format!("CKB Indexer error: {}", msg),

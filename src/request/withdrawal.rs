@@ -1,5 +1,5 @@
 use super::helper::HexParser;
-use crate::request::helper::{parse_vec_map, ReqParser};
+use crate::request::helper::{check_secp256k1_batch_master_lock, parse_vec_map, ReqParser};
 use crate::utils::error::Error;
 use jsonrpc_http_server::jsonrpc_core::serde_json::Map;
 use jsonrpc_http_server::jsonrpc_core::Value;
@@ -14,9 +14,9 @@ pub struct TransferWithdrawal {
 impl ReqParser for TransferWithdrawal {
     fn from_map(map: &Map<String, Value>) -> Result<Self, Error> {
         Ok(TransferWithdrawal {
-            cota_id:        map.get_hex_bytes_filed::<20>("cota_id")?,
-            token_index:    map.get_hex_bytes_filed::<4>("token_index")?,
-            to_lock_script: map.get_hex_vec_filed("to_lock_script")?,
+            cota_id:        map.get_hex_bytes_field::<20>("cota_id")?,
+            token_index:    map.get_hex_bytes_field::<4>("token_index")?,
+            to_lock_script: map.get_script_field("to_lock_script")?,
         })
     }
 }
@@ -30,9 +30,11 @@ pub struct WithdrawalReq {
 
 impl WithdrawalReq {
     pub fn from_map(map: &Map<String, Value>) -> Result<Self, Error> {
+        let lock_script = map.get_script_field("lock_script")?;
+        check_secp256k1_batch_master_lock(&lock_script)?;
         Ok(WithdrawalReq {
-            lock_script: map.get_hex_vec_filed("lock_script")?,
-            out_point:   map.get_hex_bytes_filed::<24>("out_point")?,
+            lock_script,
+            out_point: map.get_hex_bytes_field::<24>("out_point")?,
             withdrawals: parse_vec_map::<TransferWithdrawal>(map, "withdrawals")?,
         })
     }
@@ -48,9 +50,9 @@ pub struct SenderLockReq {
 impl SenderLockReq {
     pub fn from_map(map: &Map<String, Value>) -> Result<Self, Error> {
         Ok(SenderLockReq {
-            lock_script: map.get_hex_vec_filed("lock_script")?,
-            cota_id:     map.get_hex_bytes_filed::<20>("cota_id")?,
-            token_index: map.get_hex_bytes_filed::<4>("token_index")?,
+            lock_script: map.get_script_field("lock_script")?,
+            cota_id:     map.get_hex_bytes_field::<20>("cota_id")?,
+            token_index: map.get_hex_bytes_field::<4>("token_index")?,
         })
     }
 }

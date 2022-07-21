@@ -1,4 +1,7 @@
 use super::error::Error;
+use crate::utils::constant::{
+    MAINNET_SECP256K1_BATCH_CODE_HASH, TESTNET_SECP256K1_BATCH_CODE_HASH,
+};
 use chrono::prelude::*;
 use hex;
 use log::debug;
@@ -47,6 +50,14 @@ pub fn is_ckb_mainnet() -> bool {
     match env::var("IS_MAINNET") {
         Ok(mainnet) => from_str::<bool>(&mainnet).unwrap(),
         Err(_e) => false,
+    }
+}
+
+pub fn get_secp256k1_batch_code_hash() -> String {
+    if is_ckb_mainnet() {
+        MAINNET_SECP256K1_BATCH_CODE_HASH.to_string()
+    } else {
+        TESTNET_SECP256K1_BATCH_CODE_HASH.to_string()
     }
 }
 

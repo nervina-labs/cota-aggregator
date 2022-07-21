@@ -12,8 +12,8 @@ pub struct WitnessReq {
 impl WitnessReq {
     pub fn from_map(map: &Map<String, Value>) -> Result<Self, Error> {
         Ok(WitnessReq {
-            witness: map.get_hex_vec_filed("witness")?,
-            version: map.get_u8_filed("version")?,
+            witness: map.get_hex_vec_field("witness")?,
+            version: map.get_u8_field("version")?,
         })
     }
 }
