@@ -26,6 +26,41 @@ table! {
 }
 
 table! {
+    class_info_versions (id) {
+        id -> Bigint,
+        old_block_number -> Unsigned<Bigint>,
+        block_number -> Unsigned<Bigint>,
+        cota_id -> Char,
+        old_version -> Varchar,
+        version -> Varchar,
+        old_name -> Varchar,
+        name -> Varchar,
+        old_symbol -> Varchar,
+        symbol -> Varchar,
+        old_description -> Varchar,
+        description -> Varchar,
+        old_image -> Varchar,
+        image -> Varchar,
+        old_audio -> Varchar,
+        audio -> Varchar,
+        old_video -> Varchar,
+        video -> Varchar,
+        old_model -> Varchar,
+        model -> Varchar,
+        old_characteristic -> Varchar,
+        characteristic -> Varchar,
+        old_properties -> Varchar,
+        properties -> Varchar,
+        old_localization -> Varchar,
+        localization -> Varchar,
+        action_type -> Unsigned<Tinyint>,
+        tx_index -> Unsigned<Integer>,
+        created_at -> Datetime,
+        updated_at -> Datetime,
+    }
+}
+
+table! {
     class_infos (id) {
         id -> Bigint,
         block_number -> Unsigned<Bigint>,
@@ -47,6 +82,24 @@ table! {
 }
 
 table! {
+    define_cota_nft_kv_pair_versions (id) {
+        id -> Bigint,
+        old_block_number -> Unsigned<Bigint>,
+        block_number -> Unsigned<Bigint>,
+        cota_id -> Char,
+        total -> Unsigned<Integer>,
+        old_issued -> Unsigned<Integer>,
+        issued -> Unsigned<Integer>,
+        configure -> Unsigned<Tinyint>,
+        lock_hash -> Char,
+        action_type -> Unsigned<Tinyint>,
+        tx_index -> Unsigned<Integer>,
+        created_at -> Datetime,
+        updated_at -> Datetime,
+    }
+}
+
+table! {
     define_cota_nft_kv_pairs (id) {
         id -> Bigint,
         block_number -> Unsigned<Bigint>,
@@ -56,6 +109,27 @@ table! {
         configure -> Unsigned<Tinyint>,
         lock_hash -> Char,
         lock_hash_crc -> Unsigned<Integer>,
+        created_at -> Datetime,
+        updated_at -> Datetime,
+    }
+}
+
+table! {
+    hold_cota_nft_kv_pair_versions (id) {
+        id -> Bigint,
+        old_block_number -> Unsigned<Bigint>,
+        block_number -> Unsigned<Bigint>,
+        cota_id -> Char,
+        token_index -> Unsigned<Integer>,
+        old_state -> Unsigned<Tinyint>,
+        state -> Unsigned<Tinyint>,
+        configure -> Unsigned<Tinyint>,
+        old_characteristic -> Char,
+        characteristic -> Char,
+        old_lock_hash -> Char,
+        lock_hash -> Char,
+        action_type -> Unsigned<Tinyint>,
+        tx_index -> Unsigned<Integer>,
         created_at -> Datetime,
         updated_at -> Datetime,
     }
@@ -72,6 +146,29 @@ table! {
         characteristic -> Char,
         lock_hash -> Char,
         lock_hash_crc -> Unsigned<Integer>,
+        created_at -> Datetime,
+        updated_at -> Datetime,
+    }
+}
+
+table! {
+    issuer_info_versions (id) {
+        id -> Bigint,
+        old_block_number -> Unsigned<Bigint>,
+        block_number -> Unsigned<Bigint>,
+        lock_hash -> Char,
+        old_version -> Varchar,
+        version -> Varchar,
+        old_name -> Varchar,
+        name -> Varchar,
+        old_avatar -> Varchar,
+        avatar -> Varchar,
+        old_description -> Varchar,
+        description -> Varchar,
+        old_localization -> Varchar,
+        localization -> Varchar,
+        action_type -> Unsigned<Tinyint>,
+        tx_index -> Unsigned<Integer>,
         created_at -> Datetime,
         updated_at -> Datetime,
     }
@@ -131,12 +228,14 @@ table! {
         token_index -> Unsigned<Integer>,
         out_point -> Char,
         out_point_crc -> Unsigned<Integer>,
+        tx_hash -> Char,
         state -> Unsigned<Tinyint>,
         configure -> Unsigned<Tinyint>,
         characteristic -> Char,
         receiver_lock_script_id -> Bigint,
         lock_hash -> Char,
         lock_hash_crc -> Unsigned<Integer>,
+        lock_script_id -> Bigint,
         version -> Unsigned<Tinyint>,
         created_at -> Datetime,
         updated_at -> Datetime,
@@ -146,9 +245,13 @@ table! {
 allow_tables_to_appear_in_same_query!(
     check_infos,
     claimed_cota_nft_kv_pairs,
+    class_info_versions,
     class_infos,
+    define_cota_nft_kv_pair_versions,
     define_cota_nft_kv_pairs,
+    hold_cota_nft_kv_pair_versions,
     hold_cota_nft_kv_pairs,
+    issuer_info_versions,
     issuer_infos,
     register_cota_kv_pairs,
     schema_migrations,

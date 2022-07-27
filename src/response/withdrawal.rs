@@ -1,6 +1,8 @@
+use crate::business::helper::address_from_script;
 use crate::models::class::ClassInfoDb;
 use crate::models::withdrawal::WithdrawNFTDb;
 use crate::response::helper::Inserter;
+use crate::utils::error::Error;
 use ckb_types::prelude::Entity;
 use cota_smt::smt::H256;
 use cota_smt::transfer::WithdrawalCotaNFTV1Entries;
@@ -71,14 +73,20 @@ pub fn parse_withdrawal_smt(
 }
 
 pub fn parse_sender_response(
-    sender_lock_hash: Option<String>,
+    sender_account: Option<(String, Vec<u8>)>,
     block_number: u64,
-) -> Map<String, Value> {
+) -> Result<Map<String, Value>, Error> {
     let mut map = Map::new();
-    match sender_lock_hash {
-        Some(lock_hash) => map.insert_str("sender_lock_hash", format!("0x{}", lock_hash)),
-        None => map.insert_null("sender_lock_hash"),
+    match sender_account {
+        Some((lock_hash, lock_script)) => {
+            map.insert_str("sender_lock_hash", format!("0x{}", lock_hash));
+            map.insert_str("sender_address", address_from_script(&lock_script)?);
+        }
+        None => {
+            map.insert_null("sender_lock_hash");
+            map.insert_null("sender_address");
+        }
     };
     map.insert_u64("block_number", block_number);
-    map
+    Ok(map)
 }

@@ -25,17 +25,23 @@ pub enum Error {
     #[fail(display = "Request parameter '{}' type error", _0)]
     RequestParamTypeError(String),
 
-    #[fail(display = "The cota_id '{}' has not defined", _0)]
+    #[fail(display = "The collection of cota_id '{}' has not defined", _0)]
     CotaIdHasNotDefined(String),
 
-    #[fail(display = "The cota_id and token_index has not withdrawn")]
+    #[fail(display = "The NFT of cota_id and token_index has not been withdrawn")]
     CotaIdAndTokenIndexHasNotWithdrawn,
 
-    #[fail(display = "The cota_id and token_index has not held")]
+    #[fail(display = "The NFT of cota_id and token_index has not been held")]
     CotaIdAndTokenIndexHasNotHeld,
 
     #[fail(display = "The withdrawal CoTA NFTs are not in one transaction")]
     WithdrawCotaNFTsNotInOneTx,
+
+    #[fail(display = "The NFT of cota_id and token_index has no transactions")]
+    CotaIdAndTokenIndexHasNoTxs,
+
+    #[fail(display = "CKB Script error")]
+    CKBScriptError,
 
     #[fail(display = "Database '{}' query error", _0)]
     DatabaseQueryError(String),
@@ -97,6 +103,10 @@ impl Error {
             Self::WithdrawCotaNFTsNotInOneTx => {
                 "The withdrawal CoTA NFTs are not in one transaction".into()
             }
+            Self::CotaIdAndTokenIndexHasNoTxs => {
+                "The NFT of cota_id and token_index has no transactions".into()
+            }
+            Self::CKBScriptError => "CKB Script error".into(),
             Self::DatabaseQueryError(msg) => format!("Database query error: {}", msg),
             Self::SMTProofError(msg) => format!("'{}' SMT proof error", msg),
             Self::CKBIndexerError(msg) => format!("CKB Indexer error: {}", msg),

@@ -72,6 +72,21 @@ https://cota.nervina.dev/aggregator
 
 ## APIs
 
+- [generate_define_cota_smt](#generate_define_cota_smt)
+- [generate_mint_cota_smt](#generate_mint_cota_smt)
+- [generate_transfer_cota_smt](#generate_transfer_cota_smt)
+- [get_hold_cota_nft](#get_hold_cota_nft)
+- [get_withdrawal_cota_nft](#get_withdrawal_cota_nft)
+- [get_mint_cota_nft](#get_mint_cota_nft)
+- [is_claimed](#is_claimed)
+- [get_cota_nft_sender](#get_cota_nft_sender)
+- [get_define_info](#get_define_info)
+- [get_issuer_info](#get_issuer_info)
+- [parse_witness](#parse_witness)
+- [get_cota_count](#get_cota_count)
+- [get_history_transactions](#get_history_transactions)
+- [get_aggregator_info](#get_aggregator_info)
+
 ### generate_define_cota_smt
 
 Generate smt data(`smt_entry` for `witness_args.input_type` and `smt_root` for cell data) for CoTA define transaction
@@ -683,6 +698,7 @@ http://127.0.0.1:3030
 ```
 block_number - The latest block number of cota-nft-entries-syncer
 sender_lock_hash - The sender lock hash of the NFT
+sender_address - The sender ckb address of the NFT
 ```
 
 ```shell
@@ -690,7 +706,8 @@ sender_lock_hash - The sender lock hash of the NFT
     "jsonrpc":"2.0",
     "result":{
         "block_number":4397997,
-        "sender_lock_hash":"0x8a8f45a094cbe050d1a612924901b11edc1bce28c0fd8d96cdc8779889f28aa8"
+        "sender_lock_hash":"0x8a8f45a094cbe050d1a612924901b11edc1bce28c0fd8d96cdc8779889f28aa8",
+        "sender_address": "ckt1qzda0cr08m85hc8jlnfp3zer7xulejywt49kt2rr0vthywaa50xwsq0xzmg5vrtrge5t3tvpjuwr55l8qh63ucqhqne0u"
     },
     "id":2
 }
@@ -894,6 +911,112 @@ count - The count of NFTs held and withdrew by the owner
     "result":{
         "block_number":5120925,
         "count":80
+    },
+    "id":2
+}
+```
+
+### get_history_transactions
+
+Get the history transactions of the specific CoTA NFT with `cota_id` and `token_index`
+
+#### Parameters
+
+```
+cota_id - CoTA NFT Class Unique ID
+token_index - The index of the NFT Class (increment from zero)
+page - The page number of the result
+page_size - The page size of the result
+```
+
+```shell
+echo '{
+    "id":2,
+    "jsonrpc":"2.0",
+    "method":"get_history_transactions",
+    "params":{
+        "cota_id":"0x16166f5eb4ec88ad89710bbd596ac8987052a85e",
+	    "token_index": "0x00000000",
+	    "page": "0",
+	    "page_size": "10"
+    }
+}' \
+| tr -d '\n' \
+| curl -H 'content-type: application/json' -d @- \
+http://127.0.0.1:3030
+```
+
+### Response
+
+```
+block_number - The latest block number of cota-nft-entries-syncer
+page_size - page_size - The page size of the CoTA NFT transaction list
+total - The total amount of the CoTA NFT transaction list
+transactions - The transaction list of the sepcific CoTA NFT
+    age - The block timestamp of the mint or transfer transaction (millisecond)
+    block_number - The CoTA NFT transfer or mint block number
+    from - The sender address of the CoTA NFT transfer or mint transaction
+    to - The receiver address of the CoTA NFT transfer or mint transaction
+    tx_hash - The hash of the CoTA NFT transfer or mint transaction
+    type - The type of the CoTA NFT transaction: 'transfer' or 'mint'
+```
+
+```shell
+ "jsonrpc":"2.0",
+    "result":{
+        "block_number":7587159,
+        "page_size":10,
+        "total":6,
+        "transactions":[
+            {
+                "age":1650608618595,
+                "block_number":6960258,
+                "from":"ckb1qqypm0l63rdt2jayymfrrjnyadmqe630a8skwcdpmfqqmgdje0sjsqt3emxu792v2yatrwfgp48huss2yg4yq9g083utk",
+                "to":"ckb1qrgp752jcfnm0uemj723grpyva6zappyuj0tuge3etkpjlmjsxmq5qt7jq0g09af5m0yqjncd5v9mg3p2yuu5es2w57jj",
+                "tx_hash":"0x325a2f20531ab5020aa1a95ccff633140d7c3e67ec0011a01892c177d6fb572b",
+                "type":"transfer"
+            },
+            {
+                "age":1647613397194,
+                "block_number":6727018,
+                "from":"ckb1qzl58smqy32hnrq6vxjedcxe2fugvnz497h7yvwqvwel40uh4rltcqvuj4m34cfxmz74jlsk0dkp6yrwf7q2z4q9puchc",
+                "to":"ckb1qqypm0l63rdt2jayymfrrjnyadmqe630a8skwcdpmfqqmgdje0sjsqt3emxu792v2yatrwfgp48huss2yg4yq9g083utk",
+                "tx_hash":"0xa1edd805418bca0cd999df49d042eb46139b8b09a964fd8f11e0de6c8c57f467",
+                "type":"transfer"
+            },
+            {
+                "age":1647613281847,
+                "block_number":6727011,
+                "from":"ckb1qqypm0l63rdt2jayymfrrjnyadmqe630a8skwcdpmfqqmgdje0sjsqt3emxu792v2yatrwfgp48huss2yg4yq9g083utk",
+                "to":"ckb1qzl58smqy32hnrq6vxjedcxe2fugvnz497h7yvwqvwel40uh4rltcqvuj4m34cfxmz74jlsk0dkp6yrwf7q2z4q9puchc",
+                "tx_hash":"0x9c547d7a5b38e3e46062d48bf4887bb0ca98ea593bf805882b41bf1738f8ac12",
+                "type":"transfer"
+            },
+            {
+                "age":1647613127780,
+                "block_number":6726999,
+                "from":"ckb1qzl58smqy32hnrq6vxjedcxe2fugvnz497h7yvwqvwel40uh4rltcqvuj4m34cfxmz74jlsk0dkp6yrwf7q2z4q9puchc",
+                "to":"ckb1qqypm0l63rdt2jayymfrrjnyadmqe630a8skwcdpmfqqmgdje0sjsqt3emxu792v2yatrwfgp48huss2yg4yq9g083utk",
+                "tx_hash":"0xa5a63fd171029e1424a5d155206977680cea40d9b0fdf0d6040855d18f8e02bb",
+                "type":"transfer"
+            },
+            {
+                "age":1647612280580,
+                "block_number":6726919,
+                "from":"ckb1qqypm0l63rdt2jayymfrrjnyadmqe630a8skwcdpmfqqmgdje0sjsqt3emxu792v2yatrwfgp48huss2yg4yq9g083utk",
+                "to":"ckb1qzl58smqy32hnrq6vxjedcxe2fugvnz497h7yvwqvwel40uh4rltcqvuj4m34cfxmz74jlsk0dkp6yrwf7q2z4q9puchc",
+                "tx_hash":"0xe0ed4ccddf35d1a36ce6979fa4c1b64af9dd8fe248ec25346951e0a3d0fa09c6",
+                "type":"transfer"
+            },
+            {
+                "age":1645804795836,
+                "block_number":6585724,
+                "from":"ckb1qzda0cr08m85hc8jlnfp3zer7xulejywt49kt2rr0vthywaa50xwsqgk2yu24zgcj0dq2vlsshmhg4hqprlm23c4jwrps",
+                "to":"ckb1qqypm0l63rdt2jayymfrrjnyadmqe630a8skwcdpmfqqmgdje0sjsqt3emxu792v2yatrwfgp48huss2yg4yq9g083utk",
+                "tx_hash":"0x3fc95d95a6ecaafab402ac2dc1200c37018052f61fa1bd02ecf81a36f7b6b142",
+                "type":"mint"
+            }
+        ]
     },
     "id":2
 }
