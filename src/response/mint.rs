@@ -1,6 +1,6 @@
 use super::helper::Inserter;
 use crate::models::class::ClassInfoDb;
-use crate::models::withdrawal::WithdrawDb;
+use crate::models::withdrawal::nft::WithdrawDb;
 use ckb_types::prelude::Entity;
 use cota_smt::mint::MintCotaNFTV1Entries;
 use cota_smt::smt::H256;

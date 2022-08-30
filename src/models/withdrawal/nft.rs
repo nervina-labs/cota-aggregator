@@ -1,6 +1,6 @@
-use super::helper::{parse_cota_id_index_pairs, parse_lock_hash};
 use crate::models::block::get_syncer_tip_block_number;
 use crate::models::helper::{generate_crc, PAGE_SIZE};
+use crate::models::helper::{parse_cota_id_index_pairs, parse_lock_hash};
 use crate::models::scripts::get_script_map_by_ids;
 use crate::models::{DBResult, DBTotalResult};
 use crate::schema::withdraw_cota_nft_kv_pairs::dsl::withdraw_cota_nft_kv_pairs;
@@ -12,7 +12,6 @@ use chrono::prelude::*;
 use diesel::*;
 use log::error;
 use serde::{Deserialize, Serialize};
-use std::collections::BTreeSet;
 
 #[derive(Serialize, Deserialize, Queryable, Debug, Clone)]
 pub struct WithdrawCotaNft {
@@ -196,114 +195,6 @@ pub fn get_withdrawal_cota_by_script_id(
     let block_height = get_syncer_tip_block_number()?;
     diff_time(start_time, "SQL get_withdrawal_cota_by_script_id");
     Ok((withdrawals, total, block_height))
-}
-
-#[derive(Serialize, Deserialize, Queryable, Debug, Clone)]
-pub struct WithdrawTxDb {
-    pub block_number:            u64,
-    pub tx_hash:                 String,
-    pub lock_script_id:          i64,
-    pub receiver_lock_script_id: i64,
-}
-
-#[derive(Debug, Clone)]
-pub struct WithdrawHistoryTx {
-    pub block_number:         u64,
-    pub tx_hash:              String,
-    pub lock_script:          Vec<u8>,
-    pub receiver_lock_script: Vec<u8>,
-}
-
-pub fn get_all_transactions(
-    cota_id_: [u8; 20],
-    token_index_: [u8; 4],
-    page: i64,
-    page_size: i64,
-) -> DBTotalResult<WithdrawHistoryTx> {
-    let conn = &POOL.clone().get().expect("Mysql pool connection error");
-    let cota_id_hex = hex::encode(cota_id_);
-    let token_index_u32 = u32::from_be_bytes(token_index_);
-    let cota_id_crc_u32 = generate_crc(cota_id_hex.as_bytes());
-    let total = withdraw_cota_nft_kv_pairs
-        .filter(cota_id_crc.eq(cota_id_crc_u32))
-        .filter(token_index.eq(token_index_u32))
-        .filter(cota_id.eq(cota_id_hex.clone()))
-        .count()
-        .get_result::<i64>(conn)
-        .map_err(|e| {
-            error!("Query withdraw error: {}", e.to_string());
-            Error::DatabaseQueryError(e.to_string())
-        })?;
-
-    let db_history_txs: Vec<WithdrawTxDb> = withdraw_cota_nft_kv_pairs
-        .select((
-            block_number,
-            tx_hash,
-            lock_script_id,
-            receiver_lock_script_id,
-        ))
-        .filter(cota_id_crc.eq(cota_id_crc_u32))
-        .filter(token_index.eq(token_index_u32))
-        .filter(cota_id.eq(cota_id_hex))
-        .order(updated_at.desc())
-        .limit(page_size)
-        .offset(page_size * page)
-        .load::<WithdrawTxDb>(conn)
-        .map_err(|e| {
-            error!("Query withdraw error: {}", e.to_string());
-            Error::DatabaseQueryError(e.to_string())
-        })?;
-
-    let mut script_id_set = BTreeSet::<i64>::new();
-    for tx in db_history_txs.iter() {
-        script_id_set.insert(tx.receiver_lock_script_id);
-        script_id_set.insert(tx.lock_script_id);
-    }
-    let script_ids: Vec<i64> = script_id_set.into_iter().collect();
-    let script_map = get_script_map_by_ids(script_ids)?;
-    let history_transactions: Vec<WithdrawHistoryTx> = db_history_txs
-        .into_iter()
-        .map(|tx| WithdrawHistoryTx {
-            tx_hash:              tx.tx_hash,
-            block_number:         tx.block_number,
-            lock_script:          script_map.get(&tx.lock_script_id).cloned().unwrap(),
-            receiver_lock_script: script_map
-                .get(&tx.receiver_lock_script_id)
-                .cloned()
-                .unwrap(),
-        })
-        .collect();
-    let block_height = get_syncer_tip_block_number()?;
-    Ok((history_transactions, total, block_height))
-}
-
-pub fn get_first_transaction(
-    cota_id_: [u8; 20],
-    token_index_: [u8; 4],
-) -> Result<Option<WithdrawTxDb>, Error> {
-    let conn = &POOL.clone().get().expect("Mysql pool connection error");
-    let cota_id_hex = hex::encode(cota_id_);
-    let token_index_u32 = u32::from_be_bytes(token_index_);
-    let cota_id_crc_u32 = generate_crc(cota_id_hex.as_bytes());
-
-    let db_history_txs: Vec<WithdrawTxDb> = withdraw_cota_nft_kv_pairs
-        .select((
-            block_number,
-            tx_hash,
-            lock_script_id,
-            receiver_lock_script_id,
-        ))
-        .filter(cota_id_crc.eq(cota_id_crc_u32))
-        .filter(token_index.eq(token_index_u32))
-        .filter(cota_id.eq(cota_id_hex))
-        .order(updated_at.asc())
-        .limit(1)
-        .load::<WithdrawTxDb>(conn)
-        .map_err(|e| {
-            error!("Query withdraw error: {}", e.to_string());
-            Error::DatabaseQueryError(e.to_string())
-        })?;
-    Ok(db_history_txs.first().cloned())
 }
 
 #[derive(Serialize, Deserialize, Queryable, Debug, Clone)]

@@ -1,6 +1,6 @@
 use crate::business::helper::address_from_script;
 use crate::models::class::ClassInfoDb;
-use crate::models::withdrawal::WithdrawNFTDb;
+use crate::models::withdrawal::nft::WithdrawNFTDb;
 use crate::response::helper::Inserter;
 use crate::utils::error::Error;
 use ckb_types::prelude::Entity;

@@ -7,7 +7,7 @@ use crate::entries::helper::{
 use crate::entries::smt::{generate_history_smt, init_smt};
 use crate::entries::witness::parse_withdraw_witness;
 use crate::models::claim::is_exist_in_claim;
-use crate::models::withdrawal::{get_withdrawal_cota_by_lock_hash, WithdrawDb};
+use crate::models::withdrawal::nft::{get_withdrawal_cota_by_lock_hash, WithdrawDb};
 use crate::request::transfer::TransferReq;
 use crate::request::withdrawal::TransferWithdrawal;
 use crate::smt::db::db::RocksDB;
@@ -20,7 +20,7 @@ use cota_smt::common::*;
 use cota_smt::molecule::prelude::*;
 use cota_smt::smt::{blake2b_256, H256};
 use cota_smt::transfer::{TransferCotaNFTV2Entries, TransferCotaNFTV2EntriesBuilder};
-use log::error;
+use log::{debug, error};
 use molecule::hex_string;
 
 pub async fn generate_transfer_smt(
@@ -153,6 +153,7 @@ pub async fn generate_transfer_smt(
     diff_time(start_time, "Generate transfer smt proof");
 
     let transfer_merkel_proof_vec: Vec<u8> = transfer_merkle_proof_compiled.into();
+    debug!("transfer proof size: {}", transfer_merkel_proof_vec.len());
     let transfer_merkel_proof_bytes = BytesBuilder::default()
         .extend(transfer_merkel_proof_vec.iter().map(|v| Byte::from(*v)))
         .build();
@@ -203,6 +204,11 @@ pub async fn generate_transfer_smt(
         .output_index(withdraw_info.output_index)
         .tx_proof(withdraw_info.tx_proof)
         .build();
+
+    debug!(
+        "transfer entries size: {}",
+        transfer_entries.as_slice().len()
+    );
 
     Ok((
         *transfer_smt.root(),

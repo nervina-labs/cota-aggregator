@@ -72,6 +72,10 @@ fn main() {
     io.add_method("parse_witness", parse_witness);
     io.add_method("get_cota_count", get_cota_count);
     io.add_method("get_history_transactions", get_cota_history_transactions);
+    io.add_method(
+        "get_transactions_by_block_number",
+        get_cota_transactions_by_block_number,
+    );
     io.add_method("get_aggregator_info", get_aggregator_info);
 
     let threads: usize = match env::var("THREADS") {

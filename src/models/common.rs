@@ -6,7 +6,7 @@ use crate::models::hold::{
     get_hold_cota_count_by_lock_hash, HoldDb,
 };
 use crate::models::scripts::get_script_id_by_lock_script;
-use crate::models::withdrawal::{
+use crate::models::withdrawal::nft::{
     get_sender_lock_by_script_id, get_withdrawal_cota_by_cota_ids,
     get_withdrawal_cota_by_lock_hash, get_withdrawal_cota_by_script_id, WithdrawDb, WithdrawNFTDb,
 };
