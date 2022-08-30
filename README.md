@@ -85,6 +85,7 @@ https://cota.nervina.dev/aggregator
 - [parse_witness](#parse_witness)
 - [get_cota_count](#get_cota_count)
 - [get_history_transactions](#get_history_transactions)
+- [get_transactions_by_block_number](#get_transactions_by_block_number)
 - [get_aggregator_info](#get_aggregator_info)
 
 ### generate_define_cota_smt
@@ -1014,6 +1015,72 @@ transactions - The transaction list of the sepcific CoTA NFT
                 "from":"ckb1qzda0cr08m85hc8jlnfp3zer7xulejywt49kt2rr0vthywaa50xwsqgk2yu24zgcj0dq2vlsshmhg4hqprlm23c4jwrps",
                 "to":"ckb1qqypm0l63rdt2jayymfrrjnyadmqe630a8skwcdpmfqqmgdje0sjsqt3emxu792v2yatrwfgp48huss2yg4yq9g083utk",
                 "tx_hash":"0x3fc95d95a6ecaafab402ac2dc1200c37018052f61fa1bd02ecf81a36f7b6b142",
+                "type":"mint"
+            }
+        ]
+    },
+    "id":2
+}
+```
+
+### get_transactions_by_block_number
+
+Get the CoTA transactions of the specific block number
+
+#### Parameters
+
+```
+block_number - The block number of CKB
+```
+
+```shell
+echo '{
+    "id":2,
+    "jsonrpc":"2.0",
+    "method":"get_transactions_by_block_number",
+    "params":{
+        "block_number": "6586282"
+    }
+}' \
+| tr -d '\n' \
+| curl -H 'content-type: application/json' -d @- \
+http://127.0.0.1:3030
+```
+
+### Response
+
+```
+cota_id - CoTA NFT Class Unique ID
+token_index - The index of the NFT Class (increment from zero)
+block_number - The block number of the mint or transfer transaction
+from - The sender address of the CoTA NFT transfer or mint transaction
+to - The receiver address of the CoTA NFT transfer or mint transaction
+tx_hash - The hash of the CoTA NFT transfer or mint transaction
+type - The type of the CoTA NFT transaction: 'transfer' or 'mint'
+```
+
+```
+{
+    "jsonrpc":"2.0",
+    "result":{
+        "block_number":7893309,
+        "transactions":[
+            {
+                "block_number":6586282,
+                "cota_id":"0x2b738f9f6c2326f6ef198d7a0dff19636ee00ed4",
+                "from":"ckb1qzda0cr08m85hc8jlnfp3zer7xulejywt49kt2rr0vthywaa50xwsqdy2wj0q6wxpda8ft6xnxgq83zu6t4cvvcrlhnz7",
+                "to":"ckb1qzl58smqy32hnrq6vxjedcxe2fugvnz497h7yvwqvwel40uh4rltcqg78jg823ckd4k2h3vme6yhgzyvaxs5jfqlcnjj2",
+                "token_index":"0x00000006",
+                "tx_hash":"0x52a49c3e4d9344c429b5d55c8c1616b6e8aa9a5783f4a5c5588b1f92e07aa73c",
+                "type":"mint"
+            },
+            {
+                "block_number":6586282,
+                "cota_id":"0x2b738f9f6c2326f6ef198d7a0dff19636ee00ed4",
+                "from":"ckb1qzda0cr08m85hc8jlnfp3zer7xulejywt49kt2rr0vthywaa50xwsqdy2wj0q6wxpda8ft6xnxgq83zu6t4cvvcrlhnz7",
+                "to":"ckb1qzl58smqy32hnrq6vxjedcxe2fugvnz497h7yvwqvwel40uh4rltcqg78jg823ckd4k2h3vme6yhgzyvaxs5jfqlcnjj2",
+                "token_index":"0x00000007",
+                "tx_hash":"0x52a49c3e4d9344c429b5d55c8c1616b6e8aa9a5783f4a5c5588b1f92e07aa73c",
                 "type":"mint"
             }
         ]
