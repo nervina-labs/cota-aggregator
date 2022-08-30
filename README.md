@@ -1050,13 +1050,15 @@ http://127.0.0.1:3030
 ### Response
 
 ```
-cota_id - CoTA NFT Class Unique ID
-token_index - The index of the NFT Class (increment from zero)
-block_number - The block number of the mint or transfer transaction
-from - The sender address of the CoTA NFT transfer or mint transaction
-to - The receiver address of the CoTA NFT transfer or mint transaction
-tx_hash - The hash of the CoTA NFT transfer or mint transaction
-type - The type of the CoTA NFT transaction: 'transfer' or 'mint'
+block_number - The latest block number of cota-nft-entries-syncer
+transactions - The transaction list of the sepcific CoTA NFT
+    cota_id - CoTA NFT Class Unique ID
+    token_index - The index of the NFT Class (increment from zero)
+    block_number - The block number of the mint or transfer transaction
+    from - The sender address of the CoTA NFT transfer or mint transaction
+    to - The receiver address of the CoTA NFT transfer or mint transaction
+    tx_hash - The hash of the CoTA NFT transfer or mint transaction
+    type - The type of the CoTA NFT transaction: 'transfer' or 'mint'
 ```
 
 ```
