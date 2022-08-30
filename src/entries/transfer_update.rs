@@ -7,7 +7,7 @@ use crate::entries::helper::{
 use crate::entries::smt::{generate_history_smt, init_smt};
 use crate::entries::witness::parse_withdraw_witness;
 use crate::models::claim::is_exist_in_claim;
-use crate::models::withdrawal::{get_withdrawal_cota_by_lock_hash, WithdrawDb};
+use crate::models::withdrawal::nft::{get_withdrawal_cota_by_lock_hash, WithdrawDb};
 use crate::request::transfer::{TransferUpdate, TransferUpdateReq};
 use crate::smt::db::db::RocksDB;
 use crate::smt::transaction::store_transaction::StoreTransaction;
