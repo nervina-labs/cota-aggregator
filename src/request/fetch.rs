@@ -85,3 +85,16 @@ impl FetchHistoryTxsReq {
         })
     }
 }
+
+#[derive(Clone, Copy, Eq, PartialEq)]
+pub struct FetchTxsByBlockNumberReq {
+    pub block_number: u64,
+}
+
+impl FetchTxsByBlockNumberReq {
+    pub fn from_map(map: &Map<String, Value>) -> Result<Self, Error> {
+        Ok(FetchTxsByBlockNumberReq {
+            block_number: map.get_u64_filed("block_number")?,
+        })
+    }
+}

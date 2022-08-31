@@ -15,7 +15,7 @@ use cota_smt::common::*;
 use cota_smt::mint::{MintCotaNFTV1Entries, MintCotaNFTV1EntriesBuilder};
 use cota_smt::molecule::prelude::*;
 use cota_smt::smt::{blake2b_256, H256};
-use log::error;
+use log::{debug, error};
 use molecule::hex_string;
 
 pub async fn generate_mint_smt(
@@ -136,6 +136,7 @@ pub async fn generate_mint_smt(
     diff_time(start_time, "Generate mint smt proof");
 
     let merkel_proof_vec: Vec<u8> = mint_merkle_proof_compiled.into();
+    debug!("mint proof size: {}", merkel_proof_vec.len());
     let merkel_proof_bytes = BytesBuilder::default()
         .extend(merkel_proof_vec.iter().map(|v| Byte::from(*v)))
         .build();

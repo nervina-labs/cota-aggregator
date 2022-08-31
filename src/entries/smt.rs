@@ -7,7 +7,7 @@ use crate::models::claim::ClaimDb;
 use crate::models::common::get_all_cota_by_lock_hash;
 use crate::models::define::DefineDb;
 use crate::models::hold::HoldDb;
-use crate::models::withdrawal::WithdrawDb;
+use crate::models::withdrawal::nft::WithdrawDb;
 use crate::smt::db::schema::{
     COLUMN_SMT_BRANCH, COLUMN_SMT_LEAF, COLUMN_SMT_ROOT, COLUMN_SMT_TEMP_LEAVES,
 };

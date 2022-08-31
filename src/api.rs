@@ -1,4 +1,4 @@
-use crate::business::transaction::get_history_transactions;
+use crate::business::transaction::{get_history_transactions, get_txs_by_block_number};
 use crate::entries::claim::generate_claim_smt;
 use crate::entries::claim_update::generate_claim_update_smt;
 use crate::entries::define::generate_define_smt;
@@ -15,7 +15,9 @@ use crate::models::common::{
 use crate::models::issuer::get_issuer_info_by_lock_hash;
 use crate::request::claim::{ClaimReq, ClaimUpdateReq, IsClaimedReq};
 use crate::request::define::{DefineInfoReq, DefineReq};
-use crate::request::fetch::{FetchCountReq, FetchHistoryTxsReq, FetchIssuerReq, FetchReq};
+use crate::request::fetch::{
+    FetchCountReq, FetchHistoryTxsReq, FetchIssuerReq, FetchReq, FetchTxsByBlockNumberReq,
+};
 use crate::request::mint::MintReq;
 use crate::request::transfer::{TransferReq, TransferUpdateReq};
 use crate::request::update::UpdateReq;
@@ -27,7 +29,7 @@ use crate::response::hold::{parse_hold_response, parse_owned_nft_count};
 use crate::response::info::generate_aggregator_info;
 use crate::response::issuer::parse_issuer_response;
 use crate::response::mint::{parse_mint_response, parse_mint_smt};
-use crate::response::transaction::parse_history_transactions;
+use crate::response::transaction::{parse_cota_transactions, parse_history_transactions};
 use crate::response::transfer::{parse_transfer_smt, parse_transfer_update_smt};
 use crate::response::update::parse_update_smt;
 use crate::response::withdrawal::{
@@ -252,6 +254,17 @@ pub async fn get_cota_history_transactions(params: Params) -> Result<Value, Erro
         .await
         .map_err(|err| err.into())?;
     let response = parse_history_transactions(transactions, total, req.page_size, block_height);
+    Ok(Value::Object(response))
+}
+
+pub async fn get_cota_transactions_by_block_number(params: Params) -> Result<Value, Error> {
+    info!("Get CoTA NFT transactions by block number");
+    let map: Map<String, Value> = Params::parse(params)?;
+    let req = FetchTxsByBlockNumberReq::from_map(&map).map_err(|err| err.into())?;
+    let (transactions, block_height) = get_txs_by_block_number(req)
+        .await
+        .map_err(|err| err.into())?;
+    let response = parse_cota_transactions(transactions, block_height);
     Ok(Value::Object(response))
 }
 

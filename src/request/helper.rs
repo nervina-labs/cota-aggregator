@@ -28,6 +28,7 @@ pub trait HexParser {
     fn get_hex_bytes_filed<const N: usize>(&self, key: &str) -> Result<[u8; N], Error>;
     fn get_hex_vec_filed(&self, key: &str) -> Result<Vec<u8>, Error>;
     fn get_i64_filed(&self, key: &str) -> Result<i64, Error>;
+    fn get_u64_filed(&self, key: &str) -> Result<u64, Error>;
     fn get_u8_filed(&self, key: &str) -> Result<u8, Error>;
 }
 
@@ -78,6 +79,17 @@ impl HexParser for Map<String, Value> {
         if result < 0 {
             return Err(Error::RequestParamTypeError(key.to_owned()));
         }
+        Ok(result)
+    }
+
+    fn get_u64_filed(&self, key: &str) -> Result<u64, Error> {
+        let v = self
+            .get(key)
+            .ok_or(Error::RequestParamNotFound(key.to_owned()))?;
+        if !v.is_string() {
+            return Err(Error::RequestParamTypeError(key.to_owned()));
+        }
+        let result: u64 = v.as_str().unwrap().parse().unwrap();
         Ok(result)
     }
 
