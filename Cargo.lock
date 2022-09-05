@@ -643,7 +643,7 @@ checksum = "5827cebf4670468b8772dd191856768aedcb1b0278a04f989f7766351917b9dc"
 
 [[package]]
 name = "cota-aggregator"
-version = "0.6.8"
+version = "0.6.9"
 dependencies = [
  "chrono",
  "ckb-jsonrpc-types",
