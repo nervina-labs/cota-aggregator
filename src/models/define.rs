@@ -108,6 +108,23 @@ pub fn get_define_cota_by_cota_id(cota_id_: [u8; 20]) -> Result<Option<DefineDb>
     Ok(defines.get(0).cloned())
 }
 
+pub fn get_lock_hash_by_cota_id(cota_id_: [u8; 20]) -> Result<[u8; 32], Error> {
+    let conn = &POOL.clone().get().expect("Mysql pool connection error");
+    let cota_id_hex = hex::encode(cota_id_);
+    define_cota_nft_kv_pairs
+        .select(lock_hash)
+        .filter(cota_id.eq(cota_id_hex))
+        .limit(1)
+        .first::<String>(conn)
+        .map_or_else(
+            |e| {
+                error!("Query lock hash by cota id error: {}", e.to_string());
+                Err(Error::DatabaseQueryError(e.to_string()))
+            },
+            |lock_hash_| Ok(parse_bytes_n::<32>(lock_hash_).unwrap()),
+        )
+}
+
 fn parse_define_cota_nft(defines: Vec<DefineCotaNft>) -> Vec<DefineDb> {
     defines
         .into_iter()

@@ -15,6 +15,9 @@ use crate::utils::error::Error;
 use cota_smt::smt::blake2b_256;
 use log::debug;
 
+use super::define::get_lock_hash_by_cota_id;
+use super::issuer::{get_issuer_info_by_lock_hash, IssuerInfoDb};
+
 type DBAllResult = Result<(Vec<DefineDb>, Vec<HoldDb>, Vec<WithdrawDb>, Vec<ClaimDb>), Error>;
 
 pub fn get_all_cota_by_lock_hash(lock_hash: [u8; 32]) -> DBAllResult {
@@ -152,4 +155,10 @@ pub fn get_owned_cota_count(lock_script: &[u8], cota_id: [u8; 20]) -> Result<(i6
     );
     let count = hold_count + withdrawal_count;
     Ok((count, block_height))
+}
+
+pub fn get_issuer_by_cota_id(cota_id: [u8; 20]) -> Result<([u8; 32], Option<IssuerInfoDb>), Error> {
+    let lock_hash = get_lock_hash_by_cota_id(cota_id)?;
+    let issuer = get_issuer_info_by_lock_hash(lock_hash)?;
+    Ok((lock_hash, issuer))
 }

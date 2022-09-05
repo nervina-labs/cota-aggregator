@@ -9,14 +9,15 @@ use crate::entries::update::generate_update_smt;
 use crate::entries::withdrawal::generate_withdrawal_smt;
 use crate::models::block::get_syncer_tip_block_number;
 use crate::models::common::{
-    check_cota_claimed, get_define_info_by_cota_id, get_hold_cota, get_mint_cota,
-    get_owned_cota_count, get_sender_account_by_cota_nft, get_withdrawal_cota,
+    check_cota_claimed, get_define_info_by_cota_id, get_hold_cota, get_issuer_by_cota_id,
+    get_mint_cota, get_owned_cota_count, get_sender_account_by_cota_nft, get_withdrawal_cota,
 };
 use crate::models::issuer::get_issuer_info_by_lock_hash;
 use crate::request::claim::{ClaimReq, ClaimUpdateReq, IsClaimedReq};
 use crate::request::define::{DefineInfoReq, DefineReq};
 use crate::request::fetch::{
-    FetchCountReq, FetchHistoryTxsReq, FetchIssuerReq, FetchReq, FetchTxsByBlockNumberReq,
+    FetchCountReq, FetchHistoryTxsReq, FetchIssuerInfoReq, FetchIssuerReq, FetchReq,
+    FetchTxsByBlockNumberReq,
 };
 use crate::request::mint::MintReq;
 use crate::request::transfer::{TransferReq, TransferUpdateReq};
@@ -27,7 +28,7 @@ use crate::response::claim::{parse_claimed_response, parse_claimed_smt, parse_cl
 use crate::response::define::{parse_define_info, parse_define_smt};
 use crate::response::hold::{parse_hold_response, parse_owned_nft_count};
 use crate::response::info::generate_aggregator_info;
-use crate::response::issuer::parse_issuer_response;
+use crate::response::issuer::{parse_issuer_info_response, parse_issuer_response};
 use crate::response::mint::{parse_mint_response, parse_mint_smt};
 use crate::response::transaction::{parse_cota_transactions, parse_history_transactions};
 use crate::response::transfer::{parse_transfer_smt, parse_transfer_update_smt};
@@ -258,13 +259,26 @@ pub async fn get_cota_history_transactions(params: Params) -> Result<Value, Erro
 }
 
 pub async fn get_cota_transactions_by_block_number(params: Params) -> Result<Value, Error> {
-    info!("Get CoTA NFT transactions by block number");
+    info!(
+        "Get CoTA NFT transactions by block number request: {:?}",
+        params
+    );
     let map: Map<String, Value> = Params::parse(params)?;
     let req = FetchTxsByBlockNumberReq::from_map(&map).map_err(|err| err.into())?;
     let (transactions, block_height) = get_txs_by_block_number(req)
         .await
         .map_err(|err| err.into())?;
     let response = parse_cota_transactions(transactions, block_height);
+    Ok(Value::Object(response))
+}
+
+pub async fn get_issuer_info_by_cota_id(params: Params) -> Result<Value, Error> {
+    info!("Get issuer info by cota id request: {:?}", params);
+    let map: Map<String, Value> = Params::parse(params)?;
+    let FetchIssuerInfoReq { cota_id } =
+        FetchIssuerInfoReq::from_map(&map).map_err(|err| err.into())?;
+    let (lock_hash, issuer_info_opt) = get_issuer_by_cota_id(cota_id).map_err(|err| err.into())?;
+    let response = parse_issuer_info_response(lock_hash, issuer_info_opt, get_block_number()?);
     Ok(Value::Object(response))
 }
 
