@@ -805,6 +805,54 @@ description - The issuer's description
 }
 ```
 
+### get_issuer_info_by_cota_id
+
+Get issuer's information by cota_id
+
+#### Parameters
+
+```
+cota_id - CoTA NFT Class Unique ID
+```
+
+```shell
+echo '{
+    "id":2,
+    "jsonrpc":"2.0",
+    "method":"get_issuer_info_by_cota_id",
+    "params":{
+        "cota_id":"0x07d6fa85babd5c31bf6252998aa06960730017ef"
+    }
+}' \
+| tr -d '\n' \
+| curl -H 'content-type: application/json' -d @- \
+http://127.0.0.1:3030
+```
+
+#### Response
+
+```
+block_number - The latest block number of cota-nft-entries-syncer
+lock_hash - The lock script hash of issuer
+avatar - The issuer's avatar
+name - The issuer's name
+description - The issuer's description
+```
+
+```shell
+{
+    "jsonrpc":"2.0",
+    "result":{
+        "avatar":"https://bafybeieubinsws3na52z63mnavuf4yeb4xcxf2dhkj22w53qe3cgl7rz7a.ipfs.nftstorage.link/%E6%9C%AA%E7%89%A9%E4%B8%BB%E4%B9%89logo.png",
+        "block_number":7893309,
+        "description":"由未物主义平台铸造",
+        "lock_hash":"0xa611a0d1695f14c9672e35c235735025b40c33c507598f5155217cba4e64d4dd",
+        "name":"未物主义"
+    },
+    "id":2
+}
+```
+
 ### parse_witness
 
 Parse CoTA witness
