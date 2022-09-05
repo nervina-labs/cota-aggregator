@@ -23,3 +23,13 @@ pub fn parse_issuer_response(
     map.insert_u64("block_number", block_number);
     map
 }
+
+pub fn parse_issuer_info_response(
+    lock_hash: [u8; 32],
+    issuer_info: Option<IssuerInfoDb>,
+    block_number: u64,
+) -> Map<String, Value> {
+    let mut map = parse_issuer_response(issuer_info, block_number);
+    map.insert_hex("lock_hash", &lock_hash);
+    map
+}

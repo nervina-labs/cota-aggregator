@@ -98,3 +98,16 @@ impl FetchTxsByBlockNumberReq {
         })
     }
 }
+
+#[derive(Clone, Eq, PartialEq)]
+pub struct FetchIssuerInfoReq {
+    pub cota_id: [u8; 20],
+}
+
+impl FetchIssuerInfoReq {
+    pub fn from_map(map: &Map<String, Value>) -> Result<Self, Error> {
+        Ok(FetchIssuerInfoReq {
+            cota_id: map.get_hex_bytes_filed::<20>("cota_id")?,
+        })
+    }
+}
