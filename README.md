@@ -82,6 +82,7 @@ https://cota.nervina.dev/aggregator
 - [get_cota_nft_sender](#get_cota_nft_sender)
 - [get_define_info](#get_define_info)
 - [get_issuer_info](#get_issuer_info)
+- [get_issuer_info_by_cota_id](#get_issuer_info_by_cota_id)
 - [parse_witness](#parse_witness)
 - [get_cota_count](#get_cota_count)
 - [get_history_transactions](#get_history_transactions)
