@@ -115,6 +115,35 @@ table! {
 }
 
 table! {
+    extension_kv_pair_versions (id) {
+        id -> Bigint,
+        old_block_number -> Unsigned<Bigint>,
+        block_number -> Unsigned<Bigint>,
+        key -> Char,
+        value -> Char,
+        old_value -> Char,
+        lock_hash -> Char,
+        action_type -> Unsigned<Tinyint>,
+        tx_index -> Unsigned<Integer>,
+        created_at -> Datetime,
+        updated_at -> Datetime,
+    }
+}
+
+table! {
+    extension_kv_pairs (id) {
+        id -> Bigint,
+        block_number -> Unsigned<Bigint>,
+        lock_hash -> Char,
+        lock_hash_crc -> Unsigned<Integer>,
+        key -> Char,
+        value -> Char,
+        created_at -> Datetime,
+        updated_at -> Datetime,
+    }
+}
+
+table! {
     hold_cota_nft_kv_pair_versions (id) {
         id -> Bigint,
         old_block_number -> Unsigned<Bigint>,
@@ -190,10 +219,60 @@ table! {
 }
 
 table! {
+    joy_id_info_versions (id) {
+        id -> Bigint,
+        old_block_number -> Unsigned<Bigint>,
+        block_number -> Unsigned<Bigint>,
+        lock_hash -> Varchar,
+        old_version -> Varchar,
+        version -> Varchar,
+        old_name -> Varchar,
+        name -> Varchar,
+        old_avatar -> Varchar,
+        avatar -> Varchar,
+        old_description -> Varchar,
+        description -> Varchar,
+        old_extension -> Varchar,
+        extension -> Varchar,
+        old_nickname -> Varchar,
+        nickname -> Varchar,
+        pub_key -> Char,
+        credential_id -> Varchar,
+        alg -> Char,
+        cota_cell_id -> Char,
+        action_type -> Unsigned<Tinyint>,
+        tx_index -> Unsigned<Integer>,
+        created_at -> Datetime,
+        updated_at -> Datetime,
+    }
+}
+
+table! {
+    joy_id_infos (id) {
+        id -> Bigint,
+        block_number -> Unsigned<Bigint>,
+        lock_hash -> Varchar,
+        version -> Varchar,
+        name -> Varchar,
+        avatar -> Varchar,
+        description -> Varchar,
+        extension -> Varchar,
+        nickname -> Varchar,
+        pub_key -> Char,
+        credential_id -> Varchar,
+        alg -> Char,
+        cota_cell_id -> Char,
+        created_at -> Datetime,
+        updated_at -> Datetime,
+    }
+}
+
+table! {
     register_cota_kv_pairs (id) {
         id -> Bigint,
         block_number -> Unsigned<Bigint>,
         lock_hash -> Char,
+        cota_cell_id -> Unsigned<Bigint>,
         created_at -> Datetime,
         updated_at -> Datetime,
     }
@@ -214,6 +293,19 @@ table! {
         hash_type -> Unsigned<Tinyint>,
         args -> Text,
         args_crc -> Unsigned<Integer>,
+        created_at -> Datetime,
+        updated_at -> Datetime,
+    }
+}
+
+table! {
+    sub_key_infos (id) {
+        id -> Bigint,
+        block_number -> Unsigned<Bigint>,
+        lock_hash -> Varchar,
+        pub_key -> Char,
+        credential_id -> Varchar,
+        alg -> Char,
         created_at -> Datetime,
         updated_at -> Datetime,
     }
@@ -249,12 +341,17 @@ allow_tables_to_appear_in_same_query!(
     class_infos,
     define_cota_nft_kv_pair_versions,
     define_cota_nft_kv_pairs,
+    extension_kv_pair_versions,
+    extension_kv_pairs,
     hold_cota_nft_kv_pair_versions,
     hold_cota_nft_kv_pairs,
     issuer_info_versions,
     issuer_infos,
+    joy_id_info_versions,
+    joy_id_infos,
     register_cota_kv_pairs,
     schema_migrations,
     scripts,
+    sub_key_infos,
     withdraw_cota_nft_kv_pairs,
 );
