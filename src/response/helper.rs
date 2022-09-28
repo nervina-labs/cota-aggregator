@@ -1,3 +1,4 @@
+use crate::utils::error::Error;
 use jsonrpc_http_server::jsonrpc_core::serde_json::{Map, Number};
 use jsonrpc_http_server::jsonrpc_core::Value;
 
@@ -58,4 +59,8 @@ impl Inserter for Map<String, Value> {
         let vec: Vec<Value> = v.into_iter().map(|v_| Value::Object(v_)).collect();
         self.insert(k.to_string(), Value::Array(vec))
     }
+}
+
+pub fn parse_json_err(_err: serde_json::Error) -> Error {
+    Error::Other("Json parse error".to_string())
 }
