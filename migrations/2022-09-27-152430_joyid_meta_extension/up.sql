@@ -73,7 +73,8 @@ CREATE TABLE IF NOT EXISTS extension_kv_pairs (
     created_at datetime(6) NOT NULL,
     updated_at datetime(6) NOT NULL,
     PRIMARY KEY (id),
-    KEY index_extension_on_block_number (block_number)
+    KEY index_extension_on_block_number (block_number),
+    KEY index_extension_on_lock_hash_crc (lock_hash_crc)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
 
 

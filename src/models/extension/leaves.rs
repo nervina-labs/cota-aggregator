@@ -1,0 +1,73 @@
+use crate::{
+    models::{
+        block::get_syncer_tip_block_number,
+        helper::{parse_lock_hash, PAGE_SIZE},
+        DBResult,
+    },
+    schema::extension_kv_pairs::dsl::extension_kv_pairs,
+    schema::extension_kv_pairs::{key, lock_hash, lock_hash_crc, value},
+    utils::{
+        error::Error,
+        helper::{diff_time, parse_bytes_n},
+    },
+    POOL,
+};
+use chrono::prelude::*;
+use diesel::*;
+use log::error;
+use serde::Serialize;
+
+#[derive(Serialize, Debug, Copy, Clone, Eq, PartialEq)]
+pub struct ExtensionLeafDb {
+    pub key:   [u8; 32],
+    pub value: [u8; 32],
+}
+
+#[derive(Queryable, Debug, Clone, Eq, PartialEq)]
+struct ExtensionLeaf {
+    pub key:   String,
+    pub value: String,
+}
+
+pub fn get_extension_leaves_by_lock_hash(lock_hash_: [u8; 32]) -> DBResult<ExtensionLeafDb> {
+    let start_time = Local::now().timestamp_millis();
+    let conn = &POOL.clone().get().expect("Mysql pool connection error");
+    let (lock_hash_hex, lock_hash_crc_) = parse_lock_hash(lock_hash_);
+    let mut page: i64 = 0;
+    let mut leaves: Vec<ExtensionLeafDb> = Vec::new();
+    loop {
+        let leaves_page = extension_kv_pairs
+            .select((key, value))
+            .filter(lock_hash_crc.eq(lock_hash_crc_))
+            .filter(lock_hash.eq(lock_hash_hex.clone()))
+            .limit(PAGE_SIZE)
+            .offset(PAGE_SIZE * page)
+            .load::<ExtensionLeaf>(conn)
+            .map_or_else(
+                |e| {
+                    error!("Query extension error: {}", e.to_string());
+                    Err(Error::DatabaseQueryError(e.to_string()))
+                },
+                |leaves_| Ok(parse_extension_leaves(leaves_)),
+            )?;
+        let length = leaves_page.len();
+        leaves.extend(leaves_page);
+        if length < (PAGE_SIZE as usize) {
+            break;
+        }
+        page += 1;
+    }
+    let block_height = get_syncer_tip_block_number()?;
+    diff_time(start_time, "SQL get_extension_leaves_by_lock_hash");
+    Ok((leaves, block_height))
+}
+
+fn parse_extension_leaves(leaves: Vec<ExtensionLeaf>) -> Vec<ExtensionLeafDb> {
+    leaves
+        .into_iter()
+        .map(|leaf| ExtensionLeafDb {
+            key:   parse_bytes_n::<32>(leaf.key).unwrap(),
+            value: parse_bytes_n::<32>(leaf.value).unwrap(),
+        })
+        .collect()
+}
