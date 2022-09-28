@@ -176,8 +176,7 @@ pub async fn fetch_mint_rpc(params: Params) -> Result<Value, Error> {
     } = FetchReq::from_map(&map).map_err(|err| err.into())?;
     let (withdrawals, total, block_number) =
         get_mint_cota(&lock_script, page, page_size).map_err(|err| err.into())?;
-    let response = parse_mint_response(withdrawals, total, page_size, block_number);
-    Ok(Value::Object(response))
+    parse_mint_response(withdrawals, total, page_size, block_number).map_err(|err| err.into())
 }
 
 pub async fn is_claimed_rpc(params: Params) -> Result<Value, Error> {

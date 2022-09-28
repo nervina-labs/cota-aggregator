@@ -17,7 +17,7 @@ pub struct ClassInfoDb {
     pub audio:          String,
     pub video:          String,
     pub model:          String,
-    #[serde(skip_serializing)]
+    #[serde(rename(serialize = "meta_characteristic"))]
     pub characteristic: String,
     pub properties:     String,
 }
