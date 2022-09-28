@@ -161,8 +161,7 @@ pub async fn fetch_withdrawal_rpc(params: Params) -> Result<Value, Error> {
     } = FetchReq::from_map(&map).map_err(|err| err.into())?;
     let (withdrawals, total, block_number) =
         get_withdrawal_cota(&lock_script, page, page_size, cota_id).map_err(|err| err.into())?;
-    let response = parse_withdrawal_response(withdrawals, total, page_size, block_number);
-    Ok(Value::Object(response))
+    parse_withdrawal_response(withdrawals, total, page_size, block_number).map_err(|err| err.into())
 }
 
 pub async fn fetch_mint_rpc(params: Params) -> Result<Value, Error> {
