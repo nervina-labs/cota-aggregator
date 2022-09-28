@@ -20,12 +20,14 @@ struct DefineCotaNft {
     pub block_number: u64,
 }
 
-#[derive(Debug, Copy, Clone, Eq, PartialEq)]
+#[derive(Serialize, Debug, Copy, Clone, Eq, PartialEq, Default)]
 pub struct DefineDb {
+    #[serde(skip_serializing)]
     pub cota_id:      [u8; 20],
     pub total:        u32,
     pub issued:       u32,
     pub configure:    u8,
+    #[serde(skip_serializing)]
     pub block_number: u64,
 }
 
