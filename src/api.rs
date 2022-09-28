@@ -285,8 +285,8 @@ pub async fn get_issuer_info_by_cota_id(params: Params) -> Result<Value, Error> 
     let FetchIssuerInfoReq { cota_id } =
         FetchIssuerInfoReq::from_map(&map).map_err(|err| err.into())?;
     let (lock_hash, issuer_info_opt) = get_issuer_by_cota_id(cota_id).map_err(|err| err.into())?;
-    let response = parse_issuer_info_response(lock_hash, issuer_info_opt, get_block_number()?);
-    Ok(Value::Object(response))
+    parse_issuer_info_response(lock_hash, issuer_info_opt, get_block_number()?)
+        .map_err(|err| err.into())
 }
 
 pub async fn get_joyid_info(params: Params) -> Result<Value, Error> {
