@@ -34,16 +34,36 @@ impl FetchReq {
 
 #[derive(Clone, Eq, PartialEq)]
 pub struct FetchIssuerReq {
-    pub lock_script: Vec<u8>,
+    pub lock_script: Option<Vec<u8>>,
+    pub address:     Option<String>,
 }
 
 impl FetchIssuerReq {
     pub fn from_map(map: &Map<String, Value>) -> Result<Self, Error> {
-        let lock_script = map.get_hex_vec_filed("lock_script")?;
-        if Script::from_slice(&lock_script).is_err() {
-            return Err(Error::RequestParamTypeError("Script".to_string()));
+        let lock_script = match map.get("lock_script") {
+            Some(_) => {
+                let lock = map.get_hex_vec_filed("lock_script")?;
+                if Script::from_slice(&lock).is_err() {
+                    return Err(Error::RequestParamTypeError("Script".to_string()));
+                }
+                Some(lock)
+            }
+            None => None,
+        };
+
+        let address = match map.get("address") {
+            Some(_) => Some(map.get_str_filed("address")?),
+            None => None,
+        };
+        if lock_script.is_none() && address.is_none() {
+            return Err(Error::RequestParamTypeError(
+                "lock script and address".to_string(),
+            ));
         }
-        Ok(FetchIssuerReq { lock_script })
+        Ok(FetchIssuerReq {
+            lock_script,
+            address,
+        })
     }
 }
 

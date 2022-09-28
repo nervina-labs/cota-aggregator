@@ -222,9 +222,16 @@ pub async fn get_define_info(params: Params) -> Result<Value, Error> {
 pub async fn get_issuer_info(params: Params) -> Result<Value, Error> {
     info!("Get issuer info request: {:?}", params);
     let map: Map<String, Value> = Params::parse(params)?;
-    let FetchIssuerReq { lock_script } =
-        FetchIssuerReq::from_map(&map).map_err(|err| err.into())?;
-    let lock_hash = blake2b_256(&lock_script);
+    let FetchIssuerReq {
+        lock_script,
+        address,
+    } = FetchIssuerReq::from_map(&map).map_err(|err| err.into())?;
+    let lock_hash = if lock_script.is_some() {
+        blake2b_256(&lock_script.unwrap())
+    } else {
+        let lock = script_from_address(address.unwrap()).map_err(|err| err.into())?;
+        blake2b_256(&lock.as_slice())
+    };
     let issuer_info_opt = get_issuer_info_by_lock_hash(lock_hash).map_err(|err| err.into())?;
     let response = parse_issuer_response(issuer_info_opt, get_block_number()?);
     Ok(Value::Object(response))
