@@ -30,6 +30,7 @@ pub trait HexParser {
     fn get_i64_filed(&self, key: &str) -> Result<i64, Error>;
     fn get_u64_filed(&self, key: &str) -> Result<u64, Error>;
     fn get_u8_filed(&self, key: &str) -> Result<u8, Error>;
+    fn get_str_filed(&self, key: &str) -> Result<String, Error>;
 }
 
 impl HexParser for Map<String, Value> {
@@ -101,6 +102,17 @@ impl HexParser for Map<String, Value> {
             return Err(Error::RequestParamTypeError(key.to_owned()));
         }
         let result: u8 = v.as_str().unwrap().parse().unwrap();
+        Ok(result)
+    }
+
+    fn get_str_filed(&self, key: &str) -> Result<String, Error> {
+        let v = self
+            .get(key)
+            .ok_or(Error::RequestParamNotFound(key.to_owned()))?;
+        if !v.is_string() {
+            return Err(Error::RequestParamTypeError(key.to_owned()));
+        }
+        let result: String = v.as_str().unwrap().parse().unwrap();
         Ok(result)
     }
 }
