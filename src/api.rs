@@ -215,8 +215,8 @@ pub async fn get_define_info(params: Params) -> Result<Value, Error> {
     let DefineInfoReq { cota_id } = DefineInfoReq::from_map(&map).map_err(|err| err.into())?;
     let (define_info_opt, class_info_opt) =
         get_define_info_by_cota_id(cota_id).map_err(|err| err.into())?;
-    let response = parse_define_info(define_info_opt, class_info_opt, get_block_number()?);
-    Ok(Value::Object(response))
+    parse_define_info(define_info_opt, class_info_opt, get_block_number()?)
+        .map_err(|err| err.into())
 }
 
 pub async fn get_issuer_info(params: Params) -> Result<Value, Error> {
@@ -233,8 +233,7 @@ pub async fn get_issuer_info(params: Params) -> Result<Value, Error> {
         blake2b_256(&lock.as_slice())
     };
     let issuer_info_opt = get_issuer_info_by_lock_hash(lock_hash).map_err(|err| err.into())?;
-    let response = parse_issuer_response(issuer_info_opt, get_block_number()?);
-    Ok(Value::Object(response))
+    parse_issuer_response(issuer_info_opt, get_block_number()?).map_err(|err| err.into())
 }
 
 pub async fn parse_witness(params: Params) -> Result<Value, Error> {
