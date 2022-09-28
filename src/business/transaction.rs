@@ -5,7 +5,9 @@ use crate::models::withdrawal::transaction::{
 };
 use crate::request::fetch::{FetchHistoryTxsReq, FetchTxsByBlockNumberReq};
 use crate::utils::error::Error;
+use serde::{Deserialize, Serialize};
 
+#[derive(Serialize, Deserialize, Debug, Clone, Eq, PartialEq)]
 pub struct HistoryTransaction {
     pub tx_hash:      String,
     pub block_number: u64,
@@ -50,6 +52,7 @@ pub async fn get_history_transactions(
     Ok((txs, total, block_height))
 }
 
+#[derive(Serialize, Deserialize, Debug, Clone, Eq, PartialEq)]
 pub struct CotaTransaction {
     pub cota_id:      String,
     pub token_index:  String,

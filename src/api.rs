@@ -262,8 +262,8 @@ pub async fn get_cota_history_transactions(params: Params) -> Result<Value, Erro
     let (transactions, total, block_height) = get_history_transactions(req)
         .await
         .map_err(|err| err.into())?;
-    let response = parse_history_transactions(transactions, total, req.page_size, block_height);
-    Ok(Value::Object(response))
+    parse_history_transactions(transactions, total, req.page_size, block_height)
+        .map_err(|err| err.into())
 }
 
 pub async fn get_cota_transactions_by_block_number(params: Params) -> Result<Value, Error> {
@@ -276,8 +276,7 @@ pub async fn get_cota_transactions_by_block_number(params: Params) -> Result<Val
     let (transactions, block_height) = get_txs_by_block_number(req)
         .await
         .map_err(|err| err.into())?;
-    let response = parse_cota_transactions(transactions, block_height);
-    Ok(Value::Object(response))
+    parse_cota_transactions(transactions, block_height).map_err(|err| err.into())
 }
 
 pub async fn get_issuer_info_by_cota_id(params: Params) -> Result<Value, Error> {
