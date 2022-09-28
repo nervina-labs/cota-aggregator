@@ -14,7 +14,21 @@ use diesel::*;
 use log::error;
 use serde::{Deserialize, Serialize};
 
-#[derive(Serialize, Deserialize, Queryable, Debug, Clone, Eq, PartialEq)]
+#[derive(Serialize, Deserialize, Debug, Clone, Eq, PartialEq, Default)]
+pub struct JoyIDInfo {
+    pub name:          String,
+    pub avatar:        String,
+    pub description:   String,
+    pub extension:     String,
+    pub nickname:      String,
+    pub pub_key:       String,
+    pub credential_id: String,
+    pub alg:           String,
+    pub cota_cell_id:  String,
+    pub sub_keys:      Vec<SubKeyDb>,
+}
+
+#[derive(Queryable, Debug, Clone, Eq, PartialEq)]
 pub struct JoyIDInfoDb {
     pub name:          String,
     pub avatar:        String,
@@ -34,9 +48,7 @@ pub struct SubKeyDb {
     pub alg:           String,
 }
 
-pub fn get_joyid_info_by_lock_hash(
-    lock_hash_: [u8; 32],
-) -> Result<Option<(JoyIDInfoDb, Vec<SubKeyDb>)>, Error> {
+pub fn get_joyid_info_by_lock_hash(lock_hash_: [u8; 32]) -> Result<Option<JoyIDInfo>, Error> {
     let conn = &POOL.clone().get().expect("Mysql pool connection error");
     let lock_hash_hex = hex::encode(lock_hash_);
     let joyid_infos: Vec<JoyIDInfoDb> = joy_id_infos
@@ -72,6 +84,17 @@ pub fn get_joyid_info_by_lock_hash(
             },
             Ok,
         )?;
-    let joyid_info = joyid_infos.get(0).cloned().map(|info| (info, sub_keys));
+    let joyid_info = joyid_infos.get(0).cloned().map(|info| JoyIDInfo {
+        name: info.name,
+        avatar: info.avatar,
+        description: info.description,
+        extension: info.extension,
+        nickname: info.nickname,
+        pub_key: info.pub_key,
+        credential_id: info.credential_id,
+        alg: info.alg,
+        cota_cell_id: info.cota_cell_id,
+        sub_keys,
+    });
     Ok(joyid_info)
 }
