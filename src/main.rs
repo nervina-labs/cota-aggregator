@@ -69,6 +69,7 @@ fn main() {
     io.add_method("get_cota_nft_sender", get_sender_account);
     io.add_method("get_define_info", get_define_info);
     io.add_method("get_issuer_info", get_issuer_info);
+    io.add_method("get_joyid_info", get_joyid_info);
     io.add_method("parse_witness", parse_witness);
     io.add_method("get_cota_count", get_cota_count);
     io.add_method("get_history_transactions", get_cota_history_transactions);

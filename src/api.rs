@@ -1,3 +1,4 @@
+use crate::business::helper::script_from_address;
 use crate::business::transaction::{get_history_transactions, get_txs_by_block_number};
 use crate::entries::claim::generate_claim_smt;
 use crate::entries::claim_update::generate_claim_update_smt;
@@ -13,10 +14,11 @@ use crate::models::common::{
     get_mint_cota, get_owned_cota_count, get_sender_account_by_cota_nft, get_withdrawal_cota,
 };
 use crate::models::issuer::get_issuer_info_by_lock_hash;
+use crate::models::joyid::get_joyid_info_by_lock_hash;
 use crate::request::claim::{ClaimReq, ClaimUpdateReq, IsClaimedReq};
 use crate::request::define::{DefineInfoReq, DefineReq};
 use crate::request::fetch::{
-    FetchCountReq, FetchHistoryTxsReq, FetchIssuerInfoReq, FetchIssuerReq, FetchReq,
+    FetchCountReq, FetchHistoryTxsReq, FetchIssuerInfoReq, FetchIssuerReq, FetchJoyIDReq, FetchReq,
     FetchTxsByBlockNumberReq,
 };
 use crate::request::mint::MintReq;
@@ -29,6 +31,7 @@ use crate::response::define::{parse_define_info, parse_define_smt};
 use crate::response::hold::{parse_hold_response, parse_owned_nft_count};
 use crate::response::info::generate_aggregator_info;
 use crate::response::issuer::{parse_issuer_info_response, parse_issuer_response};
+use crate::response::joyid_metadata::parse_joyid_metadata_response;
 use crate::response::mint::{parse_mint_response, parse_mint_smt};
 use crate::response::transaction::{parse_cota_transactions, parse_history_transactions};
 use crate::response::transfer::{parse_transfer_smt, parse_transfer_update_smt};
@@ -38,6 +41,7 @@ use crate::response::withdrawal::{
 };
 use crate::response::witness::cota::parse_cota_witness;
 use crate::smt::db::db::RocksDB;
+use ckb_types::prelude::Entity;
 use cota_smt::smt::blake2b_256;
 use jsonrpc_http_server::jsonrpc_core::serde_json::Map;
 use jsonrpc_http_server::jsonrpc_core::{Error, Params, Value};
@@ -279,6 +283,25 @@ pub async fn get_issuer_info_by_cota_id(params: Params) -> Result<Value, Error> 
         FetchIssuerInfoReq::from_map(&map).map_err(|err| err.into())?;
     let (lock_hash, issuer_info_opt) = get_issuer_by_cota_id(cota_id).map_err(|err| err.into())?;
     let response = parse_issuer_info_response(lock_hash, issuer_info_opt, get_block_number()?);
+    Ok(Value::Object(response))
+}
+
+pub async fn get_joyid_info(params: Params) -> Result<Value, Error> {
+    info!("Get joyid info request: {:?}", params);
+    let map: Map<String, Value> = Params::parse(params)?;
+    let FetchJoyIDReq {
+        lock_script,
+        address,
+    } = FetchJoyIDReq::from_map(&map).map_err(|err| err.into())?;
+    let lock_hash = if lock_script.is_some() {
+        blake2b_256(&lock_script.unwrap())
+    } else {
+        let lock = script_from_address(address.unwrap()).map_err(|err| err.into())?;
+        blake2b_256(&lock.as_slice())
+    };
+    let joyid_info_opt = get_joyid_info_by_lock_hash(lock_hash).map_err(|err| err.into())?;
+    let response = parse_joyid_metadata_response(joyid_info_opt, get_block_number()?)
+        .map_err(|err| err.into())?;
     Ok(Value::Object(response))
 }
 
