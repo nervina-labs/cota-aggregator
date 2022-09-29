@@ -157,7 +157,7 @@ pub async fn fetch_hold_rpc(params: Params) -> Result<Value, Error> {
     } = FetchReq::from_map(&map).map_err(|err| err.into())?;
     let (holds, total, block_number) =
         get_hold_cota(&lock_script, page, page_size, cota_id).map_err(|err| err.into())?;
-    Ok(parse_hold_response(holds, total, page_size, block_number))
+    parse_hold_response(holds, total, page_size, block_number).map_err(|err| err.into())
 }
 
 pub async fn fetch_withdrawal_rpc(params: Params) -> Result<Value, Error> {
