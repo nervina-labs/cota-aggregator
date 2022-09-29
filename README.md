@@ -826,7 +826,7 @@ echo '{
     "jsonrpc":"2.0",
     "method":"get_issuer_info_by_cota_id",
     "params":{
-        "cota_id":"0x07d6fa85babd5c31bf6252998aa06960730017ef"
+        "cota_id":"0x1deb31f603652bf59ff5027b522e1d81c288b72f"
     }
 }' \
 | tr -d '\n' \
@@ -844,15 +844,14 @@ name - The issuer's name
 description - The issuer's description
 ```
 
-```shell
+```json
 {
     "jsonrpc":"2.0",
     "result":{
-        "avatar":"https://bafybeieubinsws3na52z63mnavuf4yeb4xcxf2dhkj22w53qe3cgl7rz7a.ipfs.nftstorage.link/%E6%9C%AA%E7%89%A9%E4%B8%BB%E4%B9%89logo.png",
-        "block_number":7893309,
-        "description":"由未物主义平台铸造",
-        "lock_hash":"0xa611a0d1695f14c9672e35c235735025b40c33c507598f5155217cba4e64d4dd",
-        "name":"未物主义"
+        "avatar":"https://i.loli.net/2021/04/29/IigbpOWP8fw9qDn.png",
+        "block_number":6836177,
+        "description":"Melting Two Worlds Together.",
+        "name":"Nervina Labs"
     },
     "id":2
 }
@@ -1066,7 +1065,7 @@ echo '{
     "jsonrpc":"2.0",
     "method":"get_history_transactions",
     "params":{
-        "cota_id":"0x16166f5eb4ec88ad89710bbd596ac8987052a85e",
+        "cota_id":"0x1e23dc506c1b15f286c9db84a4d12a4532660975",
 	    "token_index": "0x00000000",
 	    "page": "0",
 	    "page_size": "10"
@@ -1093,59 +1092,28 @@ transactions - The transaction list of the sepcific CoTA NFT
 ```
 
 ```json
- "jsonrpc":"2.0",
+ {
+    "jsonrpc":"2.0",
     "result":{
-        "block_number":7587159,
+        "block_number":6844828,
         "page_size":10,
-        "total":6,
+        "total":2,
         "transactions":[
             {
-                "age":1650608618595,
-                "block_number":6960258,
-                "from":"ckb1qqypm0l63rdt2jayymfrrjnyadmqe630a8skwcdpmfqqmgdje0sjsqt3emxu792v2yatrwfgp48huss2yg4yq9g083utk",
-                "to":"ckb1qrgp752jcfnm0uemj723grpyva6zappyuj0tuge3etkpjlmjsxmq5qt7jq0g09af5m0yqjncd5v9mg3p2yuu5es2w57jj",
-                "tx_hash":"0x325a2f20531ab5020aa1a95ccff633140d7c3e67ec0011a01892c177d6fb572b",
-                "type":"transfer"
+                "age":1650111720128,
+                "block_number":5059481,
+                "from":"ckt1qzda0cr08m85hc8jlnfp3zer7xulejywt49kt2rr0vthywaa50xwsqwuwrenm6r0muupkn79huyjhv3aqfm5sqg5xwwyx",
+                "to":"ckt1qzda0cr08m85hc8jlnfp3zer7xulejywt49kt2rr0vthywaa50xwsqfrkrvjpk2e7p6e90t9sc65ahf7wjhwzqq26rfzt",
+                "tx_hash":"0xc938c9acf95a351c2de70494b1fabc22d625fd1664741535e1058e60d454738f",
+                "tx_type":"transfer"
             },
             {
-                "age":1647613397194,
-                "block_number":6727018,
-                "from":"ckb1qzl58smqy32hnrq6vxjedcxe2fugvnz497h7yvwqvwel40uh4rltcqvuj4m34cfxmz74jlsk0dkp6yrwf7q2z4q9puchc",
-                "to":"ckb1qqypm0l63rdt2jayymfrrjnyadmqe630a8skwcdpmfqqmgdje0sjsqt3emxu792v2yatrwfgp48huss2yg4yq9g083utk",
-                "tx_hash":"0xa1edd805418bca0cd999df49d042eb46139b8b09a964fd8f11e0de6c8c57f467",
-                "type":"transfer"
-            },
-            {
-                "age":1647613281847,
-                "block_number":6727011,
-                "from":"ckb1qqypm0l63rdt2jayymfrrjnyadmqe630a8skwcdpmfqqmgdje0sjsqt3emxu792v2yatrwfgp48huss2yg4yq9g083utk",
-                "to":"ckb1qzl58smqy32hnrq6vxjedcxe2fugvnz497h7yvwqvwel40uh4rltcqvuj4m34cfxmz74jlsk0dkp6yrwf7q2z4q9puchc",
-                "tx_hash":"0x9c547d7a5b38e3e46062d48bf4887bb0ca98ea593bf805882b41bf1738f8ac12",
-                "type":"transfer"
-            },
-            {
-                "age":1647613127780,
-                "block_number":6726999,
-                "from":"ckb1qzl58smqy32hnrq6vxjedcxe2fugvnz497h7yvwqvwel40uh4rltcqvuj4m34cfxmz74jlsk0dkp6yrwf7q2z4q9puchc",
-                "to":"ckb1qqypm0l63rdt2jayymfrrjnyadmqe630a8skwcdpmfqqmgdje0sjsqt3emxu792v2yatrwfgp48huss2yg4yq9g083utk",
-                "tx_hash":"0xa5a63fd171029e1424a5d155206977680cea40d9b0fdf0d6040855d18f8e02bb",
-                "type":"transfer"
-            },
-            {
-                "age":1647612280580,
-                "block_number":6726919,
-                "from":"ckb1qqypm0l63rdt2jayymfrrjnyadmqe630a8skwcdpmfqqmgdje0sjsqt3emxu792v2yatrwfgp48huss2yg4yq9g083utk",
-                "to":"ckb1qzl58smqy32hnrq6vxjedcxe2fugvnz497h7yvwqvwel40uh4rltcqvuj4m34cfxmz74jlsk0dkp6yrwf7q2z4q9puchc",
-                "tx_hash":"0xe0ed4ccddf35d1a36ce6979fa4c1b64af9dd8fe248ec25346951e0a3d0fa09c6",
-                "type":"transfer"
-            },
-            {
-                "age":1645804795836,
-                "block_number":6585724,
-                "from":"ckb1qzda0cr08m85hc8jlnfp3zer7xulejywt49kt2rr0vthywaa50xwsqgk2yu24zgcj0dq2vlsshmhg4hqprlm23c4jwrps",
-                "to":"ckb1qqypm0l63rdt2jayymfrrjnyadmqe630a8skwcdpmfqqmgdje0sjsqt3emxu792v2yatrwfgp48huss2yg4yq9g083utk",
-                "tx_hash":"0x3fc95d95a6ecaafab402ac2dc1200c37018052f61fa1bd02ecf81a36f7b6b142",
-                "type":"mint"
+                "age":1649995513851,
+                "block_number":5044927,
+                "from":"ckt1qzda0cr08m85hc8jlnfp3zer7xulejywt49kt2rr0vthywaa50xwsq0cvve2kfh7tw4gnaag73vvllvduduly4gt2hawf",
+                "to":"ckt1qzda0cr08m85hc8jlnfp3zer7xulejywt49kt2rr0vthywaa50xwsqwuwrenm6r0muupkn79huyjhv3aqfm5sqg5xwwyx",
+                "tx_hash":"0x11c4e7426663eecf3f72fdc28526e2f29688c1bdbb8d80dd7206a8a41bbe1787",
+                "tx_type":"mint"
             }
         ]
     },
@@ -1169,7 +1137,7 @@ echo '{
     "jsonrpc":"2.0",
     "method":"get_transactions_by_block_number",
     "params":{
-        "block_number": "6586282"
+        "block_number": "5059481"
     }
 }' \
 | tr -d '\n' \
@@ -1195,25 +1163,25 @@ transactions - The transaction list of the sepcific CoTA NFT
 {
     "jsonrpc":"2.0",
     "result":{
-        "block_number":7893309,
+        "block_number":6844840,
         "transactions":[
             {
-                "block_number":6586282,
-                "cota_id":"0x2b738f9f6c2326f6ef198d7a0dff19636ee00ed4",
-                "from":"ckb1qzda0cr08m85hc8jlnfp3zer7xulejywt49kt2rr0vthywaa50xwsqdy2wj0q6wxpda8ft6xnxgq83zu6t4cvvcrlhnz7",
-                "to":"ckb1qzl58smqy32hnrq6vxjedcxe2fugvnz497h7yvwqvwel40uh4rltcqg78jg823ckd4k2h3vme6yhgzyvaxs5jfqlcnjj2",
-                "token_index":"0x00000006",
-                "tx_hash":"0x52a49c3e4d9344c429b5d55c8c1616b6e8aa9a5783f4a5c5588b1f92e07aa73c",
-                "type":"mint"
+                "block_number":5059481,
+                "cota_id":"0x1e23dc506c1b15f286c9db84a4d12a4532660975",
+                "from":"ckt1qzda0cr08m85hc8jlnfp3zer7xulejywt49kt2rr0vthywaa50xwsqwuwrenm6r0muupkn79huyjhv3aqfm5sqg5xwwyx",
+                "to":"ckt1qzda0cr08m85hc8jlnfp3zer7xulejywt49kt2rr0vthywaa50xwsqfrkrvjpk2e7p6e90t9sc65ahf7wjhwzqq26rfzt",
+                "token_index":"0x00000000",
+                "tx_hash":"0xc938c9acf95a351c2de70494b1fabc22d625fd1664741535e1058e60d454738f",
+                "tx_type":"transfer"
             },
             {
-                "block_number":6586282,
-                "cota_id":"0x2b738f9f6c2326f6ef198d7a0dff19636ee00ed4",
-                "from":"ckb1qzda0cr08m85hc8jlnfp3zer7xulejywt49kt2rr0vthywaa50xwsqdy2wj0q6wxpda8ft6xnxgq83zu6t4cvvcrlhnz7",
-                "to":"ckb1qzl58smqy32hnrq6vxjedcxe2fugvnz497h7yvwqvwel40uh4rltcqg78jg823ckd4k2h3vme6yhgzyvaxs5jfqlcnjj2",
-                "token_index":"0x00000007",
-                "tx_hash":"0x52a49c3e4d9344c429b5d55c8c1616b6e8aa9a5783f4a5c5588b1f92e07aa73c",
-                "type":"mint"
+                "block_number":5059481,
+                "cota_id":"0xab041249179d1e0e455ff3874596a7ae4f748612",
+                "from":"ckt1qzda0cr08m85hc8jlnfp3zer7xulejywt49kt2rr0vthywaa50xwsq0lks0kx0e6r5jz8ycl9ecrarwqv7u5h2scf08fr",
+                "to":"ckt1qpth5hjexr3wehtzqpm97dzzucgemjv7sl05wnez7y72hqvuszeyyqv4689kzhgq6d7apy9ekn439f5z9c3usxgezfww0",
+                "token_index":"0x00000003",
+                "tx_hash":"0x258570cfe00ea0002ba09fbf139172cd349e8a16bbf663ba6be7bbd47b7310f4",
+                "tx_type":"mint"
             }
         ]
     },
