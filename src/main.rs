@@ -7,6 +7,7 @@ use crate::api::*;
 use crate::models::helper::{init_connection_pool, SqlConnectionPool};
 use crate::smt::db::db::RocksDB;
 use dotenv::dotenv;
+use jsonrpc_core::Params;
 use jsonrpc_http_server::jsonrpc_core::serde_json::from_str;
 use jsonrpc_http_server::jsonrpc_core::IoHandler;
 use jsonrpc_http_server::ServerBuilder;
@@ -50,19 +51,19 @@ fn main() {
     let mut io = IoHandler::default();
     io.add_method("generate_define_cota_smt", |req| define_rpc(req, &DB));
     io.add_method("generate_mint_cota_smt", |req| mint_rpc(req, &DB));
-    io.add_method("generate_withdrawal_cota_smt", |req| {
-        withdrawal_rpc(req, &DB)
-    });
     io.add_method("generate_claim_cota_smt", |req| claim_rpc(req, &DB));
     io.add_method("generate_update_cota_smt", |req| update_rpc(req, &DB));
     io.add_method("generate_transfer_cota_smt", |req| transfer_rpc(req, &DB));
+    io.add_method("generate_extension_smt", |req| extension_rpc(req, &DB));
+    io.add_method("generate_withdrawal_cota_smt", |req| {
+        withdrawal_rpc(req, &DB)
+    });
     io.add_method("generate_claim_update_cota_smt", |req| {
         claim_update_rpc(req, &DB)
     });
     io.add_method("generate_transfer_update_cota_smt", |req| {
         transfer_update_rpc(req, &DB)
     });
-    io.add_method("generate_extension_smt", |req| extension_rpc(req, &DB));
     io.add_method("get_hold_cota_nft", fetch_hold_rpc);
     io.add_method("get_withdrawal_cota_nft", fetch_withdrawal_rpc);
     io.add_method("get_mint_cota_nft", fetch_mint_rpc);
@@ -74,10 +75,7 @@ fn main() {
     io.add_method("parse_witness", parse_witness);
     io.add_method("get_cota_count", get_cota_count);
     io.add_method("get_history_transactions", get_cota_history_transactions);
-    io.add_method(
-        "get_transactions_by_block_number",
-        get_cota_transactions_by_block_number,
-    );
+    io.add_method("get_transactions_by_block_number", get_txs_by_block_number);
     io.add_method("get_issuer_info_by_cota_id", get_issuer_info_by_cota_id);
     io.add_method("get_aggregator_info", get_aggregator_info);
 
