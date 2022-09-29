@@ -1,5 +1,5 @@
 use crate::business::helper::script_from_address;
-use crate::business::transaction::{get_history_transactions, get_txs_by_block_number};
+use crate::business::transaction::{get_cota_txs_by_block_number, get_history_transactions};
 use crate::entries::claim::generate_claim_smt;
 use crate::entries::claim_update::generate_claim_update_smt;
 use crate::entries::define::generate_define_smt;
@@ -257,11 +257,11 @@ pub async fn get_cota_history_transactions(params: Params) -> Result<Value, Erro
     parse_history_transactions(transactions, total, req.page_size, block_height).map_err(rpc_err)
 }
 
-pub async fn get_txs_by_block_num(params: Params) -> Result<Value, Error> {
+pub async fn get_txs_by_block_number(params: Params) -> Result<Value, Error> {
     info!("Get CoTA NFT txs by block number request: {:?}", params);
     let map: Map<String, Value> = Params::parse(params)?;
     let req = FetchTxsByBlockNumberReq::from_map(&map).map_err(rpc_err)?;
-    let (transactions, block_height) = get_txs_by_block_number(req).await.map_err(rpc_err)?;
+    let (transactions, block_height) = get_cota_txs_by_block_number(req).await.map_err(rpc_err)?;
     parse_cota_transactions(transactions, block_height).map_err(rpc_err)
 }
 

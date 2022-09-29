@@ -63,7 +63,7 @@ pub struct CotaTransaction {
     pub tx_type:      String,
 }
 
-pub async fn get_txs_by_block_number(
+pub async fn get_cota_txs_by_block_number(
     req: FetchTxsByBlockNumberReq,
 ) -> Result<(Vec<CotaTransaction>, u64), Error> {
     let FetchTxsByBlockNumberReq { block_number } = req;
