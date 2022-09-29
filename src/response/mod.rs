@@ -1,5 +1,6 @@
 pub mod claim;
 pub mod define;
+pub mod extension;
 mod helper;
 pub mod hold;
 pub mod info;
