@@ -7,7 +7,6 @@ use crate::api::*;
 use crate::models::helper::{init_connection_pool, SqlConnectionPool};
 use crate::smt::db::db::RocksDB;
 use dotenv::dotenv;
-use jsonrpc_core::Params;
 use jsonrpc_http_server::jsonrpc_core::serde_json::from_str;
 use jsonrpc_http_server::jsonrpc_core::IoHandler;
 use jsonrpc_http_server::ServerBuilder;
@@ -75,7 +74,7 @@ fn main() {
     io.add_method("parse_witness", parse_witness);
     io.add_method("get_cota_count", get_cota_count);
     io.add_method("get_history_transactions", get_cota_history_transactions);
-    io.add_method("get_transactions_by_block_number", get_txs_by_block_number);
+    io.add_method("get_transactions_by_block_number", get_txs_by_block_num);
     io.add_method("get_issuer_info_by_cota_id", get_issuer_info_by_cota_id);
     io.add_method("get_aggregator_info", get_aggregator_info);
 

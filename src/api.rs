@@ -257,7 +257,7 @@ pub async fn get_cota_history_transactions(params: Params) -> Result<Value, Erro
     parse_history_transactions(transactions, total, req.page_size, block_height).map_err(rpc_err)
 }
 
-pub async fn get_txs_by_block_number(params: Params) -> Result<Value, Error> {
+pub async fn get_txs_by_block_num(params: Params) -> Result<Value, Error> {
     info!("Get CoTA NFT txs by block number request: {:?}", params);
     let map: Map<String, Value> = Params::parse(params)?;
     let req = FetchTxsByBlockNumberReq::from_map(&map).map_err(rpc_err)?;
