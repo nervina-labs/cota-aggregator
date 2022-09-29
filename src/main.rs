@@ -62,6 +62,7 @@ fn main() {
     io.add_method("generate_transfer_update_cota_smt", |req| {
         transfer_update_rpc(req, &DB)
     });
+    io.add_method("generate_extension_smt", |req| extension_rpc(req, &DB));
     io.add_method("get_hold_cota_nft", fetch_hold_rpc);
     io.add_method("get_withdrawal_cota_nft", fetch_withdrawal_rpc);
     io.add_method("get_mint_cota_nft", fetch_mint_rpc);

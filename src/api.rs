@@ -3,6 +3,7 @@ use crate::business::transaction::{get_history_transactions, get_txs_by_block_nu
 use crate::entries::claim::generate_claim_smt;
 use crate::entries::claim_update::generate_claim_update_smt;
 use crate::entries::define::generate_define_smt;
+use crate::entries::extension::generate_extension_smt;
 use crate::entries::mint::generate_mint_smt;
 use crate::entries::transfer::generate_transfer_smt;
 use crate::entries::transfer_update::generate_transfer_update_smt;
@@ -17,6 +18,7 @@ use crate::models::issuer::get_issuer_info_by_lock_hash;
 use crate::models::joyid::get_joyid_info_by_lock_hash;
 use crate::request::claim::{ClaimReq, ClaimUpdateReq, IsClaimedReq};
 use crate::request::define::{DefineInfoReq, DefineReq};
+use crate::request::extension::ExtensionReq;
 use crate::request::fetch::{
     FetchCountReq, FetchHistoryTxsReq, FetchIssuerInfoReq, FetchIssuerReq, FetchJoyIDReq, FetchReq,
     FetchTxsByBlockNumberReq,
@@ -28,6 +30,7 @@ use crate::request::withdrawal::{SenderLockReq, WithdrawalReq};
 use crate::request::witness::WitnessReq;
 use crate::response::claim::{parse_claimed_response, parse_claimed_smt, parse_claimed_update_smt};
 use crate::response::define::{parse_define_info, parse_define_smt};
+use crate::response::extension::parse_extension_smt;
 use crate::response::hold::{parse_hold_response, parse_owned_nft_count};
 use crate::response::info::generate_aggregator_info;
 use crate::response::issuer::{parse_issuer_info_response, parse_issuer_response};
@@ -132,6 +135,17 @@ pub async fn transfer_update_rpc(params: Params, db: &RocksDB) -> Result<Value, 
         .await
         .map_err(|err| err.into())?;
     let response = parse_transfer_update_smt(transfer_update_smt, get_block_number()?);
+    Ok(Value::Object(response))
+}
+
+pub async fn extension_rpc(params: Params, db: &RocksDB) -> Result<Value, Error> {
+    info!("Extension request: {:?}", params);
+    let map: Map<String, Value> = Params::parse(params)?;
+    let extension_req = ExtensionReq::from_map(&map).map_err(|err| err.into())?;
+    let extension_smt = generate_extension_smt(db, extension_req)
+        .await
+        .map_err(|err| err.into())?;
+    let response = parse_extension_smt(extension_smt, get_block_number()?);
     Ok(Value::Object(response))
 }
 
