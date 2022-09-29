@@ -7,6 +7,7 @@ pub(crate) mod claim;
 pub(crate) mod claim_update;
 mod constants;
 pub(crate) mod define;
+pub(crate) mod extension;
 pub mod helper;
 pub(crate) mod mint;
 pub mod smt;
