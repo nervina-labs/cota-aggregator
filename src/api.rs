@@ -57,8 +57,7 @@ pub async fn define_rpc(params: Params, db: &RocksDB) -> Result<Value, Error> {
     let define_smt = generate_define_smt(db, define_req)
         .await
         .map_err(|err| err.into())?;
-    let response = parse_define_smt(define_smt, get_block_number()?);
-    Ok(Value::Object(response))
+    Ok(parse_define_smt(define_smt, get_block_number()?))
 }
 
 pub async fn mint_rpc(params: Params, db: &RocksDB) -> Result<Value, Error> {
@@ -68,8 +67,7 @@ pub async fn mint_rpc(params: Params, db: &RocksDB) -> Result<Value, Error> {
     let mint_smt = generate_mint_smt(db, mint_req)
         .await
         .map_err(|err| err.into())?;
-    let response = parse_mint_smt(mint_smt, get_block_number()?);
-    Ok(Value::Object(response))
+    Ok(parse_mint_smt(mint_smt, get_block_number()?))
 }
 
 pub async fn withdrawal_rpc(params: Params, db: &RocksDB) -> Result<Value, Error> {
@@ -79,8 +77,7 @@ pub async fn withdrawal_rpc(params: Params, db: &RocksDB) -> Result<Value, Error
     let withdrawal_smt = generate_withdrawal_smt(db, withdrawal_req)
         .await
         .map_err(|err| err.into())?;
-    let response = parse_withdrawal_smt(withdrawal_smt, get_block_number()?);
-    Ok(Value::Object(response))
+    Ok(parse_withdrawal_smt(withdrawal_smt, get_block_number()?))
 }
 
 pub async fn claim_rpc(params: Params, db: &RocksDB) -> Result<Value, Error> {
@@ -90,8 +87,7 @@ pub async fn claim_rpc(params: Params, db: &RocksDB) -> Result<Value, Error> {
     let claim_smt = generate_claim_smt(db, claim_req)
         .await
         .map_err(|err| err.into())?;
-    let response = parse_claimed_smt(claim_smt, get_block_number()?);
-    Ok(Value::Object(response))
+    Ok(parse_claimed_smt(claim_smt, get_block_number()?))
 }
 
 pub async fn update_rpc(params: Params, db: &RocksDB) -> Result<Value, Error> {
@@ -101,8 +97,7 @@ pub async fn update_rpc(params: Params, db: &RocksDB) -> Result<Value, Error> {
     let update_smt = generate_update_smt(db, update_req)
         .await
         .map_err(|err| err.into())?;
-    let response = parse_update_smt(update_smt, get_block_number()?);
-    Ok(Value::Object(response))
+    Ok(parse_update_smt(update_smt, get_block_number()?))
 }
 
 pub async fn transfer_rpc(params: Params, db: &RocksDB) -> Result<Value, Error> {
@@ -112,8 +107,7 @@ pub async fn transfer_rpc(params: Params, db: &RocksDB) -> Result<Value, Error> 
     let transfer_smt = generate_transfer_smt(db, transfer_req)
         .await
         .map_err(|err| err.into())?;
-    let response = parse_transfer_smt(transfer_smt, get_block_number()?);
-    Ok(Value::Object(response))
+    Ok(parse_transfer_smt(transfer_smt, get_block_number()?))
 }
 
 pub async fn claim_update_rpc(params: Params, db: &RocksDB) -> Result<Value, Error> {
@@ -123,8 +117,10 @@ pub async fn claim_update_rpc(params: Params, db: &RocksDB) -> Result<Value, Err
     let claim_update_smt = generate_claim_update_smt(db, claim_update_req)
         .await
         .map_err(|err| err.into())?;
-    let response = parse_claimed_update_smt(claim_update_smt, get_block_number()?);
-    Ok(Value::Object(response))
+    Ok(parse_claimed_update_smt(
+        claim_update_smt,
+        get_block_number()?,
+    ))
 }
 
 pub async fn transfer_update_rpc(params: Params, db: &RocksDB) -> Result<Value, Error> {
@@ -134,8 +130,10 @@ pub async fn transfer_update_rpc(params: Params, db: &RocksDB) -> Result<Value, 
     let transfer_update_smt = generate_transfer_update_smt(db, transfer_update_req)
         .await
         .map_err(|err| err.into())?;
-    let response = parse_transfer_update_smt(transfer_update_smt, get_block_number()?);
-    Ok(Value::Object(response))
+    Ok(parse_transfer_update_smt(
+        transfer_update_smt,
+        get_block_number()?,
+    ))
 }
 
 pub async fn extension_rpc(params: Params, db: &RocksDB) -> Result<Value, Error> {
@@ -145,8 +143,7 @@ pub async fn extension_rpc(params: Params, db: &RocksDB) -> Result<Value, Error>
     let extension_smt = generate_extension_smt(db, extension_req)
         .await
         .map_err(|err| err.into())?;
-    let response = parse_extension_smt(extension_smt, get_block_number()?);
-    Ok(Value::Object(response))
+    Ok(parse_extension_smt(extension_smt, get_block_number()?))
 }
 
 pub async fn fetch_hold_rpc(params: Params) -> Result<Value, Error> {
@@ -160,8 +157,7 @@ pub async fn fetch_hold_rpc(params: Params) -> Result<Value, Error> {
     } = FetchReq::from_map(&map).map_err(|err| err.into())?;
     let (holds, total, block_number) =
         get_hold_cota(&lock_script, page, page_size, cota_id).map_err(|err| err.into())?;
-    let response = parse_hold_response(holds, total, page_size, block_number);
-    Ok(Value::Object(response))
+    Ok(parse_hold_response(holds, total, page_size, block_number))
 }
 
 pub async fn fetch_withdrawal_rpc(params: Params) -> Result<Value, Error> {
@@ -202,8 +198,7 @@ pub async fn is_claimed_rpc(params: Params) -> Result<Value, Error> {
     } = IsClaimedReq::from_map(&map).map_err(|err| err.into())?;
     let (claimed, block_number) =
         check_cota_claimed(&lock_script, cota_id, token_index).map_err(|err| err.into())?;
-    let response = parse_claimed_response(claimed, block_number);
-    Ok(Value::Object(response))
+    Ok(parse_claimed_response(claimed, block_number))
 }
 
 pub async fn get_sender_account(params: Params) -> Result<Value, Error> {
@@ -217,8 +212,7 @@ pub async fn get_sender_account(params: Params) -> Result<Value, Error> {
     let sender_account = get_sender_account_by_cota_nft(&lock_script, cota_id, token_index)
         .map_err(|err| err.into())?;
     let block_number = get_block_number()?;
-    let response = parse_sender_response(sender_account, block_number).map_err(|err| err.into())?;
-    Ok(Value::Object(response))
+    parse_sender_response(sender_account, block_number).map_err(|err| err.into())
 }
 
 pub async fn get_define_info(params: Params) -> Result<Value, Error> {
@@ -252,8 +246,7 @@ pub async fn parse_witness(params: Params) -> Result<Value, Error> {
     info!("Parse witness request: {:?}", params);
     let map: Map<String, Value> = Params::parse(params)?;
     let WitnessReq { witness, version } = WitnessReq::from_map(&map).map_err(|err| err.into())?;
-    let response = parse_cota_witness(witness, version).map_err(|err| err.into())?;
-    Ok(Value::Object(response))
+    parse_cota_witness(witness, version).map_err(|err| err.into())
 }
 
 pub async fn get_cota_count(params: Params) -> Result<Value, Error> {
@@ -265,8 +258,7 @@ pub async fn get_cota_count(params: Params) -> Result<Value, Error> {
     } = FetchCountReq::from_map(&map).map_err(|err| err.into())?;
     let (count, block_height) =
         get_owned_cota_count(&lock_script, cota_id).map_err(|err| err.into())?;
-    let response = parse_owned_nft_count(count, block_height);
-    Ok(Value::Object(response))
+    Ok(parse_owned_nft_count(count, block_height))
 }
 
 pub async fn get_cota_history_transactions(params: Params) -> Result<Value, Error> {
@@ -317,17 +309,14 @@ pub async fn get_joyid_info(params: Params) -> Result<Value, Error> {
         blake2b_256(&lock.as_slice())
     };
     let joyid_info_opt = get_joyid_info_by_lock_hash(lock_hash).map_err(|err| err.into())?;
-    let response = parse_joyid_metadata_response(joyid_info_opt, get_block_number()?)
-        .map_err(|err| err.into())?;
-    Ok(Value::Object(response))
+    parse_joyid_metadata_response(joyid_info_opt, get_block_number()?).map_err(|err| err.into())
 }
 
 pub async fn get_aggregator_info(_params: Params) -> Result<Value, Error> {
     info!("Get aggregator info request");
-    let response = generate_aggregator_info(get_block_number()?)
+    generate_aggregator_info(get_block_number()?)
         .await
-        .map_err(|err| err.into())?;
-    Ok(Value::Object(response))
+        .map_err(|err| err.into())
 }
 
 fn get_block_number() -> Result<u64, Error> {

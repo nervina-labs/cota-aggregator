@@ -9,14 +9,14 @@ pub fn parse_hold_response(
     total: i64,
     page_size: i64,
     block_number: u64,
-) -> Map<String, Value> {
+) -> Value {
     let nfts: Vec<Value> = holds.into_iter().map(parse_hold_value).collect();
     let mut map = Map::new();
     map.insert_i64("total", total);
     map.insert_i64("page_size", page_size);
     map.insert_u64("block_number", block_number);
     map.insert_array("nfts", nfts);
-    map
+    Value::Object(map)
 }
 
 fn parse_hold_value((hold, class_info): (HoldDb, Option<ClassInfoDb>)) -> Value {
@@ -51,9 +51,9 @@ fn parse_hold_value((hold, class_info): (HoldDb, Option<ClassInfoDb>)) -> Value 
     Value::Object(map)
 }
 
-pub fn parse_owned_nft_count(count: i64, block_number: u64) -> Map<String, Value> {
+pub fn parse_owned_nft_count(count: i64, block_number: u64) -> Value {
     let mut map = Map::new();
     map.insert_i64("count", count);
     map.insert_u64("block_number", block_number);
-    map
+    Value::Object(map)
 }

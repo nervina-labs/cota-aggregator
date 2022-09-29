@@ -51,20 +51,20 @@ fn parse_withdrawal_value(
 pub fn parse_withdrawal_smt(
     (root_hash, withdrawal_entries): (H256, WithdrawalCotaNFTV1Entries),
     block_number: u64,
-) -> Map<String, Value> {
+) -> Value {
     let withdrawal_entry = hex::encode(withdrawal_entries.as_slice());
     let withdrawal_root_hash = hex::encode(root_hash.as_slice());
     let mut map = Map::new();
     map.insert_str("smt_root_hash", withdrawal_root_hash);
     map.insert_str("withdrawal_smt_entry", withdrawal_entry);
     map.insert_u64("block_number", block_number);
-    map
+    Value::Object(map)
 }
 
 pub fn parse_sender_response(
     sender_account: Option<(String, Vec<u8>)>,
     block_number: u64,
-) -> Result<Map<String, Value>, Error> {
+) -> Result<Value, Error> {
     let mut map = Map::new();
     match sender_account {
         Some((lock_hash, lock_script)) => {
@@ -77,5 +77,5 @@ pub fn parse_sender_response(
         }
     };
     map.insert_u64("block_number", block_number);
-    Ok(map)
+    Ok(Value::Object(map))
 }

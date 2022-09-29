@@ -6,7 +6,7 @@ use jsonrpc_http_server::jsonrpc_core::serde_json::{Map, Value};
 use serde_json::from_str;
 use std::env;
 
-pub async fn generate_aggregator_info(block_number: u64) -> Result<Map<String, Value>, Error> {
+pub async fn generate_aggregator_info(block_number: u64) -> Result<Value, Error> {
     let version = env!("CARGO_PKG_VERSION");
     let is_mainnet: bool = match env::var("IS_MAINNET") {
         Ok(mainnet) => from_str::<bool>(&mainnet).unwrap(),
@@ -21,5 +21,5 @@ pub async fn generate_aggregator_info(block_number: u64) -> Result<Map<String, V
     map.insert_str("version", format!("v{:}", version));
     map.insert_u64("syncer_block_number", block_number);
     map.insert("is_mainnet".to_owned(), Value::Bool(is_mainnet));
-    Ok(map)
+    Ok(Value::Object(map))
 }
