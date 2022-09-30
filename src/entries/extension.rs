@@ -2,6 +2,7 @@ use super::helper::{generate_extension_key, generate_extension_value};
 use crate::ckb::indexer::get_cota_smt_root;
 use crate::entries::helper::with_lock;
 use crate::entries::smt::{generate_history_smt, init_smt};
+use crate::models::extension::leaves::get_extension_leaf_by_lock_hash;
 use crate::request::extension::ExtensionReq;
 use crate::smt::db::db::RocksDB;
 use crate::smt::transaction::store_transaction::StoreTransaction;
@@ -23,16 +24,23 @@ pub async fn generate_extension_smt(
     let mut update_leaves: Vec<(H256, H256)> = Vec::with_capacity(1);
     let mut previous_leaves: Vec<(H256, H256)> = Vec::with_capacity(1);
     let ExtensionReq { lock_script } = extension_req;
+    let lock_hash = blake2b_256(&lock_script);
 
     let (ext_key, key) = generate_extension_key();
     let (ext_value, value) = generate_extension_value();
+
+    let leaf_opt = get_extension_leaf_by_lock_hash(lock_hash, key)?;
+    let old_values = match leaf_opt {
+        Some(leaf) => vec![Byte32::from_slice(&leaf.value).unwrap()],
+        None => vec![],
+    };
 
     update_leaves.push((key, value));
     previous_leaves.push((key, H256::zero()));
 
     let smt_root = get_cota_smt_root(&lock_script).await?;
     let transaction = &StoreTransaction::new(db.transaction());
-    let lock_hash = blake2b_256(&lock_script);
+
     let mut smt = init_smt(transaction, lock_hash)?;
     // Add lock to smt
     with_lock(lock_hash, || {
@@ -66,6 +74,7 @@ pub async fn generate_extension_smt(
             ExtensionLeavesBuilder::default()
                 .keys(ExtensionVecBuilder::default().set(vec![ext_key]).build())
                 .values(ExtensionVecBuilder::default().set(vec![ext_value]).build())
+                .old_values(ExtensionVecBuilder::default().set(old_values).build())
                 .proof(merkel_proof_bytes)
                 .build(),
         )
