@@ -9,7 +9,7 @@ The aggregator service of [CoTA](https://talk.nervos.org/t/rfc-cota-a-compact-to
 
 ## Prerequisites
 
-- [CoTA Syncer](https://github.com/nervina-labs/cota-nft-entries-syncer): The server to index CoTA data from CKB
+- [CoTA Syncer](https://github.com/nervina-labs/cota-syncer): The server to index CoTA data from CKB
 
 > The aggregator and syncer share the same mysql database, and the aggregator use CoTA data from the database to provide RPC service
 
@@ -83,6 +83,7 @@ https://cota.nervina.dev/aggregator
 - [get_define_info](#get_define_info)
 - [get_issuer_info](#get_issuer_info)
 - [get_issuer_info_by_cota_id](#get_issuer_info_by_cota_id)
+- [get_joyid_info](#get_joyid_info)
 - [parse_witness](#parse_witness)
 - [get_cota_count](#get_cota_count)
 - [get_history_transactions](#get_history_transactions)
@@ -124,12 +125,12 @@ http://127.0.0.1:3030
 #### Response
 
 ```
-block_number - The latest block number of cota-nft-entries-syncer
+block_number - The latest block number of cota-syncer
 define_smt_entry - The SMT define information (origin SMT leaves, SMT proof and other information)
 smt_root_hash - The latest SMT root hash after defining
 ```
 
-```shell
+```json
 {
     "jsonrpc":"2.0",
     "result":{
@@ -191,12 +192,12 @@ http://127.0.0.1:3030
 #### Response
 
 ```
-block_number - The latest block number of cota-nft-entries-syncer
+block_number - The latest block number of cota-syncer
 mint_smt_entry - The SMT mint information (origin SMT leaves, SMT proof and other information)
 smt_root_hash - The latest SMT root hash after minting
 ```
 
-```shell
+```json
 {
     "jsonrpc":"2.0",
     "result":{
@@ -250,13 +251,13 @@ http://127.0.0.1:3030
 #### Response
 
 ```
-block_number - The latest block number of cota-nft-entries-syncer
+block_number - The latest block number of cota-syncer
 smt_root_hash - The latest SMT root hash after transferring
 withdraw_block_hash - The block hash containing the withdraw transaction
 mint_smt_entry - The SMT transfer information (origin SMT leaves, SMT proof and other information)
 ```
 
-```shell
+```json
 {
     "jsonrpc":"2.0",
     "result":{
@@ -300,7 +301,7 @@ cota_id - CoTA NFT Class Unique ID (optional)
 http://127.0.0.1:3030
 ```
 
-```shell
+```json
 {
     "jsonrpc":"2.0",
     "result":{
@@ -364,7 +365,7 @@ http://127.0.0.1:3030
 
 ```
 
-```shell
+```json
 {
     "jsonrpc":"2.0",
     "result":{
@@ -424,7 +425,7 @@ cota_id - CoTA NFT Class Unique ID (optional)
 http://127.0.0.1:3030
 ```
 
-```shell
+```json
 {
     "jsonrpc":"2.0",
     "result":{
@@ -503,7 +504,7 @@ http://127.0.0.1:3030
 
 ```
 
-```shell
+```json
 {
     "jsonrpc":"2.0",
     "result":{
@@ -575,7 +576,7 @@ echo '{
 http://127.0.0.1:3030
 ```
 
-```shell
+```json
 {
     "jsonrpc":"2.0",
     "result":{
@@ -652,11 +653,11 @@ http://127.0.0.1:3030
 #### Response
 
 ```
-block_number - The latest block number of cota-nft-entries-syncer
+block_number - The latest block number of cota-syncer
 claimed - true for claimed and false fot unclaimed
 ```
 
-```shell
+```json
 {
     "jsonrpc":"2.0",
     "result":{
@@ -698,12 +699,12 @@ http://127.0.0.1:3030
 #### Response
 
 ```
-block_number - The latest block number of cota-nft-entries-syncer
+block_number - The latest block number of cota-syncer
 sender_lock_hash - The sender lock hash of the NFT
 sender_address - The sender ckb address of the NFT
 ```
 
-```shell
+```json
 {
     "jsonrpc":"2.0",
     "result":{
@@ -739,7 +740,7 @@ echo '{
 http://127.0.0.1:3030
 ```
 
-```shell
+```json
 {
     "jsonrpc":"2.0",
     "result":{
@@ -768,7 +769,9 @@ Get issuer's information
 
 ```
 lock_script - The issuer's lock script
+address - The issuer's ckb address
 ```
+> At least one of address and lock script must be non-null
 
 ```shell
 echo '{
@@ -776,7 +779,8 @@ echo '{
     "jsonrpc":"2.0",
     "method":"get_issuer_info",
     "params":{
-        "lock_script":"0x490000001000000030000000310000009bd7e06f3ecf4be0f2fcd2188b23f1b9fcc88e5d4b65a8637b17723bbda3cce80114000000d5f13ab18e9f6b55eae6535b6ec141865437854d"
+        "lock_script":"0x490000001000000030000000310000009bd7e06f3ecf4be0f2fcd2188b23f1b9fcc88e5d4b65a8637b17723bbda3cce80114000000f86332ab26fe5baa89f7a8f458cffd8de379f255",
+        "address": "ckt1qyq0scej4vn0uka238m63azcel7cmcme7f2sxj5ska"
     }
 }' \
 | tr -d '\n' \
@@ -787,20 +791,20 @@ http://127.0.0.1:3030
 #### Response
 
 ```
-block_number - The latest block number of cota-nft-entries-syncer
+block_number - The latest block number of cota-syncer
 avatar - The issuer's avatar
 name - The issuer's name
 description - The issuer's description
 ```
 
-```shell
+```json
 {
     "jsonrpc":"2.0",
     "result":{
         "avatar":"https://i.loli.net/2021/04/29/IigbpOWP8fw9qDn.png",
-        "block_number":4872987,
-        "description":"Community building protocol",
-        "name":"Rostra"
+        "block_number":6836177,
+        "description":"Melting Two Worlds Together.",
+        "name":"Nervina Labs"
     },
     "id":2
 }
@@ -822,7 +826,7 @@ echo '{
     "jsonrpc":"2.0",
     "method":"get_issuer_info_by_cota_id",
     "params":{
-        "cota_id":"0x07d6fa85babd5c31bf6252998aa06960730017ef"
+        "cota_id":"0x1deb31f603652bf59ff5027b522e1d81c288b72f"
     }
 }' \
 | tr -d '\n' \
@@ -840,15 +844,91 @@ name - The issuer's name
 description - The issuer's description
 ```
 
-```shell
+```json
 {
     "jsonrpc":"2.0",
     "result":{
-        "avatar":"https://bafybeieubinsws3na52z63mnavuf4yeb4xcxf2dhkj22w53qe3cgl7rz7a.ipfs.nftstorage.link/%E6%9C%AA%E7%89%A9%E4%B8%BB%E4%B9%89logo.png",
-        "block_number":7893309,
-        "description":"由未物主义平台铸造",
-        "lock_hash":"0xa611a0d1695f14c9672e35c235735025b40c33c507598f5155217cba4e64d4dd",
-        "name":"未物主义"
+        "avatar":"https://i.loli.net/2021/04/29/IigbpOWP8fw9qDn.png",
+        "block_number":6836177,
+        "description":"Melting Two Worlds Together.",
+        "name":"Nervina Labs"
+    },
+    "id":2
+}
+```
+
+### get_joyid_info
+
+Get joyid metadata information by lock script or address
+
+#### Parameters
+
+```
+lock_script - The issuer's lock script
+address - The issuer's ckb address
+```
+> At least one of address and lock script must be non-null
+
+```shell
+echo '{
+    "id":2,
+    "jsonrpc":"2.0",
+    "method":"get_joyid_info",
+    "params":{
+        "lock_script":"0x4a000000100000003000000031000000726c205927bf90b3c1c8def979333e5a04f8f82e158e2a35dee85a6750d38cf1011500000001ae75e66699b47d6c178d5d282aee95f33c09057e",
+        "address": "ckt1q3excgzey7lepv7per00j7fn8edqf78c9c2cu234mm595e6s6wx0zqdwwhnxdxd504kp0r2a9q4wa90n8sys2lse0p2jy"
+    }
+}' \
+| tr -d '\n' \
+| curl -H 'content-type: application/json' -d @- \
+http://127.0.0.1:3030
+```
+
+#### Response
+
+```
+block_number - The latest block number of cota-syncer
+avatar - The joyid metadata avatar
+name - The joyid metadata name
+description - The joyid metadata description
+extension - The joyid metadata extension
+nickname - The joyid metadata nickname
+pub_key - The joyid metadata public key
+credential_id - The joyid metadata WebAuthn credential_id
+alg - The joyid metadata WebAuthn algorithm
+cota_cell_id - The joyid metadata cota cell id(CCID)
+sub_keys - The joyid metadata sub public keys
+    pub_key - The joyid metadata public key
+    credential_id - The joyid metadata WebAuthn credential_id
+    alg - The joyid metadata WebAuthn algorithm
+```
+
+```json
+{
+    "jsonrpc":"2.0",
+    "result":{
+        "alg":"01",
+        "avatar":"https://i.loli.net/2021/04/29/IigbpOWP8fw9qDn.png",
+        "block_number":6836259,
+        "cota_cell_id":"0000000000000b6b",
+        "credential_id":"459d12c09a65e58e22a9d8d6fa843c3d",
+        "description":"Web3 Developer",
+        "extension":"",
+        "name":"Dylan",
+        "nickname":"Dylan#2923",
+        "pub_key":"650e48cf029c8a04788c02d7d88bad7b62918714137d0cd486b5b3aff53d0c2baecabd8d23107933f85fdf13cd814a0ba3d1848329b0504d7134a88962e9bde3",
+        "sub_keys":[
+            {
+                "alg":"01",
+                "credential_id":"459d12c09a65e58e22a9d8d6fa843c3d",
+                "pub_key":"650e48cf029c8a04788c02d7d88bad7b62918714137d0cd486b5b3aff53d0c2baecabd8d23107933f85fdf13cd814a0ba3d1848329b0504d7134a88962e9bde3"
+            },
+            {
+                "alg":"01",
+                "credential_id":"369d12c09a65e58e22a9d8d6fa843c3d",
+                "pub_key":"290e48cf029c8a04788c02d7d88bad7b62918714137d0cd486b5b3aff53d0c2baecabd8d23107933f85fdf13cd814a0ba3d1848329b0504d7134a88962e9bde3"
+            }
+        ]
     },
     "id":2
 }
@@ -880,7 +960,7 @@ echo '{
 http://127.0.0.1:3030
 ```
 
-```shell
+```json
 {
     "jsonrpc":"2.0",
     "result":{
@@ -933,7 +1013,7 @@ lock_script - The owner's lock script
 cota_id - CoTA NFT Class Unique ID
 ```
 
-```shell
+```json
 echo '{
     "id":2,
     "jsonrpc":"2.0",
@@ -951,11 +1031,11 @@ http://127.0.0.1:3030
 #### Response
 
 ```
-block_number - The latest block number of cota-nft-entries-syncer
+block_number - The latest block number of cota-syncer
 count - The count of NFTs held and withdrew by the owner
 ```
 
-```shell
+```json
 {
     "jsonrpc":"2.0",
     "result":{
@@ -985,7 +1065,7 @@ echo '{
     "jsonrpc":"2.0",
     "method":"get_history_transactions",
     "params":{
-        "cota_id":"0x16166f5eb4ec88ad89710bbd596ac8987052a85e",
+        "cota_id":"0x1e23dc506c1b15f286c9db84a4d12a4532660975",
 	    "token_index": "0x00000000",
 	    "page": "0",
 	    "page_size": "10"
@@ -999,7 +1079,7 @@ http://127.0.0.1:3030
 ### Response
 
 ```
-block_number - The latest block number of cota-nft-entries-syncer
+block_number - The latest block number of cota-syncer
 page_size - page_size - The page size of the CoTA NFT transaction list
 total - The total amount of the CoTA NFT transaction list
 transactions - The transaction list of the sepcific CoTA NFT
@@ -1011,60 +1091,29 @@ transactions - The transaction list of the sepcific CoTA NFT
     type - The type of the CoTA NFT transaction: 'transfer' or 'mint'
 ```
 
-```shell
- "jsonrpc":"2.0",
+```json
+ {
+    "jsonrpc":"2.0",
     "result":{
-        "block_number":7587159,
+        "block_number":6844828,
         "page_size":10,
-        "total":6,
+        "total":2,
         "transactions":[
             {
-                "age":1650608618595,
-                "block_number":6960258,
-                "from":"ckb1qqypm0l63rdt2jayymfrrjnyadmqe630a8skwcdpmfqqmgdje0sjsqt3emxu792v2yatrwfgp48huss2yg4yq9g083utk",
-                "to":"ckb1qrgp752jcfnm0uemj723grpyva6zappyuj0tuge3etkpjlmjsxmq5qt7jq0g09af5m0yqjncd5v9mg3p2yuu5es2w57jj",
-                "tx_hash":"0x325a2f20531ab5020aa1a95ccff633140d7c3e67ec0011a01892c177d6fb572b",
-                "type":"transfer"
+                "age":1650111720128,
+                "block_number":5059481,
+                "from":"ckt1qzda0cr08m85hc8jlnfp3zer7xulejywt49kt2rr0vthywaa50xwsqwuwrenm6r0muupkn79huyjhv3aqfm5sqg5xwwyx",
+                "to":"ckt1qzda0cr08m85hc8jlnfp3zer7xulejywt49kt2rr0vthywaa50xwsqfrkrvjpk2e7p6e90t9sc65ahf7wjhwzqq26rfzt",
+                "tx_hash":"0xc938c9acf95a351c2de70494b1fabc22d625fd1664741535e1058e60d454738f",
+                "tx_type":"transfer"
             },
             {
-                "age":1647613397194,
-                "block_number":6727018,
-                "from":"ckb1qzl58smqy32hnrq6vxjedcxe2fugvnz497h7yvwqvwel40uh4rltcqvuj4m34cfxmz74jlsk0dkp6yrwf7q2z4q9puchc",
-                "to":"ckb1qqypm0l63rdt2jayymfrrjnyadmqe630a8skwcdpmfqqmgdje0sjsqt3emxu792v2yatrwfgp48huss2yg4yq9g083utk",
-                "tx_hash":"0xa1edd805418bca0cd999df49d042eb46139b8b09a964fd8f11e0de6c8c57f467",
-                "type":"transfer"
-            },
-            {
-                "age":1647613281847,
-                "block_number":6727011,
-                "from":"ckb1qqypm0l63rdt2jayymfrrjnyadmqe630a8skwcdpmfqqmgdje0sjsqt3emxu792v2yatrwfgp48huss2yg4yq9g083utk",
-                "to":"ckb1qzl58smqy32hnrq6vxjedcxe2fugvnz497h7yvwqvwel40uh4rltcqvuj4m34cfxmz74jlsk0dkp6yrwf7q2z4q9puchc",
-                "tx_hash":"0x9c547d7a5b38e3e46062d48bf4887bb0ca98ea593bf805882b41bf1738f8ac12",
-                "type":"transfer"
-            },
-            {
-                "age":1647613127780,
-                "block_number":6726999,
-                "from":"ckb1qzl58smqy32hnrq6vxjedcxe2fugvnz497h7yvwqvwel40uh4rltcqvuj4m34cfxmz74jlsk0dkp6yrwf7q2z4q9puchc",
-                "to":"ckb1qqypm0l63rdt2jayymfrrjnyadmqe630a8skwcdpmfqqmgdje0sjsqt3emxu792v2yatrwfgp48huss2yg4yq9g083utk",
-                "tx_hash":"0xa5a63fd171029e1424a5d155206977680cea40d9b0fdf0d6040855d18f8e02bb",
-                "type":"transfer"
-            },
-            {
-                "age":1647612280580,
-                "block_number":6726919,
-                "from":"ckb1qqypm0l63rdt2jayymfrrjnyadmqe630a8skwcdpmfqqmgdje0sjsqt3emxu792v2yatrwfgp48huss2yg4yq9g083utk",
-                "to":"ckb1qzl58smqy32hnrq6vxjedcxe2fugvnz497h7yvwqvwel40uh4rltcqvuj4m34cfxmz74jlsk0dkp6yrwf7q2z4q9puchc",
-                "tx_hash":"0xe0ed4ccddf35d1a36ce6979fa4c1b64af9dd8fe248ec25346951e0a3d0fa09c6",
-                "type":"transfer"
-            },
-            {
-                "age":1645804795836,
-                "block_number":6585724,
-                "from":"ckb1qzda0cr08m85hc8jlnfp3zer7xulejywt49kt2rr0vthywaa50xwsqgk2yu24zgcj0dq2vlsshmhg4hqprlm23c4jwrps",
-                "to":"ckb1qqypm0l63rdt2jayymfrrjnyadmqe630a8skwcdpmfqqmgdje0sjsqt3emxu792v2yatrwfgp48huss2yg4yq9g083utk",
-                "tx_hash":"0x3fc95d95a6ecaafab402ac2dc1200c37018052f61fa1bd02ecf81a36f7b6b142",
-                "type":"mint"
+                "age":1649995513851,
+                "block_number":5044927,
+                "from":"ckt1qzda0cr08m85hc8jlnfp3zer7xulejywt49kt2rr0vthywaa50xwsq0cvve2kfh7tw4gnaag73vvllvduduly4gt2hawf",
+                "to":"ckt1qzda0cr08m85hc8jlnfp3zer7xulejywt49kt2rr0vthywaa50xwsqwuwrenm6r0muupkn79huyjhv3aqfm5sqg5xwwyx",
+                "tx_hash":"0x11c4e7426663eecf3f72fdc28526e2f29688c1bdbb8d80dd7206a8a41bbe1787",
+                "tx_type":"mint"
             }
         ]
     },
@@ -1078,7 +1127,7 @@ Get the CoTA transactions of the specific block number
 
 #### Parameters
 
-```
+```shell
 block_number - The block number of CKB
 ```
 
@@ -1088,7 +1137,7 @@ echo '{
     "jsonrpc":"2.0",
     "method":"get_transactions_by_block_number",
     "params":{
-        "block_number": "6586282"
+        "block_number": "5059481"
     }
 }' \
 | tr -d '\n' \
@@ -1098,8 +1147,8 @@ http://127.0.0.1:3030
 
 ### Response
 
-```
-block_number - The latest block number of cota-nft-entries-syncer
+```shell
+block_number - The latest block number of cota-syncer
 transactions - The transaction list of the sepcific CoTA NFT
     cota_id - CoTA NFT Class Unique ID
     token_index - The index of the NFT Class (increment from zero)
@@ -1110,29 +1159,29 @@ transactions - The transaction list of the sepcific CoTA NFT
     type - The type of the CoTA NFT transaction: 'transfer' or 'mint'
 ```
 
-```
+```json
 {
     "jsonrpc":"2.0",
     "result":{
-        "block_number":7893309,
+        "block_number":6844840,
         "transactions":[
             {
-                "block_number":6586282,
-                "cota_id":"0x2b738f9f6c2326f6ef198d7a0dff19636ee00ed4",
-                "from":"ckb1qzda0cr08m85hc8jlnfp3zer7xulejywt49kt2rr0vthywaa50xwsqdy2wj0q6wxpda8ft6xnxgq83zu6t4cvvcrlhnz7",
-                "to":"ckb1qzl58smqy32hnrq6vxjedcxe2fugvnz497h7yvwqvwel40uh4rltcqg78jg823ckd4k2h3vme6yhgzyvaxs5jfqlcnjj2",
-                "token_index":"0x00000006",
-                "tx_hash":"0x52a49c3e4d9344c429b5d55c8c1616b6e8aa9a5783f4a5c5588b1f92e07aa73c",
-                "type":"mint"
+                "block_number":5059481,
+                "cota_id":"0x1e23dc506c1b15f286c9db84a4d12a4532660975",
+                "from":"ckt1qzda0cr08m85hc8jlnfp3zer7xulejywt49kt2rr0vthywaa50xwsqwuwrenm6r0muupkn79huyjhv3aqfm5sqg5xwwyx",
+                "to":"ckt1qzda0cr08m85hc8jlnfp3zer7xulejywt49kt2rr0vthywaa50xwsqfrkrvjpk2e7p6e90t9sc65ahf7wjhwzqq26rfzt",
+                "token_index":"0x00000000",
+                "tx_hash":"0xc938c9acf95a351c2de70494b1fabc22d625fd1664741535e1058e60d454738f",
+                "tx_type":"transfer"
             },
             {
-                "block_number":6586282,
-                "cota_id":"0x2b738f9f6c2326f6ef198d7a0dff19636ee00ed4",
-                "from":"ckb1qzda0cr08m85hc8jlnfp3zer7xulejywt49kt2rr0vthywaa50xwsqdy2wj0q6wxpda8ft6xnxgq83zu6t4cvvcrlhnz7",
-                "to":"ckb1qzl58smqy32hnrq6vxjedcxe2fugvnz497h7yvwqvwel40uh4rltcqg78jg823ckd4k2h3vme6yhgzyvaxs5jfqlcnjj2",
-                "token_index":"0x00000007",
-                "tx_hash":"0x52a49c3e4d9344c429b5d55c8c1616b6e8aa9a5783f4a5c5588b1f92e07aa73c",
-                "type":"mint"
+                "block_number":5059481,
+                "cota_id":"0xab041249179d1e0e455ff3874596a7ae4f748612",
+                "from":"ckt1qzda0cr08m85hc8jlnfp3zer7xulejywt49kt2rr0vthywaa50xwsq0lks0kx0e6r5jz8ycl9ecrarwqv7u5h2scf08fr",
+                "to":"ckt1qpth5hjexr3wehtzqpm97dzzucgemjv7sl05wnez7y72hqvuszeyyqv4689kzhgq6d7apy9ekn439f5z9c3usxgezfww0",
+                "token_index":"0x00000003",
+                "tx_hash":"0x258570cfe00ea0002ba09fbf139172cd349e8a16bbf663ba6be7bbd47b7310f4",
+                "tx_type":"mint"
             }
         ]
     },
@@ -1161,15 +1210,15 @@ http://127.0.0.1:3030
 
 #### Response
 
-```
+```shell
 indexer_block_number - The latest block number of ckb-indexer
 node_block_number - The latest block number of ckb-node
-syncer_block_number - The latest block number of cota-nft-entries-syncer
+syncer_block_number - The latest block number of cota-syncer
 version - The current version of cota-aggregator
 is_mainnet - The environment variable to indicate ckb network
 ```
 
-```shell
+```json
 {
     "jsonrpc":"2.0",
     "result":{

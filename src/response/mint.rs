@@ -1,6 +1,7 @@
-use super::helper::Inserter;
+use super::helper::{parse_json_err, Inserter};
 use crate::models::class::ClassInfoDb;
 use crate::models::withdrawal::nft::WithdrawDb;
+use crate::utils::error::Error;
 use ckb_types::prelude::Entity;
 use cota_smt::mint::MintCotaNFTV1Entries;
 use cota_smt::smt::H256;
@@ -12,17 +13,22 @@ pub fn parse_mint_response(
     total: i64,
     page_size: i64,
     block_number: u64,
-) -> Map<String, Value> {
-    let nfts: Vec<Value> = withdrawals.into_iter().map(parse_mint_value).collect();
+) -> Result<Value, Error> {
+    let mut nfts: Vec<Value> = Vec::new();
+    for withdrawal in withdrawals {
+        nfts.push(parse_mint_value(withdrawal)?);
+    }
     let mut map = Map::new();
     map.insert_i64("total", total);
     map.insert_i64("page_size", page_size);
     map.insert_u64("block_number", block_number);
     map.insert_array("nfts", nfts);
-    map
+    Ok(Value::Object(map))
 }
 
-fn parse_mint_value((withdrawal, class_info): (WithdrawDb, Option<ClassInfoDb>)) -> Value {
+fn parse_mint_value(
+    (withdrawal, class_info): (WithdrawDb, Option<ClassInfoDb>),
+) -> Result<Value, Error> {
     let mut map = Map::new();
     map.insert_hex("cota_id", &withdrawal.cota_id);
     map.insert_hex("token_index", &withdrawal.token_index);
@@ -30,40 +36,25 @@ fn parse_mint_value((withdrawal, class_info): (WithdrawDb, Option<ClassInfoDb>))
     map.insert_hex("configure", &[withdrawal.configure]);
     map.insert_hex("characteristic", &withdrawal.characteristic);
     map.insert_hex("receiver_lock", &withdrawal.receiver_lock_script);
-    match class_info {
-        Some(class) => {
-            map.insert_str("name", class.name);
-            map.insert_str("description", class.description);
-            map.insert_str("image", class.image);
-            map.insert_str("audio", class.audio);
-            map.insert_str("video", class.video);
-            map.insert_str("model", class.model);
-            map.insert_str("meta_characteristic", class.characteristic);
-            map.insert_str("properties", class.properties);
-        }
-        None => {
-            map.insert_null("name");
-            map.insert_null("description");
-            map.insert_null("image");
-            map.insert_null("audio");
-            map.insert_null("video");
-            map.insert_null("model");
-            map.insert_null("meta_characteristic");
-            map.insert_null("properties");
-        }
-    }
-    Value::Object(map)
+
+    let class = class_info.map_or(ClassInfoDb::default(), |class| class);
+    let class_json = serde_json::to_string(&class).map_err(parse_json_err)?;
+    let mut class_map: Map<String, Value> =
+        serde_json::from_str(&class_json).map_err(parse_json_err)?;
+
+    map.append(&mut class_map);
+    Ok(Value::Object(map))
 }
 
 pub fn parse_mint_smt(
     (root_hash, mint_entries): (H256, MintCotaNFTV1Entries),
     block_number: u64,
-) -> Map<String, Value> {
+) -> Value {
     let mint_entry = hex::encode(mint_entries.as_slice());
     let mint_root_hash = hex::encode(root_hash.as_slice());
     let mut map = Map::new();
     map.insert_str("smt_root_hash", mint_root_hash);
     map.insert_str("mint_smt_entry", mint_entry);
     map.insert_u64("block_number", block_number);
-    map
+    Value::Object(map)
 }
