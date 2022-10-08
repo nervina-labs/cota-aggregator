@@ -6,7 +6,7 @@ use diesel::*;
 use log::error;
 use serde::{Deserialize, Serialize};
 
-#[derive(Serialize, Deserialize, Queryable, Debug, Clone, Eq, PartialEq)]
+#[derive(Serialize, Deserialize, Queryable, Debug, Clone, Eq, PartialEq, Default)]
 pub struct IssuerInfoDb {
     pub name:        String,
     pub avatar:      String,

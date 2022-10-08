@@ -8,7 +8,7 @@ use diesel::*;
 use log::error;
 use serde::{Deserialize, Serialize};
 
-#[derive(Serialize, Deserialize, Queryable, Debug, Clone, Eq, PartialEq)]
+#[derive(Serialize, Deserialize, Queryable, Debug, Clone, Eq, PartialEq, Default)]
 pub struct ClassInfoDb {
     pub name:           String,
     pub symbol:         String,
@@ -17,6 +17,7 @@ pub struct ClassInfoDb {
     pub audio:          String,
     pub video:          String,
     pub model:          String,
+    #[serde(rename(serialize = "meta_characteristic"))]
     pub characteristic: String,
     pub properties:     String,
 }

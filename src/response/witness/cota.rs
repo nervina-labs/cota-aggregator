@@ -32,7 +32,7 @@ use serde_json::{from_slice, json};
 
 type CotaMap = Map<String, Value>;
 
-pub fn parse_cota_witness(witness: Vec<u8>, version: u8) -> Result<CotaMap, Error> {
+pub fn parse_cota_witness(witness: Vec<u8>, version: u8) -> Result<Value, Error> {
     if version > 2 {
         return Err(Error::WitnessParseError("Version invalid".to_string()));
     }
@@ -43,7 +43,7 @@ pub fn parse_cota_witness(witness: Vec<u8>, version: u8) -> Result<CotaMap, Erro
     }
     let mut cota_map = Map::new();
     cota_map = parse_cota(witness_args.input_type(), version, cota_map)?;
-    parse_metadata(witness_args.output_type(), cota_map)
+    parse_metadata(witness_args.output_type(), cota_map).map(|map| Value::Object(map))
 }
 
 const CREATE: u8 = 1;

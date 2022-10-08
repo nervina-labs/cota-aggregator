@@ -78,7 +78,8 @@ pub fn generate_history_smt<'a>(
 
 fn generate_mysql_smt<'a>(smt: &mut CotaSMT<'a>, lock_hash: [u8; 32]) -> Result<(), Error> {
     let start_time = Local::now().timestamp_millis();
-    let (defines, holds, withdrawals, claims) = get_all_cota_by_lock_hash(lock_hash)?;
+    let (defines, holds, withdrawals, claims, extension_leaves) =
+        get_all_cota_by_lock_hash(lock_hash)?;
     diff_time(
         start_time,
         "Load all history smt leaves from mysql database",
@@ -167,6 +168,11 @@ fn generate_mysql_smt<'a>(smt: &mut CotaSMT<'a>, lock_hash: [u8; 32]) -> Result<
             .unwrap_or_default();
         let (_, key) = generate_claim_key(cota_id, token_index, out_point);
         let (_, value) = generate_claim_value(version);
+        leaves.push((key, value));
+    }
+    for extension_leaf in extension_leaves {
+        let key = H256::from(extension_leaf.key);
+        let value = H256::from(extension_leaf.value);
         leaves.push((key, value));
     }
     if !leaves.is_empty() {

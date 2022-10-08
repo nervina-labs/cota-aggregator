@@ -50,12 +50,13 @@ fn main() {
     let mut io = IoHandler::default();
     io.add_method("generate_define_cota_smt", |req| define_rpc(req, &DB));
     io.add_method("generate_mint_cota_smt", |req| mint_rpc(req, &DB));
-    io.add_method("generate_withdrawal_cota_smt", |req| {
-        withdrawal_rpc(req, &DB)
-    });
     io.add_method("generate_claim_cota_smt", |req| claim_rpc(req, &DB));
     io.add_method("generate_update_cota_smt", |req| update_rpc(req, &DB));
     io.add_method("generate_transfer_cota_smt", |req| transfer_rpc(req, &DB));
+    io.add_method("generate_extension_smt", |req| extension_rpc(req, &DB));
+    io.add_method("generate_withdrawal_cota_smt", |req| {
+        withdrawal_rpc(req, &DB)
+    });
     io.add_method("generate_claim_update_cota_smt", |req| {
         claim_update_rpc(req, &DB)
     });
@@ -69,13 +70,11 @@ fn main() {
     io.add_method("get_cota_nft_sender", get_sender_account);
     io.add_method("get_define_info", get_define_info);
     io.add_method("get_issuer_info", get_issuer_info);
+    io.add_method("get_joyid_info", get_joyid_info);
     io.add_method("parse_witness", parse_witness);
     io.add_method("get_cota_count", get_cota_count);
     io.add_method("get_history_transactions", get_cota_history_transactions);
-    io.add_method(
-        "get_transactions_by_block_number",
-        get_cota_transactions_by_block_number,
-    );
+    io.add_method("get_transactions_by_block_number", get_txs_by_block_number);
     io.add_method("get_issuer_info_by_cota_id", get_issuer_info_by_cota_id);
     io.add_method("get_aggregator_info", get_aggregator_info);
 
