@@ -45,19 +45,15 @@ pub async fn generate_define_smt(
         smt.commit()
     })?;
 
-    let define_merkle_proof = smt
-        .merkle_proof(update_leaves.iter().map(|leave| leave.0).collect())
-        .map_err(|e| {
-            error!("Define SMT proof error: {:?}", e.to_string());
-            Error::SMTProofError("Mint".to_string())
-        })?;
-    let define_merkle_proof_compiled =
-        define_merkle_proof
-            .compile(update_leaves.clone())
-            .map_err(|e| {
-                error!("Define SMT proof error: {:?}", e.to_string());
-                Error::SMTProofError("Define".to_string())
-            })?;
+    let leaf_keys: Vec<H256> = update_leaves.iter().map(|leave| leave.0).collect();
+    let define_merkle_proof = smt.merkle_proof(leaf_keys.clone()).map_err(|e| {
+        error!("Define SMT proof error: {:?}", e.to_string());
+        Error::SMTProofError("Mint".to_string())
+    })?;
+    let define_merkle_proof_compiled = define_merkle_proof.compile(leaf_keys).map_err(|e| {
+        error!("Define SMT proof error: {:?}", e.to_string());
+        Error::SMTProofError("Define".to_string())
+    })?;
 
     let merkel_proof_vec: Vec<u8> = define_merkle_proof_compiled.into();
     let merkel_proof_bytes = BytesBuilder::default()

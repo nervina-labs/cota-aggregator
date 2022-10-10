@@ -4,7 +4,7 @@ use crate::entries::helper::{
     generate_claim_key, generate_claim_value, generate_hold_key, generate_hold_value, with_lock,
 };
 use crate::entries::smt::{generate_history_smt, init_smt};
-use crate::entries::witness::parse_withdraw_witness;
+use crate::entries::witness::parse_witness_withdraw_proof;
 use crate::models::claim::is_exist_in_claim;
 use crate::models::withdrawal::nft::{get_withdrawal_cota_by_lock_hash, WithdrawDb};
 use crate::request::claim::ClaimUpdateReq;
@@ -132,15 +132,13 @@ pub async fn generate_claim_update_smt(
         claim_smt.commit()
     })?;
 
-    let claim_update_merkle_proof = claim_smt
-        .merkle_proof(claim_update_leaves.iter().map(|leave| leave.0).collect())
-        .map_err(|e| {
-            error!("Claim update SMT proof error: {:?}", e.to_string());
-            Error::SMTProofError("ClaimUpdate".to_string())
-        })?;
-    let claim_update_merkle_proof_compiled = claim_update_merkle_proof
-        .compile(claim_update_leaves.clone())
-        .map_err(|e| {
+    let leaf_keys: Vec<H256> = claim_update_leaves.iter().map(|leave| leave.0).collect();
+    let claim_update_merkle_proof = claim_smt.merkle_proof(leaf_keys.clone()).map_err(|e| {
+        error!("Claim update SMT proof error: {:?}", e.to_string());
+        Error::SMTProofError("ClaimUpdate".to_string())
+    })?;
+    let claim_update_merkle_proof_compiled =
+        claim_update_merkle_proof.compile(leaf_keys).map_err(|e| {
             error!("Claim update SMT proof error: {:?}", e.to_string());
             Error::SMTProofError("ClaimUpdate".to_string())
         })?;
@@ -155,7 +153,7 @@ pub async fn generate_claim_update_smt(
         claim_update_req.withdrawal_lock_script,
     )
     .await?;
-    let withdraw_leaf_proof = parse_withdraw_witness(
+    let withdraw_proof = parse_witness_withdraw_proof(
         withdraw_info.witnesses,
         &cota_id_index_pairs,
         withdraw_info.block_number,
@@ -184,17 +182,9 @@ pub async fn generate_claim_update_smt(
         )
         .proof(claim_proof)
         .action(action_bytes)
-        .withdrawal_proof(withdraw_leaf_proof.withdraw_proof)
-        .leaf_keys(
-            Byte32VecBuilder::default()
-                .set(withdraw_leaf_proof.leaf_keys)
-                .build(),
-        )
-        .leaf_values(
-            Byte32VecBuilder::default()
-                .set(withdraw_leaf_proof.leaf_values)
-                .build(),
-        )
+        .withdrawal_proof(withdraw_proof)
+        .leaf_keys(Byte32Vec::default())
+        .leaf_values(Byte32Vec::default())
         .raw_tx(withdraw_info.raw_tx)
         .output_index(withdraw_info.output_index)
         .tx_proof(withdraw_info.tx_proof)

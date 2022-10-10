@@ -120,19 +120,15 @@ pub async fn generate_mint_smt(
     })?;
 
     let start_time = Local::now().timestamp_millis();
-    let mint_merkle_proof = smt
-        .merkle_proof(update_leaves.iter().map(|leave| leave.0).collect())
-        .map_err(|e| {
-            error!("Mint SMT proof error: {:?}", e.to_string());
-            Error::SMTProofError("Mint".to_string())
-        })?;
-    let mint_merkle_proof_compiled =
-        mint_merkle_proof
-            .compile(update_leaves.clone())
-            .map_err(|e| {
-                error!("Mint SMT proof error: {:?}", e.to_string());
-                Error::SMTProofError("Mint".to_string())
-            })?;
+    let leaf_keys: Vec<H256> = update_leaves.iter().map(|leave| leave.0).collect();
+    let mint_merkle_proof = smt.merkle_proof(leaf_keys.clone()).map_err(|e| {
+        error!("Mint SMT proof error: {:?}", e.to_string());
+        Error::SMTProofError("Mint".to_string())
+    })?;
+    let mint_merkle_proof_compiled = mint_merkle_proof.compile(leaf_keys).map_err(|e| {
+        error!("Mint SMT proof error: {:?}", e.to_string());
+        Error::SMTProofError("Mint".to_string())
+    })?;
     diff_time(start_time, "Generate mint smt proof");
 
     let merkel_proof_vec: Vec<u8> = mint_merkle_proof_compiled.into();
