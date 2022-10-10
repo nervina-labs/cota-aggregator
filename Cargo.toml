@@ -1,6 +1,6 @@
 [package]
 name = "cota-aggregator"
-version = "0.7.0"
+version = "0.7.1"
 edition = "2018"
 
 [dependencies]
@@ -17,7 +17,7 @@ chrono = "0.4"
 molecule = "0.7.2"
 lazy_static = "1.4"
 rocksdb = { package = "ckb-rocksdb", version = "=0.18.3", features = ["snappy"] }
-sparse-merkle-tree = "0.5.3"
+sparse-merkle-tree = "0.5.4"
 ckb-types = "=0.103.0"
 ckb-jsonrpc-types = ">=0.103.0"
 reqwest = { version = "0.11", features = ["json"] }

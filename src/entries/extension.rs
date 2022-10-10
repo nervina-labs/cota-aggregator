@@ -51,15 +51,13 @@ pub async fn generate_extension_smt(
         smt.commit()
     })?;
 
-    let extension_merkle_proof = smt
-        .merkle_proof(update_leaves.iter().map(|leave| leave.0).collect())
-        .map_err(|e| {
-            error!("Extension SMT proof error: {:?}", e.to_string());
-            Error::SMTProofError("Extension".to_string())
-        })?;
-    let extension_merkle_proof_compiled = extension_merkle_proof
-        .compile(update_leaves.clone())
-        .map_err(|e| {
+    let leaf_keys: Vec<H256> = update_leaves.iter().map(|leave| leave.0).collect();
+    let extension_merkle_proof = smt.merkle_proof(leaf_keys.clone()).map_err(|e| {
+        error!("Extension SMT proof error: {:?}", e.to_string());
+        Error::SMTProofError("Extension".to_string())
+    })?;
+    let extension_merkle_proof_compiled =
+        extension_merkle_proof.compile(leaf_keys).map_err(|e| {
             error!("Extension SMT proof error: {:?}", e.to_string());
             Error::SMTProofError("Extension".to_string())
         })?;
