@@ -2,12 +2,13 @@ use crate::entries::helper::get_value_padding_block_height;
 use crate::utils::error::Error;
 use ckb_types::packed::{BytesVec, WitnessArgs};
 use cota_smt::common::{
-    Byte32, Bytes, ClaimCotaNFTKeyVec, CotaNFTId, DefineCotaNFTKeyVec, DefineCotaNFTValueVec,
+    Bytes, BytesBuilder, ClaimCotaNFTKeyVec, CotaNFTId, DefineCotaNFTKeyVec, DefineCotaNFTValueVec,
     HoldCotaNFTKeyVec, WithdrawalCotaNFTKeyV1Vec, WithdrawalCotaNFTKeyVec,
-    WithdrawalCotaNFTValueV1Vec, WithdrawalCotaNFTValueVec,
+    WithdrawalCotaNFTValueV1Vec, WithdrawalCotaNFTValueVec, *,
 };
 use cota_smt::mint::{MintCotaNFTEntries, MintCotaNFTV1Entries};
-use cota_smt::smt::blake2b_256;
+use cota_smt::molecule::prelude::*;
+use cota_smt::smt::{blake2b_256, Blake2bHasher};
 use cota_smt::transfer::{
     TransferCotaNFTEntries, TransferCotaNFTV1Entries, TransferCotaNFTV2Entries,
     WithdrawalCotaNFTEntries, WithdrawalCotaNFTV1Entries,
@@ -16,6 +17,7 @@ use cota_smt::transfer_update::{
     TransferUpdateCotaNFTEntries, TransferUpdateCotaNFTV1Entries, TransferUpdateCotaNFTV2Entries,
 };
 use molecule::prelude::Entity;
+use sparse_merkle_tree::{CompiledMerkleProof, H256};
 
 const MINT: u8 = 2;
 const WITHDRAW: u8 = 3;
@@ -23,21 +25,13 @@ const TRANSFER: u8 = 6;
 const TRANSFER_UPDATE: u8 = 8;
 
 type Pairs<'a> = &'a [([u8; 20], [u8; 4])];
+type Leaves = Vec<(H256, H256, bool)>;
 
-#[derive(Clone, Debug, Default)]
-pub struct WithdrawLeafProof {
-    pub leaf_keys:      Vec<Byte32>,
-    pub leaf_values:    Vec<Byte32>,
-    pub withdraw_proof: Bytes,
-}
-
-pub fn parse_withdraw_witness(
+pub fn parse_witness_withdraw_proof(
     witnesses: BytesVec,
     pairs: Pairs,
     block_number: u64,
-) -> Result<WithdrawLeafProof, Error> {
-    let mut leaf_keys: Vec<Byte32> = vec![];
-    let mut leaf_values: Vec<Byte32> = vec![];
+) -> Result<Bytes, Error> {
     for index in 0..witnesses.len() {
         let witness = witnesses.get(index);
         if witness.is_none() {
@@ -58,48 +52,34 @@ pub fn parse_withdraw_witness(
                             .filter(|key| match_cota_id_index(key, pairs))
                             .count();
                         if count == pairs.len() {
-                            parse_define(
+                            let leaves = parse_define(
                                 block_number,
-                                &mut leaf_keys,
-                                &mut leaf_values,
                                 entries_v0.define_keys(),
                                 entries_v0.define_new_values(),
                             );
-                            parse_withdraw_v0(
-                                &mut leaf_keys,
-                                &mut leaf_values,
+                            return parse_withdraw_v0(
+                                leaves,
                                 entries_v0.withdrawal_keys(),
                                 entries_v0.withdrawal_values(),
                                 pairs,
-                            )?;
-                            return Ok(WithdrawLeafProof {
-                                leaf_keys:      leaf_keys.clone(),
-                                leaf_values:    leaf_values.clone(),
-                                withdraw_proof: entries_v0.proof(),
-                            });
+                                entries_v0.proof().raw_data().to_vec(),
+                            );
                         }
                     }
                     if let Ok(entries_v1) = MintCotaNFTV1Entries::from_slice(&input_type[1..]) {
                         let withdrawal_keys = entries_v1.withdrawal_keys();
-                        parse_define(
+                        let leaves = parse_define(
                             block_number,
-                            &mut leaf_keys,
-                            &mut leaf_values,
                             entries_v1.define_keys(),
                             entries_v1.define_new_values(),
                         );
-                        parse_withdraw_v1(
-                            &mut leaf_keys,
-                            &mut leaf_values,
+                        return parse_withdraw_v1(
+                            leaves,
                             withdrawal_keys,
                             entries_v1.withdrawal_values(),
                             pairs,
-                        )?;
-                        return Ok(WithdrawLeafProof {
-                            leaf_keys:      leaf_keys.clone(),
-                            leaf_values:    leaf_values.clone(),
-                            withdraw_proof: entries_v1.proof(),
-                        });
+                            entries_v1.proof().raw_data().to_vec(),
+                        );
                     }
                     return Err(Error::WitnessParseError(
                         "Mint witness parse error".to_string(),
@@ -107,35 +87,25 @@ pub fn parse_withdraw_witness(
                 }
                 WITHDRAW => {
                     if let Ok(entries_v0) = WithdrawalCotaNFTEntries::from_slice(&input_type[1..]) {
-                        parse_hold(&mut leaf_keys, &mut leaf_values, entries_v0.hold_keys());
-                        parse_withdraw_v0(
-                            &mut leaf_keys,
-                            &mut leaf_values,
+                        let leaves = parse_hold(entries_v0.hold_keys());
+                        return parse_withdraw_v0(
+                            leaves,
                             entries_v0.withdrawal_keys(),
                             entries_v0.withdrawal_values(),
                             pairs,
-                        )?;
-                        return Ok(WithdrawLeafProof {
-                            leaf_keys:      leaf_keys.clone(),
-                            leaf_values:    leaf_values.clone(),
-                            withdraw_proof: entries_v0.proof(),
-                        });
+                            entries_v0.proof().raw_data().to_vec(),
+                        );
                     }
                     if let Ok(entries_v1) = WithdrawalCotaNFTV1Entries::from_slice(&input_type[1..])
                     {
-                        parse_hold(&mut leaf_keys, &mut leaf_values, entries_v1.hold_keys());
-                        parse_withdraw_v1(
-                            &mut leaf_keys,
-                            &mut leaf_values,
+                        let leaves = parse_hold(entries_v1.hold_keys());
+                        return parse_withdraw_v1(
+                            leaves,
                             entries_v1.withdrawal_keys(),
                             entries_v1.withdrawal_values(),
                             pairs,
-                        )?;
-                        return Ok(WithdrawLeafProof {
-                            leaf_keys:      leaf_keys.clone(),
-                            leaf_values:    leaf_values.clone(),
-                            withdraw_proof: entries_v1.proof(),
-                        });
+                            entries_v1.proof().raw_data().to_vec(),
+                        );
                     }
                     return Err(Error::WitnessParseError(
                         "Withdraw witness parse error".to_string(),
@@ -143,49 +113,34 @@ pub fn parse_withdraw_witness(
                 }
                 TRANSFER => {
                     if let Ok(entries_v0) = TransferCotaNFTEntries::from_slice(&input_type[1..]) {
-                        parse_claim(&mut leaf_keys, &mut leaf_values, entries_v0.claim_keys());
-                        parse_withdraw_v0(
-                            &mut leaf_keys,
-                            &mut leaf_values,
+                        let leaves = parse_claim(entries_v0.claim_keys());
+                        return parse_withdraw_v0(
+                            leaves,
                             entries_v0.withdrawal_keys(),
                             entries_v0.withdrawal_values(),
                             pairs,
-                        )?;
-                        return Ok(WithdrawLeafProof {
-                            leaf_keys:      leaf_keys.clone(),
-                            leaf_values:    leaf_values.clone(),
-                            withdraw_proof: entries_v0.proof(),
-                        });
+                            entries_v0.proof().raw_data().to_vec(),
+                        );
                     }
                     if let Ok(entries_v1) = TransferCotaNFTV1Entries::from_slice(&input_type[1..]) {
-                        parse_claim(&mut leaf_keys, &mut leaf_values, entries_v1.claim_keys());
-                        parse_withdraw_v1(
-                            &mut leaf_keys,
-                            &mut leaf_values,
+                        let leaves = parse_claim(entries_v1.claim_keys());
+                        return parse_withdraw_v1(
+                            leaves,
                             entries_v1.withdrawal_keys(),
                             entries_v1.withdrawal_values(),
                             pairs,
-                        )?;
-                        return Ok(WithdrawLeafProof {
-                            leaf_keys:      leaf_keys.clone(),
-                            leaf_values:    leaf_values.clone(),
-                            withdraw_proof: entries_v1.proof(),
-                        });
+                            entries_v1.proof().raw_data().to_vec(),
+                        );
                     }
                     if let Ok(entries_v2) = TransferCotaNFTV2Entries::from_slice(&input_type[1..]) {
-                        parse_claim(&mut leaf_keys, &mut leaf_values, entries_v2.claim_keys());
-                        parse_withdraw_v1(
-                            &mut leaf_keys,
-                            &mut leaf_values,
+                        let leaves = parse_claim(entries_v2.claim_keys());
+                        return parse_withdraw_v1(
+                            leaves,
                             entries_v2.withdrawal_keys(),
                             entries_v2.withdrawal_values(),
                             pairs,
-                        )?;
-                        return Ok(WithdrawLeafProof {
-                            leaf_keys:      leaf_keys.clone(),
-                            leaf_values:    leaf_values.clone(),
-                            withdraw_proof: entries_v2.proof(),
-                        });
+                            entries_v2.proof().raw_data().to_vec(),
+                        );
                     }
                     return Err(Error::WitnessParseError(
                         "Transfer witness parse error".to_string(),
@@ -195,53 +150,38 @@ pub fn parse_withdraw_witness(
                     if let Ok(entries_v0) =
                         TransferUpdateCotaNFTEntries::from_slice(&input_type[1..])
                     {
-                        parse_claim(&mut leaf_keys, &mut leaf_values, entries_v0.claim_keys());
-                        parse_withdraw_v0(
-                            &mut leaf_keys,
-                            &mut leaf_values,
+                        let leaves = parse_claim(entries_v0.claim_keys());
+                        return parse_withdraw_v0(
+                            leaves,
                             entries_v0.withdrawal_keys(),
                             entries_v0.withdrawal_values(),
                             pairs,
-                        )?;
-                        return Ok(WithdrawLeafProof {
-                            leaf_keys:      leaf_keys.clone(),
-                            leaf_values:    leaf_values.clone(),
-                            withdraw_proof: entries_v0.proof(),
-                        });
+                            entries_v0.proof().raw_data().to_vec(),
+                        );
                     }
                     if let Ok(entries_v1) =
                         TransferUpdateCotaNFTV1Entries::from_slice(&input_type[1..])
                     {
-                        parse_claim(&mut leaf_keys, &mut leaf_values, entries_v1.claim_keys());
-                        parse_withdraw_v1(
-                            &mut leaf_keys,
-                            &mut leaf_values,
+                        let leaves = parse_claim(entries_v1.claim_keys());
+                        return parse_withdraw_v1(
+                            leaves,
                             entries_v1.withdrawal_keys(),
                             entries_v1.withdrawal_values(),
                             pairs,
-                        )?;
-                        return Ok(WithdrawLeafProof {
-                            leaf_keys:      leaf_keys.clone(),
-                            leaf_values:    leaf_values.clone(),
-                            withdraw_proof: entries_v1.proof(),
-                        });
+                            entries_v1.proof().raw_data().to_vec(),
+                        );
                     }
                     if let Ok(entries_v2) =
                         TransferUpdateCotaNFTV2Entries::from_slice(&input_type[1..])
                     {
-                        parse_claim(&mut leaf_keys, &mut leaf_values, entries_v2.claim_keys());
-                        parse_withdraw_v1(
-                            &mut leaf_keys,
-                            &mut leaf_values,
+                        let leaves = parse_claim(entries_v2.claim_keys());
+                        return parse_withdraw_v1(
+                            leaves,
                             entries_v2.withdrawal_keys(),
                             entries_v2.withdrawal_values(),
                             pairs,
-                        )?;
-                        return Ok(WithdrawLeafProof {
-                            leaf_keys:      leaf_keys.clone(),
-                            leaf_values:    leaf_values.clone(),
-                            withdraw_proof: entries_v2.proof(),
-                        });
+                            entries_v2.proof().raw_data().to_vec(),
+                        );
                     }
                     return Err(Error::WitnessParseError(
                         "Transfer-update witness parse error".to_string(),
@@ -266,12 +206,11 @@ fn match_cota_id_index(id: &CotaNFTId, pairs: Pairs) -> bool {
 
 fn parse_define(
     block_number: u64,
-    leaf_keys: &mut Vec<Byte32>,
-    leaf_values: &mut Vec<Byte32>,
     define_keys: DefineCotaNFTKeyVec,
     define_values: DefineCotaNFTValueVec,
-) {
+) -> Leaves {
     let after_padding = block_number > get_value_padding_block_height();
+    let mut leaves: Leaves = Vec::with_capacity(define_keys.len());
     for index in 0..define_keys.len() {
         let define_key = define_keys.get(index).unwrap();
         let mut key = [0u8; 32];
@@ -284,95 +223,107 @@ fn parse_define(
             value[31] = 255u8;
         }
 
-        leaf_keys.push(Byte32::from_slice(&key).unwrap());
-        leaf_values.push(Byte32::from_slice(&value).unwrap());
+        leaves.push((H256::from(key), H256::from(value), false));
     }
+    leaves
 }
 
-fn parse_hold(
-    leaf_keys: &mut Vec<Byte32>,
-    leaf_values: &mut Vec<Byte32>,
-    hold_keys: HoldCotaNFTKeyVec,
-) {
+fn parse_hold(hold_keys: HoldCotaNFTKeyVec) -> Leaves {
+    let mut leaves: Leaves = Vec::with_capacity(hold_keys.len());
     for index in 0..hold_keys.len() {
         let hold_key = hold_keys.get(index).unwrap();
         let mut key = [0u8; 32];
         key[0..26].copy_from_slice(hold_key.as_slice());
-        leaf_keys.push(Byte32::from_slice(&key).unwrap());
-        leaf_values.push(Byte32::default());
+
+        leaves.push((H256::from(key), H256::default(), false));
     }
+    leaves
 }
 
-fn parse_withdraw_v0(
-    leaf_keys: &mut Vec<Byte32>,
-    leaf_values: &mut Vec<Byte32>,
-    withdrawal_keys: WithdrawalCotaNFTKeyVec,
-    withdrawal_value: WithdrawalCotaNFTValueVec,
-    pairs: Pairs,
-) -> Result<(), Error> {
-    let mut count: usize = 0;
-    for index in 0..withdrawal_keys.len() {
-        let withdrawal_key = withdrawal_keys.get(index).unwrap();
-        if match_cota_id_index(&withdrawal_key, pairs) {
-            count += 1;
-            continue;
-        }
-
-        let mut key = [0u8; 32];
-        key[0..26].copy_from_slice(withdrawal_key.as_slice());
-        leaf_keys.push(Byte32::from_slice(&key).unwrap());
-
-        let withdrawal_value = withdrawal_value.get(index).unwrap();
-        let value = blake2b_256(withdrawal_value.as_slice());
-        leaf_values.push(Byte32::from_slice(&value).unwrap());
-    }
-    if count != pairs.len() {
-        return Err(Error::WitnessParseError(
-            "Match cota_id and token_index error".to_string(),
-        ));
-    }
-    Ok(())
-}
-
-fn parse_withdraw_v1(
-    leaf_keys: &mut Vec<Byte32>,
-    leaf_values: &mut Vec<Byte32>,
-    withdrawal_keys: WithdrawalCotaNFTKeyV1Vec,
-    withdrawal_value: WithdrawalCotaNFTValueV1Vec,
-    pairs: Pairs,
-) -> Result<(), Error> {
-    let mut count: usize = 0;
-    for index in 0..withdrawal_keys.len() {
-        let withdrawal_key = withdrawal_keys.get(index).unwrap();
-        if match_cota_id_index(&withdrawal_key.nft_id(), pairs) {
-            count += 1;
-            continue;
-        }
-
-        let key = blake2b_256(withdrawal_key.as_slice());
-        leaf_keys.push(Byte32::from_slice(&key).unwrap());
-
-        let withdrawal_value = withdrawal_value.get(index).unwrap();
-        let value = blake2b_256(withdrawal_value.as_slice());
-        leaf_values.push(Byte32::from_slice(&value).unwrap());
-    }
-    if count != pairs.len() {
-        return Err(Error::WitnessParseError(
-            "Match cota_id and token_index error".to_string(),
-        ));
-    }
-    Ok(())
-}
-
-fn parse_claim(
-    leaf_keys: &mut Vec<Byte32>,
-    leaf_values: &mut Vec<Byte32>,
-    claim_keys: ClaimCotaNFTKeyVec,
-) {
+fn parse_claim(claim_keys: ClaimCotaNFTKeyVec) -> Leaves {
+    let mut leaves: Leaves = Vec::with_capacity(claim_keys.len());
     for index in 0..claim_keys.len() {
         let claim_key = claim_keys.get(index).unwrap();
         let key = blake2b_256(claim_key.as_slice());
-        leaf_keys.push(Byte32::from_slice(&key).unwrap());
-        leaf_values.push(Byte32::from_slice(&[255u8; 32]).unwrap());
+
+        leaves.push((H256::from(key), H256::from([255u8; 32]), false));
     }
+    leaves
+}
+
+fn parse_withdraw_v0(
+    leaves: Leaves,
+    withdrawal_keys: WithdrawalCotaNFTKeyVec,
+    withdrawal_value: WithdrawalCotaNFTValueVec,
+    pairs: Pairs,
+    withdrawal_proof: Vec<u8>,
+) -> Result<Bytes, Error> {
+    let mut count: usize = 0;
+    let mut all_leaves: Leaves = vec![];
+    all_leaves.extend(leaves);
+    for index in 0..withdrawal_keys.len() {
+        let withdrawal_key = withdrawal_keys.get(index).unwrap();
+        let mut key = [0u8; 32];
+        key[0..26].copy_from_slice(withdrawal_key.as_slice());
+
+        let withdrawal_value = withdrawal_value.get(index).unwrap();
+        let value = blake2b_256(withdrawal_value.as_slice());
+
+        if match_cota_id_index(&withdrawal_key, pairs) {
+            count += 1;
+            all_leaves.push((H256::from(key), H256::from(value), true));
+        } else {
+            all_leaves.push((H256::from(key), H256::from(value), false));
+        }
+    }
+    if count != pairs.len() {
+        return Err(Error::WitnessParseError(
+            "Match cota_id and token_index error".to_string(),
+        ));
+    }
+    parse_sub_proof(withdrawal_proof, all_leaves)
+}
+
+fn parse_withdraw_v1(
+    leaves: Leaves,
+    withdrawal_keys: WithdrawalCotaNFTKeyV1Vec,
+    withdrawal_value: WithdrawalCotaNFTValueV1Vec,
+    pairs: Pairs,
+    withdrawal_proof: Vec<u8>,
+) -> Result<Bytes, Error> {
+    let mut count: usize = 0;
+    let mut all_leaves: Leaves = vec![];
+    all_leaves.extend(leaves);
+    for index in 0..withdrawal_keys.len() {
+        let withdrawal_key = withdrawal_keys.get(index).unwrap();
+        let key = blake2b_256(withdrawal_key.as_slice());
+
+        let withdrawal_value = withdrawal_value.get(index).unwrap();
+        let value = blake2b_256(withdrawal_value.as_slice());
+
+        if match_cota_id_index(&withdrawal_key.nft_id(), pairs) {
+            count += 1;
+            all_leaves.push((H256::from(key), H256::from(value), true));
+        } else {
+            all_leaves.push((H256::from(key), H256::from(value), false));
+        }
+    }
+    if count != pairs.len() {
+        return Err(Error::WitnessParseError(
+            "Match cota_id and token_index error".to_string(),
+        ));
+    }
+    parse_sub_proof(withdrawal_proof, all_leaves)
+}
+
+fn parse_sub_proof(proof: Vec<u8>, all_leaves: Leaves) -> Result<Bytes, Error> {
+    let merkel_proof = CompiledMerkleProof(proof);
+    let compiled_proof = merkel_proof
+        .extract_proof::<Blake2bHasher>(all_leaves)
+        .map_err(|e| Error::SMTProofError(e.to_string()))?;
+    let sub_merkel_proof: Vec<u8> = compiled_proof.into();
+    let sub_proof = BytesBuilder::default()
+        .extend(sub_merkel_proof.iter().map(|v| Byte::from(*v)))
+        .build();
+    Ok(sub_proof)
 }
