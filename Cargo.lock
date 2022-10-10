@@ -143,15 +143,6 @@ checksum = "88756126a7634ad9c13ed0a6da9aa3376a6b7000eb5fcdbb89d153196326bbcd"
 
 [[package]]
 name = "blake2b-rs"
-version = "0.1.5"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "6e35e362830ef90ecea16f09b21b75d22d33a8562a679c74ab4f4fa49b4fcb87"
-dependencies = [
- "cc",
-]
-
-[[package]]
-name = "blake2b-rs"
 version = "0.2.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "a89a8565807f21b913288968e391819e7f9b2f0f46c7b89549c051cccf3a2771"
@@ -373,7 +364,7 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "4a78b173f2920585df685ececfea1a79dedd1b0b2e3a46c0c09930e8094988d2"
 dependencies = [
  "blake2b-ref 0.2.1",
- "blake2b-rs 0.2.0",
+ "blake2b-rs",
 ]
 
 [[package]]
@@ -383,7 +374,7 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "380702c09207ac378708f075d72b336adeb17b8887dcfcc1bf9460e10ea1e285"
 dependencies = [
  "blake2b-ref 0.2.1",
- "blake2b-rs 0.2.0",
+ "blake2b-rs",
 ]
 
 [[package]]
@@ -554,7 +545,7 @@ version = "0.5.4"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "fa5c59063142de7a68cfad4449c6b3863563856219a2925dfb8c5f019ec2aa47"
 dependencies = [
- "blake2b-rs 0.2.0",
+ "blake2b-rs",
  "faster-hex",
  "includedir",
  "includedir_codegen",
@@ -2277,11 +2268,12 @@ dependencies = [
 
 [[package]]
 name = "sparse-merkle-tree"
-version = "0.5.3"
+version = "0.5.4"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "f84214ec89cb9d304b5d54c7a266951c25bd396b2df5388420a9497a6896120a"
+checksum = "003e22ea773521fc026fa2a1374bd3d89cd287b6ae10ad925c971faeb30f2139"
 dependencies = [
- "blake2b-rs 0.1.5",
+ "blake2b-rs",
+ "cc",
  "cfg-if 0.1.10",
 ]
 
