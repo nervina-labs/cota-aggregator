@@ -5,7 +5,7 @@ use crate::entries::helper::{
     generate_withdrawal_value_v1, with_lock,
 };
 use crate::entries::smt::{generate_history_smt, init_smt};
-use crate::entries::witness::parse_withdraw_witness;
+use crate::entries::witness::parse_witness_withdraw_proof;
 use crate::models::claim::is_exist_in_claim;
 use crate::models::withdrawal::nft::{get_withdrawal_cota_by_lock_hash, WithdrawDb};
 use crate::request::transfer::{TransferUpdate, TransferUpdateReq};
@@ -156,14 +156,15 @@ pub async fn generate_transfer_update_smt(
         transfer_update_smt.commit()
     })?;
 
+    let leaf_keys: Vec<H256> = transfer_update_leaves.iter().map(|leave| leave.0).collect();
     let transfer_update_merkle_proof = transfer_update_smt
-        .merkle_proof(transfer_update_leaves.iter().map(|leave| leave.0).collect())
+        .merkle_proof(leaf_keys.clone())
         .map_err(|e| {
             error!("Transfer update SMT proof error: {:?}", e.to_string());
             Error::SMTProofError("Transfer".to_string())
         })?;
     let transfer_update_merkle_proof_compiled = transfer_update_merkle_proof
-        .compile(transfer_update_leaves.clone())
+        .compile(leaf_keys)
         .map_err(|e| {
             error!("Transfer SMT proof error: {:?}", e.to_string());
             Error::SMTProofError("Transfer update".to_string())
@@ -183,7 +184,7 @@ pub async fn generate_transfer_update_smt(
         transfer_update_req.withdrawal_lock_script,
     )
     .await?;
-    let withdraw_leaf_proof = parse_withdraw_witness(
+    let withdraw_proof = parse_witness_withdraw_proof(
         withdraw_info.witnesses,
         &cota_id_index_pairs,
         withdraw_info.block_number,
@@ -212,17 +213,9 @@ pub async fn generate_transfer_update_smt(
         )
         .proof(transfer_update_merkel_proof_bytes)
         .action(action_bytes)
-        .withdrawal_proof(withdraw_leaf_proof.withdraw_proof)
-        .leaf_keys(
-            Byte32VecBuilder::default()
-                .set(withdraw_leaf_proof.leaf_keys)
-                .build(),
-        )
-        .leaf_values(
-            Byte32VecBuilder::default()
-                .set(withdraw_leaf_proof.leaf_values)
-                .build(),
-        )
+        .withdrawal_proof(withdraw_proof)
+        .leaf_keys(Byte32Vec::default())
+        .leaf_values(Byte32Vec::default())
         .raw_tx(withdraw_info.raw_tx)
         .output_index(withdraw_info.output_index)
         .tx_proof(withdraw_info.tx_proof)
