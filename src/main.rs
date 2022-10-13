@@ -76,6 +76,7 @@ fn main() {
     io.add_method("get_history_transactions", get_cota_history_transactions);
     io.add_method("get_transactions_by_block_number", get_txs_by_block_number);
     io.add_method("get_issuer_info_by_cota_id", get_issuer_info_by_cota_id);
+    io.add_method("get_ccid_info", get_ccid_info);
     io.add_method("get_aggregator_info", get_aggregator_info);
 
     let threads: usize = match env::var("THREADS") {
