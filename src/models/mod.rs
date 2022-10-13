@@ -10,6 +10,7 @@ pub mod helper;
 pub(crate) mod hold;
 pub(crate) mod issuer;
 pub(crate) mod joyid;
+pub(crate) mod registry;
 pub(crate) mod scripts;
 pub(crate) mod withdrawal;
 

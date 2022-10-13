@@ -1,3 +1,4 @@
+use crate::business::helper::address_from_script;
 use crate::models::claim::{get_claim_cota_by_lock_hash, is_exist_in_claim, ClaimDb};
 use crate::models::class::{get_class_info_by_cota_id, ClassInfoDb};
 use crate::models::define::{get_define_cota_by_cota_id, get_define_cota_by_lock_hash, DefineDb};
@@ -18,6 +19,8 @@ use log::debug;
 use super::define::get_lock_hash_by_cota_id;
 use super::extension::leaves::{get_extension_leaves_by_lock_hash, ExtensionLeafDb};
 use super::issuer::{get_issuer_info_by_lock_hash, IssuerInfoDb};
+use super::joyid::{get_joyid_info_by_lock_hash, get_lock_hash_by_nickname};
+use super::registry::get_ccid_lock_script;
 
 type DBAllResult = Result<
     (
@@ -31,18 +34,12 @@ type DBAllResult = Result<
 >;
 
 pub fn get_all_cota_by_lock_hash(lock_hash: [u8; 32]) -> DBAllResult {
-    let defines = get_define_cota_by_lock_hash(lock_hash)?;
-    let holds = get_hold_cota_by_lock_hash(lock_hash, &vec![])?;
-    let withdrawals = get_withdrawal_cota_by_lock_hash(lock_hash, &vec![])?;
-    let claims = get_claim_cota_by_lock_hash(lock_hash)?;
-    let extension_leaves = get_extension_leaves_by_lock_hash(lock_hash)?;
-    Ok((
-        defines.0,
-        holds.0,
-        withdrawals.0,
-        claims.0,
-        extension_leaves.0,
-    ))
+    let (defines, _) = get_define_cota_by_lock_hash(lock_hash)?;
+    let (holds, _) = get_hold_cota_by_lock_hash(lock_hash, &vec![])?;
+    let (withdrawals, _) = get_withdrawal_cota_by_lock_hash(lock_hash, &vec![])?;
+    let (claims, _) = get_claim_cota_by_lock_hash(lock_hash)?;
+    let (extension_leaves, _) = get_extension_leaves_by_lock_hash(lock_hash)?;
+    Ok((defines, holds, withdrawals, claims, extension_leaves))
 }
 
 pub fn get_hold_cota(
@@ -122,8 +119,7 @@ pub fn check_cota_claimed(
     cota_id: [u8; 20],
     index: [u8; 4],
 ) -> Result<(bool, u64), Error> {
-    let lock_hash = blake2b_256(lock_script);
-    check_hold_cota_by_lock_hash(lock_hash, (cota_id, index))
+    check_hold_cota_by_lock_hash(blake2b_256(lock_script), (cota_id, index))
 }
 
 pub fn get_sender_account_by_cota_nft(
@@ -131,11 +127,10 @@ pub fn get_sender_account_by_cota_nft(
     cota_id: [u8; 20],
     token_index: [u8; 4],
 ) -> Result<Option<(String, Vec<u8>)>, Error> {
-    let lock_script_id_opt = get_script_id_by_lock_script(lock_script)?;
-    if lock_script_id_opt.is_none() {
-        return Ok(None);
+    match get_script_id_by_lock_script(lock_script)? {
+        Some(script_id) => get_sender_lock_by_script_id(script_id, cota_id, token_index),
+        None => Ok(None),
     }
-    get_sender_lock_by_script_id(lock_script_id_opt.unwrap(), cota_id, token_index)
 }
 
 pub fn get_define_info_by_cota_id(
@@ -178,4 +173,33 @@ pub fn get_issuer_by_cota_id(cota_id: [u8; 20]) -> Result<([u8; 32], Option<Issu
     let lock_hash = get_lock_hash_by_cota_id(cota_id)?;
     let issuer = get_issuer_info_by_lock_hash(lock_hash)?;
     Ok((lock_hash, issuer))
+}
+
+pub fn get_ccid_account(
+    lock_hash_opt: Option<[u8; 32]>,
+    ccid_opt: Option<u64>,
+    nickname_opt: Option<String>,
+) -> Result<Option<(String, u64, String)>, Error> {
+    if lock_hash_opt.is_none() && ccid_opt.is_none() && nickname_opt.is_none() {
+        return Err(Error::RequestParamTypeError(
+            "lock hash, ccid and nickname cannot be all null".to_string(),
+        ));
+    }
+    let parse_ccid_info = |lock_hash_opt: Option<[u8; 32]>, ccid_opt: Option<u64>| {
+        let result = match get_ccid_lock_script(lock_hash_opt, ccid_opt)? {
+            Some((lock_script, ccid)) => {
+                let joyid_info = get_joyid_info_by_lock_hash(blake2b_256(&lock_script))?;
+                let address = address_from_script(&lock_script)?;
+                joyid_info.map(|info| (address, ccid, info.nickname))
+            }
+            None => None,
+        };
+        Ok(result)
+    };
+    if lock_hash_opt.is_some() || ccid_opt.is_some() {
+        parse_ccid_info(lock_hash_opt, ccid_opt)
+    } else {
+        let lock_hash_ = get_lock_hash_by_nickname(&nickname_opt.unwrap())?;
+        parse_ccid_info(lock_hash_, None)
+    }
 }
