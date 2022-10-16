@@ -306,8 +306,9 @@ pub async fn get_ccid_info(params: Params) -> Result<Value, Error> {
         )),
         None => None,
     };
-    let ccid_info = get_ccid_account(lock_hash_opt, ccid, nickname).map_err(rpc_err)?;
-    parse_ccid_response(ccid_info, tip_number()?).map_err(rpc_err)
+    let (ccid_info, nickname_opt) =
+        get_ccid_account(lock_hash_opt, ccid, nickname).map_err(rpc_err)?;
+    parse_ccid_response(ccid_info, nickname_opt, tip_number()?).map_err(rpc_err)
 }
 
 pub async fn get_aggregator_info(_params: Params) -> Result<Value, Error> {

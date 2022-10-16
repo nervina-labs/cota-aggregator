@@ -179,7 +179,7 @@ pub fn get_ccid_account(
     lock_hash_opt: Option<[u8; 32]>,
     ccid_opt: Option<u64>,
     nickname_opt: Option<String>,
-) -> Result<Option<(String, u64, String)>, Error> {
+) -> Result<(Option<(String, u64)>, Option<String>), Error> {
     if lock_hash_opt.is_none() && ccid_opt.is_none() && nickname_opt.is_none() {
         return Err(Error::RequestParamTypeError(
             "lock hash, ccid and nickname cannot be all null".to_string(),
@@ -188,11 +188,12 @@ pub fn get_ccid_account(
     let parse_ccid_info = |lock_hash_opt: Option<[u8; 32]>, ccid_opt: Option<u64>| {
         let result = match get_ccid_lock_script(lock_hash_opt, ccid_opt)? {
             Some((lock_script, ccid)) => {
-                let joyid_info = get_joyid_info_by_lock_hash(blake2b_256(&lock_script))?;
+                let joyid_nickname = get_joyid_info_by_lock_hash(blake2b_256(&lock_script))?
+                    .map(|info| (info.nickname));
                 let address = address_from_script(&lock_script)?;
-                joyid_info.map(|info| (address, ccid, info.nickname))
+                (Some((address, ccid)), joyid_nickname)
             }
-            None => None,
+            None => (None, None),
         };
         Ok(result)
     };
@@ -200,6 +201,10 @@ pub fn get_ccid_account(
         parse_ccid_info(lock_hash_opt, ccid_opt)
     } else {
         let lock_hash_ = get_lock_hash_by_nickname(&nickname_opt.unwrap())?;
-        parse_ccid_info(lock_hash_, None)
+        if lock_hash_.is_none() {
+            Ok((None, None))
+        } else {
+            parse_ccid_info(lock_hash_, None)
+        }
     }
 }
