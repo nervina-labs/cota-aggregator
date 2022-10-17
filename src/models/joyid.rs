@@ -9,6 +9,7 @@ use crate::schema::sub_key_infos::{
     pub_key as sub_pub_key,
 };
 use crate::utils::error::Error;
+use crate::utils::helper::parse_bytes_n;
 use crate::POOL;
 use diesel::*;
 use log::error;
@@ -97,4 +98,22 @@ pub fn get_joyid_info_by_lock_hash(lock_hash_: [u8; 32]) -> Result<Option<JoyIDI
         sub_keys,
     });
     Ok(joyid_info)
+}
+
+pub fn get_lock_hash_by_nickname(nickname_: &str) -> Result<Option<[u8; 32]>, Error> {
+    let conn = &POOL.clone().get().expect("Mysql pool connection error");
+    let lock_hashes = joy_id_infos
+        .select(lock_hash)
+        .filter(nickname.eq(nickname_.to_string()))
+        .limit(1)
+        .load::<String>(conn)
+        .map_err(|e| {
+            error!("Query lock hash by nickname error: {}", e.to_string());
+            Error::DatabaseQueryError(e.to_string())
+        })?;
+    let lock_hash_ = lock_hashes
+        .get(0)
+        .cloned()
+        .map(|hash| parse_bytes_n::<32>(hash).unwrap());
+    Ok(lock_hash_)
 }

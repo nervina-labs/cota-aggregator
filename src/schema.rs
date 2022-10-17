@@ -272,6 +272,7 @@ table! {
         id -> Bigint,
         block_number -> Unsigned<Bigint>,
         lock_hash -> Char,
+        lock_script_id -> Bigint,
         cota_cell_id -> Unsigned<Bigint>,
         created_at -> Datetime,
         updated_at -> Datetime,
