@@ -21,10 +21,10 @@ pub fn parse_ccid_response(
     }
     match nickname_opt {
         Some(nickname) => {
-            map.insert_str("nickname", nickname);
+            map.insert_str("joyid", nickname);
         }
         None => {
-            map.insert_null("nickname");
+            map.insert_null("joyid");
         }
     }
     map.insert_u64("block_number", block_number);

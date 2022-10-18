@@ -169,9 +169,9 @@ impl FetchJoyIDReq {
 
 #[derive(Clone, Eq, PartialEq)]
 pub struct FetchCcidInfoReq {
-    pub address:  Option<String>,
-    pub ccid:     Option<u64>,
-    pub nickname: Option<String>,
+    pub address: Option<String>,
+    pub ccid:    Option<u64>,
+    pub joyid:   Option<String>,
 }
 
 impl FetchCcidInfoReq {
@@ -184,19 +184,19 @@ impl FetchCcidInfoReq {
             Some(_) => Some(map.get_u64_filed("ccid")?),
             None => None,
         };
-        let nickname = match map.get("nickname") {
-            Some(_) => Some(map.get_str_filed("nickname")?),
+        let joyid = match map.get("joyid") {
+            Some(_) => Some(map.get_str_filed("joyid")?),
             None => None,
         };
-        if address.is_none() && ccid.is_none() && nickname.is_none() {
+        if address.is_none() && ccid.is_none() && joyid.is_none() {
             return Err(Error::RequestParamTypeError(
-                "address, ccid and nickname cannot be all null".to_string(),
+                "address, ccid and joyid cannot be all null".to_string(),
             ));
         }
         Ok(FetchCcidInfoReq {
             address,
             ccid,
-            nickname,
+            joyid,
         })
     }
 }
