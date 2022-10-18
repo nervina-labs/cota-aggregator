@@ -298,7 +298,7 @@ pub async fn get_ccid_info(params: Params) -> Result<Value, Error> {
     let FetchCcidInfoReq {
         address,
         ccid,
-        nickname,
+        joyid,
     } = FetchCcidInfoReq::from_map(&map).map_err(rpc_err)?;
     let lock_hash_opt = match address {
         Some(addr) => Some(blake2b_256(
@@ -306,9 +306,8 @@ pub async fn get_ccid_info(params: Params) -> Result<Value, Error> {
         )),
         None => None,
     };
-    let (ccid_info, nickname_opt) =
-        get_ccid_account(lock_hash_opt, ccid, nickname).map_err(rpc_err)?;
-    parse_ccid_response(ccid_info, nickname_opt, tip_number()?).map_err(rpc_err)
+    let (ccid_info, joyid_opt) = get_ccid_account(lock_hash_opt, ccid, joyid).map_err(rpc_err)?;
+    parse_ccid_response(ccid_info, joyid_opt, tip_number()?).map_err(rpc_err)
 }
 
 pub async fn get_aggregator_info(_params: Params) -> Result<Value, Error> {
