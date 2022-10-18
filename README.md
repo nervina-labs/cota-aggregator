@@ -916,7 +916,7 @@ sub_keys - The joyid metadata sub public keys
         "description":"Web3 Developer",
         "extension":"",
         "name":"Dylan",
-        "nickname":"Dylan#2923",
+        "joyid":"Dylan#2923",
         "pub_key":"650e48cf029c8a04788c02d7d88bad7b62918714137d0cd486b5b3aff53d0c2baecabd8d23107933f85fdf13cd814a0ba3d1848329b0504d7134a88962e9bde3",
         "sub_keys":[
             {
