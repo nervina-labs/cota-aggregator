@@ -11,7 +11,6 @@ use crate::utils::error::Error;
 use cota_smt::common::*;
 use cota_smt::extension::{
     ExtensionEntries, ExtensionEntriesBuilder, ExtensionLeavesBuilder, ExtensionVecBuilder,
-    SocialEntryOptBuilder, SubKeyEntryOptBuilder,
 };
 use cota_smt::molecule::prelude::*;
 use cota_smt::smt::{blake2b_256, H256};
@@ -76,8 +75,8 @@ pub async fn generate_extension_smt(
                 .proof(merkel_proof_bytes)
                 .build(),
         )
-        .subkey(SubKeyEntryOptBuilder::default().build())
-        .social(SocialEntryOptBuilder::default().build())
+        .sub_type(Byte6::from_slice("subkey".as_bytes()).unwrap())
+        .raw_data(Bytes::default())
         .build();
 
     Ok((*smt.root(), extension_entries))

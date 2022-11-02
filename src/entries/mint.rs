@@ -132,7 +132,6 @@ pub async fn generate_mint_smt(
     diff_time(start_time, "Generate mint smt proof");
 
     let merkel_proof_vec: Vec<u8> = mint_merkle_proof_compiled.into();
-    debug!("mint proof size: {}", merkel_proof_vec.len());
     let merkel_proof_bytes = BytesBuilder::default()
         .extend(merkel_proof_vec.iter().map(|v| Byte::from(*v)))
         .build();

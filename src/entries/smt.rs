@@ -175,6 +175,7 @@ fn generate_mysql_smt<'a>(smt: &mut CotaSMT<'a>, lock_hash: [u8; 32]) -> Result<
         let value = H256::from(extension_leaf.value);
         leaves.push((key, value));
     }
+    debug!("history leaves count: {}", leaves.len());
     if !leaves.is_empty() {
         smt.update_all(leaves).expect("SMT update leave error");
     }
