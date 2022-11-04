@@ -648,6 +648,7 @@ dependencies = [
  "env_logger",
  "failure",
  "hex",
+ "joyid-smt",
  "jsonrpc-core",
  "jsonrpc-http-server",
  "lazy_static",
@@ -1264,6 +1265,17 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "af25a77299a7f711a01975c35a6a424eb6862092cc2d6c72c4ed6cbc56dfc1fa"
 dependencies = [
  "libc",
+]
+
+[[package]]
+name = "joyid-smt"
+version = "0.2.0"
+source = "git+https://github.com/nervina-labs/joyid-smt#dc5c58b1c493ebb6a6d61dae5cdf202eaf73c516"
+dependencies = [
+ "blake2b-ref 0.3.1",
+ "cfg-if 1.0.0",
+ "ckb-types 0.101.7",
+ "sparse-merkle-tree",
 ]
 
 [[package]]
