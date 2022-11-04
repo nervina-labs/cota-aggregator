@@ -37,12 +37,12 @@ pub async fn generate_subkey_unlock_smt(
     with_lock(lock_hash, || generate_mysql_smt(&mut smt, lock_hash))?;
 
     let subkey_merkle_proof = smt.merkle_proof(vec![key]).map_err(|e| {
-        error!("Extension Subkey SMT proof error: {:?}", e.to_string());
-        Error::SMTProofError("Extension Subkey".to_string())
+        error!("Subkey unlock SMT proof error: {:?}", e.to_string());
+        Error::SMTProofError("Subkey unlock".to_string())
     })?;
     let subkey_merkle_proof_compiled = subkey_merkle_proof.compile(vec![key]).map_err(|e| {
-        error!("Extension Subkey SMT proof error: {:?}", e.to_string());
-        Error::SMTProofError("Extension Subkey".to_string())
+        error!("Subkey unlock SMT proof error: {:?}", e.to_string());
+        Error::SMTProofError("Subkey unlock".to_string())
     })?;
 
     let merkel_proof_vec: Vec<u8> = subkey_merkle_proof_compiled.into();
