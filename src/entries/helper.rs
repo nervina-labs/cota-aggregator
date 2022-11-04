@@ -7,7 +7,6 @@ use crate::utils::error::Error;
 use cota_smt::common::{Uint16, Uint32, *};
 use cota_smt::molecule::prelude::*;
 use cota_smt::smt::{blake2b_256, H256};
-use rand::{thread_rng, Rng};
 use serde_json::from_str;
 use std::env;
 use std::sync::Arc;
@@ -184,21 +183,6 @@ pub fn generate_empty_value() -> (Byte32, H256) {
     let empty_value = Byte32Builder::default().set([Byte::from(0u8); 32]).build();
     let value = H256::zero();
     (empty_value, value)
-}
-
-pub fn generate_extension_key() -> (Byte32, H256) {
-    let mut rng = thread_rng();
-    let mut key: [u8; 32] = rng.gen::<[u8; 32]>().into();
-    key[0..2].copy_from_slice(&[0xFF, 0x00]);
-    let ext_key = Byte32::from_slice(key.as_slice()).unwrap();
-    (ext_key, H256::from(key))
-}
-
-pub fn generate_extension_value() -> (Byte32, H256) {
-    let mut rng = thread_rng();
-    let value: H256 = rng.gen::<[u8; 32]>().into();
-    let ext_value = Byte32::from_slice(value.as_slice()).unwrap();
-    (ext_value, value)
 }
 
 pub fn generate_cota_index(cota_id: [u8; 20], token_index: [u8; 4]) -> Vec<u8> {

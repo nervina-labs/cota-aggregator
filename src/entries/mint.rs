@@ -15,7 +15,7 @@ use cota_smt::common::*;
 use cota_smt::mint::{MintCotaNFTV1Entries, MintCotaNFTV1EntriesBuilder};
 use cota_smt::molecule::prelude::*;
 use cota_smt::smt::{blake2b_256, H256};
-use log::{debug, error};
+use log::error;
 use molecule::hex_string;
 
 pub async fn generate_mint_smt(

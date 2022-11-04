@@ -76,7 +76,7 @@ pub fn generate_history_smt<'a>(
     generate_mysql_smt(smt, lock_hash)
 }
 
-fn generate_mysql_smt<'a>(smt: &mut CotaSMT<'a>, lock_hash: [u8; 32]) -> Result<(), Error> {
+pub fn generate_mysql_smt<'a>(smt: &mut CotaSMT<'a>, lock_hash: [u8; 32]) -> Result<(), Error> {
     let start_time = Local::now().timestamp_millis();
     let (defines, holds, withdrawals, claims, extension_leaves) =
         get_all_cota_by_lock_hash(lock_hash)?;
