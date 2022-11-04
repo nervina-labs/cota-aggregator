@@ -1,5 +1,6 @@
 pub(crate) mod claim;
 pub(crate) mod define;
+pub(crate) mod extension;
 pub(crate) mod fetch;
 mod helper;
 pub(crate) mod mint;

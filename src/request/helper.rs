@@ -27,8 +27,11 @@ pub fn parse_vec_map<T: ReqParser>(map: &Map<String, Value>, key: &str) -> Resul
 pub trait HexParser {
     fn get_hex_bytes_filed<const N: usize>(&self, key: &str) -> Result<[u8; N], Error>;
     fn get_hex_vec_filed(&self, key: &str) -> Result<Vec<u8>, Error>;
+    fn get_int_filed(&self, key: &str) -> Result<&str, Error>;
     fn get_i64_filed(&self, key: &str) -> Result<i64, Error>;
     fn get_u64_filed(&self, key: &str) -> Result<u64, Error>;
+    fn get_u32_filed(&self, key: &str) -> Result<u32, Error>;
+    fn get_u16_filed(&self, key: &str) -> Result<u16, Error>;
     fn get_u8_filed(&self, key: &str) -> Result<u8, Error>;
     fn get_str_filed(&self, key: &str) -> Result<String, Error>;
 }
@@ -69,14 +72,18 @@ impl HexParser for Map<String, Value> {
         Ok(result)
     }
 
-    fn get_i64_filed(&self, key: &str) -> Result<i64, Error> {
+    fn get_int_filed(&self, key: &str) -> Result<&str, Error> {
         let v = self
             .get(key)
             .ok_or(Error::RequestParamNotFound(key.to_owned()))?;
         if !v.is_string() {
             return Err(Error::RequestParamTypeError(key.to_owned()));
         }
-        let result: i64 = v.as_str().unwrap().parse().unwrap();
+        Ok(v.as_str().unwrap())
+    }
+
+    fn get_i64_filed(&self, key: &str) -> Result<i64, Error> {
+        let result: i64 = self.get_int_filed(key)?.parse().unwrap();
         if result < 0 {
             return Err(Error::RequestParamTypeError(key.to_owned()));
         }
@@ -84,25 +91,19 @@ impl HexParser for Map<String, Value> {
     }
 
     fn get_u64_filed(&self, key: &str) -> Result<u64, Error> {
-        let v = self
-            .get(key)
-            .ok_or(Error::RequestParamNotFound(key.to_owned()))?;
-        if !v.is_string() {
-            return Err(Error::RequestParamTypeError(key.to_owned()));
-        }
-        let result: u64 = v.as_str().unwrap().parse().unwrap();
-        Ok(result)
+        Ok(self.get_int_filed(key)?.parse().unwrap())
+    }
+
+    fn get_u32_filed(&self, key: &str) -> Result<u32, Error> {
+        Ok(self.get_int_filed(key)?.parse().unwrap())
+    }
+
+    fn get_u16_filed(&self, key: &str) -> Result<u16, Error> {
+        Ok(self.get_int_filed(key)?.parse().unwrap())
     }
 
     fn get_u8_filed(&self, key: &str) -> Result<u8, Error> {
-        let v = self
-            .get(key)
-            .ok_or(Error::RequestParamNotFound(key.to_owned()))?;
-        if !v.is_string() {
-            return Err(Error::RequestParamTypeError(key.to_owned()));
-        }
-        let result: u8 = v.as_str().unwrap().parse().unwrap();
-        Ok(result)
+        Ok(self.get_int_filed(key)?.parse().unwrap())
     }
 
     fn get_str_filed(&self, key: &str) -> Result<String, Error> {
