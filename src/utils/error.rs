@@ -40,6 +40,9 @@ pub enum Error {
     #[fail(display = "The NFT of cota_id and token_index has no transactions")]
     CotaIdAndTokenIndexHasNoTxs,
 
+    #[fail(display = "The subkey not found")]
+    SubkeyLeafNotFound,
+
     #[fail(display = "CKB Script error")]
     CKBScriptError,
 
@@ -106,6 +109,7 @@ impl Error {
             Self::CotaIdAndTokenIndexHasNoTxs => {
                 "The NFT of cota_id and token_index has no transactions".into()
             }
+            Self::SubkeyLeafNotFound => "The subkey not found".into(),
             Self::CKBScriptError => "CKB Script error".into(),
             Self::DatabaseQueryError(msg) => format!("Database query error: {}", msg),
             Self::SMTProofError(msg) => format!("'{}' SMT proof error", msg),
