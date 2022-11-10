@@ -21,6 +21,7 @@ pub struct JoyIDInfo {
     pub avatar:        String,
     pub description:   String,
     pub extension:     String,
+    #[serde(rename(serialize = "joyid"))]
     pub nickname:      String,
     pub pub_key:       String,
     pub credential_id: String,

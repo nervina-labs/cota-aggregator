@@ -893,7 +893,7 @@ avatar - The joyid metadata avatar
 name - The joyid metadata name
 description - The joyid metadata description
 extension - The joyid metadata extension
-nickname - The joyid metadata nickname
+joyid - The joyid metadata joyid
 pub_key - The joyid metadata public key
 credential_id - The joyid metadata WebAuthn credential_id
 alg - The joyid metadata WebAuthn algorithm
@@ -916,7 +916,7 @@ sub_keys - The joyid metadata sub public keys
         "description":"Web3 Developer",
         "extension":"",
         "name":"Dylan",
-        "nickname":"Dylan#2923",
+        "joyid":"Dylan#2923",
         "pub_key":"650e48cf029c8a04788c02d7d88bad7b62918714137d0cd486b5b3aff53d0c2baecabd8d23107933f85fdf13cd814a0ba3d1848329b0504d7134a88962e9bde3",
         "sub_keys":[
             {
@@ -937,16 +937,16 @@ sub_keys - The joyid metadata sub public keys
 
 ### get_ccid_info
 
-Get CCID, address and nickname of joyid user
+Get CCID, address and joyid of joyid account
 
 #### Parameters
 
 ```
 address - The joyid ckb address
 ccid - The CoTA Cell Id
-nickname - The joyid nickname like cipher#1234
+joyid - The joyid like cipher#1234
 ```
-> At least one of address, ccid and nickname must be non-null
+> At least one of address, ccid and joyid must be non-null
 
 ```shell
 echo '{
@@ -956,7 +956,7 @@ echo '{
     "params":{
         "address": "ckt1qpexcgzey7lepv7per00j7fn8edqf78c9c2cu234mm595e6s6wx0zqgp4e67ve5ek37kc9udt55z4m547v7qjpt74ev2uq",
         "ccid": "2923",
-        "nickname": "Dylan#2923"
+        "joyid": "Dylan#2923"
     }
 }' \
 | tr -d '\n' \
@@ -970,7 +970,7 @@ http://127.0.0.1:3030
 block_number - The latest block number of cota-syncer
 address - The joyid ckb address
 ccid - The CoTA Cell Id
-nickname - The joyid nickname like cipher#1234
+joyid - The joyid like cipher#1234
 ```
 
 ```json
@@ -980,7 +980,7 @@ nickname - The joyid nickname like cipher#1234
         "address":"ckt1qpexcgzey7lepv7per00j7fn8edqf78c9c2cu234mm595e6s6wx0zqgp4e67ve5ek37kc9udt55z4m547v7qjpt74ev2uq",
         "block_number":7030848,
         "ccid":2923,
-        "nickname":"Dylan#2923"
+        "joyid":"Dylan#2923"
     },
     "id":2
 }

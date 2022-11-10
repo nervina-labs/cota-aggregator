@@ -175,6 +175,7 @@ pub fn get_issuer_by_cota_id(cota_id: [u8; 20]) -> Result<([u8; 32], Option<Issu
     Ok((lock_hash, issuer))
 }
 
+// joyid is equivalent to nickname
 pub fn get_ccid_account(
     lock_hash_opt: Option<[u8; 32]>,
     ccid_opt: Option<u64>,
