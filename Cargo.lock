@@ -1269,8 +1269,8 @@ dependencies = [
 
 [[package]]
 name = "joyid-smt"
-version = "0.2.0"
-source = "git+https://github.com/nervina-labs/joyid-smt#dc5c58b1c493ebb6a6d61dae5cdf202eaf73c516"
+version = "0.4.0"
+source = "git+https://github.com/nervina-labs/joyid-smt?tag=v0.4.0#88e042c59d1c9f8de7f3570e9522b8cdbd12f058"
 dependencies = [
  "blake2b-ref 0.3.1",
  "cfg-if 1.0.0",
