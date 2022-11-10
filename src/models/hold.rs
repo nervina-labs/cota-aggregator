@@ -16,8 +16,8 @@ use serde::{Deserialize, Serialize};
 struct HoldCotaNft {
     pub cota_id:        String,
     pub token_index:    u32,
-    pub state:          u8,
     pub configure:      u8,
+    pub state:          u8,
     pub characteristic: String,
 }
 
@@ -25,8 +25,8 @@ struct HoldCotaNft {
 pub struct HoldDb {
     pub cota_id:        [u8; 20],
     pub token_index:    [u8; 4],
-    pub state:          u8,
     pub configure:      u8,
+    pub state:          u8,
     pub characteristic: [u8; 20],
 }
 
