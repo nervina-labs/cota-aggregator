@@ -1,4 +1,6 @@
-table! {
+// @generated automatically by Diesel CLI.
+
+diesel::table! {
     check_infos (id) {
         id -> Bigint,
         check_type -> Unsigned<Tinyint>,
@@ -9,7 +11,7 @@ table! {
     }
 }
 
-table! {
+diesel::table! {
     claimed_cota_nft_kv_pairs (id) {
         id -> Bigint,
         block_number -> Unsigned<Bigint>,
@@ -25,42 +27,7 @@ table! {
     }
 }
 
-table! {
-    class_info_versions (id) {
-        id -> Bigint,
-        old_block_number -> Unsigned<Bigint>,
-        block_number -> Unsigned<Bigint>,
-        cota_id -> Char,
-        old_version -> Varchar,
-        version -> Varchar,
-        old_name -> Varchar,
-        name -> Varchar,
-        old_symbol -> Varchar,
-        symbol -> Varchar,
-        old_description -> Varchar,
-        description -> Varchar,
-        old_image -> Varchar,
-        image -> Varchar,
-        old_audio -> Varchar,
-        audio -> Varchar,
-        old_video -> Varchar,
-        video -> Varchar,
-        old_model -> Varchar,
-        model -> Varchar,
-        old_characteristic -> Varchar,
-        characteristic -> Varchar,
-        old_properties -> Varchar,
-        properties -> Varchar,
-        old_localization -> Varchar,
-        localization -> Varchar,
-        action_type -> Unsigned<Tinyint>,
-        tx_index -> Unsigned<Integer>,
-        created_at -> Datetime,
-        updated_at -> Datetime,
-    }
-}
-
-table! {
+diesel::table! {
     class_infos (id) {
         id -> Bigint,
         block_number -> Unsigned<Bigint>,
@@ -81,25 +48,7 @@ table! {
     }
 }
 
-table! {
-    define_cota_nft_kv_pair_versions (id) {
-        id -> Bigint,
-        old_block_number -> Unsigned<Bigint>,
-        block_number -> Unsigned<Bigint>,
-        cota_id -> Char,
-        total -> Unsigned<Integer>,
-        old_issued -> Unsigned<Integer>,
-        issued -> Unsigned<Integer>,
-        configure -> Unsigned<Tinyint>,
-        lock_hash -> Char,
-        action_type -> Unsigned<Tinyint>,
-        tx_index -> Unsigned<Integer>,
-        created_at -> Datetime,
-        updated_at -> Datetime,
-    }
-}
-
-table! {
+diesel::table! {
     define_cota_nft_kv_pairs (id) {
         id -> Bigint,
         block_number -> Unsigned<Bigint>,
@@ -114,23 +63,7 @@ table! {
     }
 }
 
-table! {
-    extension_kv_pair_versions (id) {
-        id -> Bigint,
-        old_block_number -> Unsigned<Bigint>,
-        block_number -> Unsigned<Bigint>,
-        key -> Char,
-        value -> Char,
-        old_value -> Char,
-        lock_hash -> Char,
-        action_type -> Unsigned<Tinyint>,
-        tx_index -> Unsigned<Integer>,
-        created_at -> Datetime,
-        updated_at -> Datetime,
-    }
-}
-
-table! {
+diesel::table! {
     extension_kv_pairs (id) {
         id -> Bigint,
         block_number -> Unsigned<Bigint>,
@@ -143,28 +76,7 @@ table! {
     }
 }
 
-table! {
-    hold_cota_nft_kv_pair_versions (id) {
-        id -> Bigint,
-        old_block_number -> Unsigned<Bigint>,
-        block_number -> Unsigned<Bigint>,
-        cota_id -> Char,
-        token_index -> Unsigned<Integer>,
-        old_state -> Unsigned<Tinyint>,
-        state -> Unsigned<Tinyint>,
-        configure -> Unsigned<Tinyint>,
-        old_characteristic -> Char,
-        characteristic -> Char,
-        old_lock_hash -> Char,
-        lock_hash -> Char,
-        action_type -> Unsigned<Tinyint>,
-        tx_index -> Unsigned<Integer>,
-        created_at -> Datetime,
-        updated_at -> Datetime,
-    }
-}
-
-table! {
+diesel::table! {
     hold_cota_nft_kv_pairs (id) {
         id -> Bigint,
         block_number -> Unsigned<Bigint>,
@@ -180,30 +92,7 @@ table! {
     }
 }
 
-table! {
-    issuer_info_versions (id) {
-        id -> Bigint,
-        old_block_number -> Unsigned<Bigint>,
-        block_number -> Unsigned<Bigint>,
-        lock_hash -> Char,
-        old_version -> Varchar,
-        version -> Varchar,
-        old_name -> Varchar,
-        name -> Varchar,
-        old_avatar -> Varchar,
-        avatar -> Varchar,
-        old_description -> Varchar,
-        description -> Varchar,
-        old_localization -> Varchar,
-        localization -> Varchar,
-        action_type -> Unsigned<Tinyint>,
-        tx_index -> Unsigned<Integer>,
-        created_at -> Datetime,
-        updated_at -> Datetime,
-    }
-}
-
-table! {
+diesel::table! {
     issuer_infos (id) {
         id -> Bigint,
         block_number -> Unsigned<Bigint>,
@@ -218,36 +107,7 @@ table! {
     }
 }
 
-table! {
-    joy_id_info_versions (id) {
-        id -> Bigint,
-        old_block_number -> Unsigned<Bigint>,
-        block_number -> Unsigned<Bigint>,
-        lock_hash -> Varchar,
-        old_version -> Varchar,
-        version -> Varchar,
-        old_name -> Varchar,
-        name -> Varchar,
-        old_avatar -> Varchar,
-        avatar -> Varchar,
-        old_description -> Varchar,
-        description -> Varchar,
-        old_extension -> Varchar,
-        extension -> Varchar,
-        old_nickname -> Varchar,
-        nickname -> Varchar,
-        pub_key -> Char,
-        credential_id -> Varchar,
-        alg -> Char,
-        cota_cell_id -> Char,
-        action_type -> Unsigned<Tinyint>,
-        tx_index -> Unsigned<Integer>,
-        created_at -> Datetime,
-        updated_at -> Datetime,
-    }
-}
-
-table! {
+diesel::table! {
     joy_id_infos (id) {
         id -> Bigint,
         block_number -> Unsigned<Bigint>,
@@ -261,13 +121,14 @@ table! {
         pub_key -> Char,
         credential_id -> Varchar,
         alg -> Char,
+        front_end -> Varchar,
         cota_cell_id -> Char,
         created_at -> Datetime,
         updated_at -> Datetime,
     }
 }
 
-table! {
+diesel::table! {
     register_cota_kv_pairs (id) {
         id -> Bigint,
         block_number -> Unsigned<Bigint>,
@@ -279,14 +140,14 @@ table! {
     }
 }
 
-table! {
+diesel::table! {
     schema_migrations (version) {
         version -> Bigint,
         dirty -> Bool,
     }
 }
 
-table! {
+diesel::table! {
     scripts (id) {
         id -> Bigint,
         code_hash -> Char,
@@ -299,7 +160,22 @@ table! {
     }
 }
 
-table! {
+diesel::table! {
+    social_kv_pairs (id) {
+        id -> Bigint,
+        block_number -> Unsigned<Bigint>,
+        lock_hash -> Char,
+        lock_hash_crc -> Unsigned<Integer>,
+        recovery_mode -> Tinyint,
+        must -> Tinyint,
+        total -> Tinyint,
+        signers -> Text,
+        created_at -> Datetime,
+        updated_at -> Datetime,
+    }
+}
+
+diesel::table! {
     sub_key_infos (id) {
         id -> Bigint,
         block_number -> Unsigned<Bigint>,
@@ -312,7 +188,7 @@ table! {
     }
 }
 
-table! {
+diesel::table! {
     withdraw_cota_nft_kv_pairs (id) {
         id -> Bigint,
         block_number -> Unsigned<Bigint>,
@@ -335,24 +211,19 @@ table! {
     }
 }
 
-allow_tables_to_appear_in_same_query!(
+diesel::allow_tables_to_appear_in_same_query!(
     check_infos,
     claimed_cota_nft_kv_pairs,
-    class_info_versions,
     class_infos,
-    define_cota_nft_kv_pair_versions,
     define_cota_nft_kv_pairs,
-    extension_kv_pair_versions,
     extension_kv_pairs,
-    hold_cota_nft_kv_pair_versions,
     hold_cota_nft_kv_pairs,
-    issuer_info_versions,
     issuer_infos,
-    joy_id_info_versions,
     joy_id_infos,
     register_cota_kv_pairs,
     schema_migrations,
     scripts,
+    social_kv_pairs,
     sub_key_infos,
     withdraw_cota_nft_kv_pairs,
 );
