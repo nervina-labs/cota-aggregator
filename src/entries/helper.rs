@@ -3,12 +3,15 @@ use crate::entries::constants::{
     DEFINE_NFT_SMT_TYPE, HOLD_NFT_SMT_TYPE, WITHDRAWAL_NFT_SMT_TYPE,
 };
 use crate::entries::SMT_LOCK;
-use crate::request::extension::ExtSubkey;
+use crate::request::extension::{ExtSocialReq, ExtSubkey};
 use crate::utils::error::Error;
 use cota_smt::common::{Uint16, Uint32, *};
 use cota_smt::molecule::prelude::*;
 use cota_smt::smt::{blake2b_256, H256};
-use joyid_smt::joyid::{SubKey, SubValue};
+use joyid_smt::common;
+use joyid_smt::joyid::{
+    LockScriptVecBuilder, SocialKey, SocialValue, SocialValueBuilder, SubKey, SubValue,
+};
 use serde_json::from_str;
 use std::env;
 use std::sync::Arc;
@@ -205,6 +208,37 @@ pub fn generate_ext_subkey_value(subkey: &ExtSubkey) -> (SubValue, H256) {
     (sub_value, H256::from(ext_value))
 }
 
+pub fn generate_ext_social_key() -> (SocialKey, H256) {
+    let mut ext_key = [0x00u8; 32];
+    ext_key[0] = 0xFF;
+    ext_key[2..8].copy_from_slice("social".as_bytes());
+    let social_key = SocialKey::from_slice(&ext_key).unwrap();
+    (social_key, H256::from(ext_key))
+}
+
+pub fn generate_ext_social_value(social: &ExtSocialReq) -> (SocialValue, H256) {
+    let ExtSocialReq {
+        recovery_mode,
+        must,
+        total,
+        signers,
+        ..
+    } = social;
+    let friends: Vec<common::Bytes> = signers
+        .into_iter()
+        .map(|signer| vec_to_bytes(&signer))
+        .collect();
+    let signers = LockScriptVecBuilder::default().set(friends).build();
+    let social_value = SocialValueBuilder::default()
+        .recovery_mode(Byte::from_slice(&[*recovery_mode]).unwrap())
+        .must(Byte::from_slice(&[*must]).unwrap())
+        .total(Byte::from_slice(&[*total]).unwrap())
+        .signers(signers)
+        .build();
+    let value = H256::from(blake2b_256(social_value.as_slice()));
+    (social_value, value)
+}
+
 pub fn generate_cota_index(cota_id: [u8; 20], token_index: [u8; 4]) -> Vec<u8> {
     let mut cota_id_index = vec![];
     cota_id_index.extend(&cota_id);
@@ -247,4 +281,10 @@ pub fn get_value_padding_block_height() -> u64 {
     } else {
         BLOCK_HEIGHT_VALUE_PADDING_TESTNET
     }
+}
+
+fn vec_to_bytes(values: &[u8]) -> joyid_smt::common::Bytes {
+    joyid_smt::common::BytesBuilder::default()
+        .set(values.iter().map(|v| Byte::from(*v)).collect())
+        .build()
 }
