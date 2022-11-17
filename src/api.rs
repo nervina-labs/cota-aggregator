@@ -3,7 +3,7 @@ use crate::business::transaction::{get_cota_txs_by_block_number, get_history_tra
 use crate::entries::claim::generate_claim_smt;
 use crate::entries::claim_update::generate_claim_update_smt;
 use crate::entries::define::generate_define_smt;
-use crate::entries::extension::generate_ext_subkey_smt;
+use crate::entries::extension::{generate_ext_social_smt, generate_ext_subkey_smt};
 use crate::entries::mint::generate_mint_smt;
 use crate::entries::subkey::generate_subkey_unlock_smt;
 use crate::entries::transfer::generate_transfer_smt;
@@ -20,7 +20,7 @@ use crate::models::issuer::get_issuer_info_by_lock_hash;
 use crate::models::joyid::get_joyid_info_by_lock_hash;
 use crate::request::claim::{ClaimReq, ClaimUpdateReq, IsClaimedReq};
 use crate::request::define::{DefineInfoReq, DefineReq};
-use crate::request::extension::ExtSubkeysReq;
+use crate::request::extension::{ExtSocialReq, ExtSubkeysReq};
 use crate::request::fetch::{
     FetchCcidInfoReq, FetchCountReq, FetchHistoryTxsReq, FetchIssuerInfoReq, FetchIssuerReq,
     FetchJoyIDReq, FetchReq, FetchTxsByBlockNumberReq,
@@ -149,6 +149,16 @@ pub async fn extension_subkey_rpc(params: Params, db: &RocksDB) -> Result<Value,
         .await
         .map_err(rpc_err)?;
     Ok(parse_extension_smt(ext_subkey, tip_number()?))
+}
+
+pub async fn extension_social_rpc(params: Params, db: &RocksDB) -> Result<Value, Error> {
+    info!("Extension social request: {:?}", params);
+    let map: Map<String, Value> = Params::parse(params)?;
+    let social_req = ExtSocialReq::from_map(&map).map_err(rpc_err)?;
+    let ext_social = generate_ext_social_smt(db, social_req)
+        .await
+        .map_err(rpc_err)?;
+    Ok(parse_extension_smt(ext_social, tip_number()?))
 }
 
 pub async fn fetch_hold_rpc(params: Params) -> Result<Value, Error> {

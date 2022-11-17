@@ -4,7 +4,7 @@ extern crate diesel;
 extern crate dotenv;
 
 use crate::api::*;
-use crate::models::helper::{init_connection_pool, SqlConnectionPool};
+use crate::models::helper::init_connection_pool;
 use crate::smt::db::db::RocksDB;
 use dotenv::dotenv;
 use jsonrpc_http_server::jsonrpc_core::serde_json::from_str;
@@ -12,6 +12,7 @@ use jsonrpc_http_server::jsonrpc_core::IoHandler;
 use jsonrpc_http_server::ServerBuilder;
 use lazy_static::lazy_static;
 use log::info;
+use models::SqlConnectionPool;
 use std::env;
 
 pub mod api;
@@ -70,6 +71,9 @@ fn main() {
     });
     io.add_method("generate_subkey_unlock_smt", |req| {
         subkey_unlock_rpc(req, &DB)
+    });
+    io.add_method("generate_extension_social_smt", |req| {
+        extension_social_rpc(req, &DB)
     });
     io.add_method("is_claimed", is_claimed_rpc);
     io.add_method("get_cota_nft_sender", get_sender_account);
