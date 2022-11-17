@@ -1,4 +1,4 @@
-use super::helper::{parse_vec_map, HexParser, ReqParser};
+use super::helper::{parse_vec_bytes, parse_vec_map, HexParser, ReqParser};
 use crate::utils::error::Error;
 use jsonrpc_http_server::jsonrpc_core::serde_json::Map;
 use jsonrpc_http_server::jsonrpc_core::Value;
@@ -41,6 +41,42 @@ impl ExtSubkeysReq {
             lock_script: map.get_hex_vec_filed("lock_script")?,
             subkeys: parse_vec_map::<ExtSubkey>(map, "subkeys")?,
             ext_action,
+        })
+    }
+}
+
+#[derive(Clone, Eq, PartialEq)]
+pub struct ExtSocialReq {
+    pub lock_script:   Vec<u8>,
+    pub ext_action:    u8,
+    pub recovery_mode: u8,
+    pub must:          u8,
+    pub total:         u8,
+    pub signers:       Vec<Vec<u8>>,
+}
+
+impl ExtSocialReq {
+    pub fn from_map(map: &Map<String, Value>) -> Result<Self, Error> {
+        let ext_action = map.get_u8_filed("ext_action")?;
+        if ext_action != EXT_ACTION_ADD && ext_action != EXT_ACTION_UPDATE {
+            return Err(Error::CKBRPCError("Extension action error".to_string()));
+        }
+        let must = map.get_u8_filed("must")?;
+        let total = map.get_u8_filed("total")?;
+        let signers = parse_vec_bytes(map, "friends")?;
+        let signers_len = signers.len() as u8;
+        if signers_len != total || must > total {
+            return Err(Error::CKBRPCError(
+                "Signers length, must and total error".to_string(),
+            ));
+        }
+        Ok(ExtSocialReq {
+            lock_script: map.get_hex_vec_filed("lock_script")?,
+            recovery_mode: map.get_u8_filed("recovery_mode")?,
+            ext_action,
+            must,
+            total,
+            signers,
         })
     }
 }

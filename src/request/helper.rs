@@ -24,6 +24,23 @@ pub fn parse_vec_map<T: ReqParser>(map: &Map<String, Value>, key: &str) -> Resul
     Ok(vec)
 }
 
+pub fn parse_vec_bytes(map: &Map<String, Value>, key: &str) -> Result<Vec<Vec<u8>>, Error> {
+    let value = map
+        .get(key)
+        .ok_or(Error::RequestParamNotFound(key.to_owned()))?;
+    if !value.is_array() {
+        return Err(Error::RequestParamTypeError(key.to_owned()));
+    }
+    let mut vec: Vec<Vec<u8>> = Vec::new();
+    for element in value.as_array().unwrap() {
+        if !element.is_string() {
+            return Err(Error::RequestParamTypeError(key.to_owned()));
+        }
+        vec.push(parse_bytes(element.as_str().unwrap().to_owned())?);
+    }
+    Ok(vec)
+}
+
 pub trait HexParser {
     fn get_hex_bytes_filed<const N: usize>(&self, key: &str) -> Result<[u8; N], Error>;
     fn get_hex_vec_filed(&self, key: &str) -> Result<Vec<u8>, Error>;
