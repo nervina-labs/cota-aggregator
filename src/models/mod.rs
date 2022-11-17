@@ -1,4 +1,6 @@
-use crate::utils::error::Error;
+use crate::{utils::error::Error, POOL};
+use diesel::mysql::MysqlConnection;
+use diesel::r2d2::{ConnectionManager, Pool, PooledConnection};
 
 pub(crate) mod block;
 pub(crate) mod claim;
@@ -16,3 +18,10 @@ pub(crate) mod withdrawal;
 
 type DBResult<T> = Result<(Vec<T>, u64), Error>;
 type DBTotalResult<T> = Result<(Vec<T>, i64, u64), Error>;
+
+pub type SqlConnectionPool = Pool<ConnectionManager<MysqlConnection>>;
+pub type SqlPooledConnection = PooledConnection<ConnectionManager<MysqlConnection>>;
+
+pub fn get_conn() -> SqlPooledConnection {
+    POOL.clone().get().expect("Mysql pool connection error")
+}

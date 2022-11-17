@@ -1,8 +1,7 @@
-use super::scripts::get_script_map_by_ids;
+use super::{get_conn, scripts::get_script_map_by_ids};
 use crate::schema::register_cota_kv_pairs::dsl::register_cota_kv_pairs;
 use crate::schema::register_cota_kv_pairs::*;
 use crate::utils::error::Error;
-use crate::POOL;
 use diesel::*;
 use log::error;
 use serde::{Deserialize, Serialize};
@@ -21,7 +20,7 @@ pub fn get_ccid_lock_script(
             "lock hash and ccid cannot all be empty".to_string(),
         ));
     }
-    let conn = &POOL.clone().get().expect("Mysql pool connection error");
+    let conn = &get_conn();
     let accounts = match lock_hash_opt {
         Some(lock_hash_) => register_cota_kv_pairs
             .select((cota_cell_id, lock_script_id))

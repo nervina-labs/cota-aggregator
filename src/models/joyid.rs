@@ -10,10 +10,11 @@ use crate::schema::sub_key_infos::{
 };
 use crate::utils::error::Error;
 use crate::utils::helper::parse_bytes_n;
-use crate::POOL;
 use diesel::*;
 use log::error;
 use serde::{Deserialize, Serialize};
+
+use super::get_conn;
 
 #[derive(Serialize, Deserialize, Debug, Clone, Eq, PartialEq, Default)]
 pub struct JoyIDInfo {
@@ -51,8 +52,8 @@ pub struct SubKeyDb {
 }
 
 pub fn get_joyid_info_by_lock_hash(lock_hash_: [u8; 32]) -> Result<Option<JoyIDInfo>, Error> {
-    let conn = &POOL.clone().get().expect("Mysql pool connection error");
     let lock_hash_hex = hex::encode(lock_hash_);
+    let conn = &get_conn();
     let joyid_infos: Vec<JoyIDInfoDb> = joy_id_infos
         .select((
             name,
@@ -102,12 +103,11 @@ pub fn get_joyid_info_by_lock_hash(lock_hash_: [u8; 32]) -> Result<Option<JoyIDI
 }
 
 pub fn get_lock_hash_by_nickname(nickname_: &str) -> Result<Option<[u8; 32]>, Error> {
-    let conn = &POOL.clone().get().expect("Mysql pool connection error");
     let lock_hashes = joy_id_infos
         .select(lock_hash)
         .filter(nickname.eq(nickname_.to_string()))
         .limit(1)
-        .load::<String>(conn)
+        .load::<String>(&get_conn())
         .map_err(|e| {
             error!("Query lock hash by nickname error: {}", e.to_string());
             Error::DatabaseQueryError(e.to_string())
