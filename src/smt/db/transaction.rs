@@ -37,10 +37,4 @@ impl RocksDBTransaction {
             .commit()
             .map_err(|e| Error::RocksDBError(format!("transaction commit: {:?}", e.to_string())))
     }
-
-    pub fn rollback(&self) -> Result<(), Error> {
-        self.inner
-            .rollback()
-            .map_err(|_e| Error::RocksDBError("transaction rollback".to_owned()))
-    }
 }

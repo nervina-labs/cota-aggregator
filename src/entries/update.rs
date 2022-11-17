@@ -3,10 +3,10 @@ use crate::entries::helper::{generate_hold_key, generate_hold_value, with_lock};
 use crate::entries::smt::{generate_history_smt, init_smt};
 use crate::models::hold::get_hold_cota_by_lock_hash;
 use crate::request::update::UpdateReq;
-use crate::smt::db::db::RocksDB;
 use crate::smt::transaction::store_transaction::StoreTransaction;
 use crate::smt::RootSaver;
 use crate::utils::error::Error;
+use crate::ROCKS_DB;
 use cota_smt::common::*;
 use cota_smt::molecule::prelude::*;
 use cota_smt::smt::{blake2b_256, H256};
@@ -14,7 +14,6 @@ use cota_smt::update::{UpdateCotaNFTEntries, UpdateCotaNFTEntriesBuilder};
 use log::error;
 
 pub async fn generate_update_smt(
-    db: &RocksDB,
     update_req: UpdateReq,
 ) -> Result<(H256, UpdateCotaNFTEntries), Error> {
     let nfts = update_req.nfts;
@@ -49,7 +48,7 @@ pub async fn generate_update_smt(
     }
 
     let smt_root = get_cota_smt_root(&update_req.lock_script).await?;
-    let transaction = &StoreTransaction::new(db.transaction());
+    let transaction = &StoreTransaction::new(ROCKS_DB.transaction());
     let lock_hash = blake2b_256(&update_req.lock_script);
     let mut smt = init_smt(transaction, lock_hash)?;
     // Add lock to smt

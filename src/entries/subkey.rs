@@ -3,9 +3,9 @@ use crate::entries::helper::with_lock;
 use crate::entries::smt::init_smt;
 use crate::models::extension::subkey::get_subkey_leaf_by_pubkey_hash;
 use crate::request::subkey::SubKeyUnlockReq;
-use crate::smt::db::db::RocksDB;
 use crate::smt::transaction::store_transaction::StoreTransaction;
 use crate::utils::error::Error;
+use crate::ROCKS_DB;
 use cota_smt::molecule::prelude::*;
 use cota_smt::smt::{blake2b_256, H256};
 use joyid_smt::common::*;
@@ -15,7 +15,6 @@ use log::error;
 use super::smt::generate_history_smt;
 
 pub async fn generate_subkey_unlock_smt(
-    db: &RocksDB,
     subkey_unlock_req: SubKeyUnlockReq,
 ) -> Result<SubKeyUnlockEntries, Error> {
     let SubKeyUnlockReq {
@@ -32,7 +31,7 @@ pub async fn generate_subkey_unlock_smt(
         .map_err(|_| Error::Other("Parse uint16 error".to_owned()))?;
 
     let smt_root = get_cota_smt_root(&lock_script).await?;
-    let transaction = &StoreTransaction::new(db.transaction());
+    let transaction = &StoreTransaction::new(ROCKS_DB.transaction());
 
     let mut smt = init_smt(transaction, lock_hash)?;
     // Add lock to smt

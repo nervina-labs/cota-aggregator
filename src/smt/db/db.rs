@@ -46,10 +46,6 @@ impl RocksDB {
             inner: self.inner.transaction(&write_options, &transaction_options),
         }
     }
-
-    pub fn inner(&self) -> Arc<OptimisticTransactionDB> {
-        Arc::clone(&self.inner)
-    }
 }
 
 #[inline]

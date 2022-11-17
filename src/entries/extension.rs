@@ -8,10 +8,10 @@ use crate::entries::helper::with_lock;
 use crate::entries::smt::{generate_history_smt, init_smt};
 use crate::models::extension::leaves::get_extension_leaf_by_lock_hash;
 use crate::request::extension::{ExtSocialReq, ExtSubkeysReq};
-use crate::smt::db::db::RocksDB;
 use crate::smt::transaction::store_transaction::StoreTransaction;
 use crate::smt::RootSaver;
 use crate::utils::error::Error;
+use crate::ROCKS_DB;
 use cota_smt::common::*;
 use cota_smt::extension::{
     ExtensionEntries, ExtensionEntriesBuilder, ExtensionLeavesBuilder, ExtensionVecBuilder,
@@ -24,7 +24,6 @@ use joyid_smt::joyid::{
 use log::error;
 
 pub async fn generate_ext_subkey_smt(
-    db: &RocksDB,
     ext_subkey_req: ExtSubkeysReq,
 ) -> Result<(H256, ExtensionEntries), Error> {
     let ExtSubkeysReq {
@@ -62,7 +61,7 @@ pub async fn generate_ext_subkey_smt(
     }
 
     let smt_root = get_cota_smt_root(&lock_script).await?;
-    let transaction = &StoreTransaction::new(db.transaction());
+    let transaction = &StoreTransaction::new(ROCKS_DB.transaction());
 
     let mut smt = init_smt(transaction, lock_hash)?;
     // Add lock to smt
@@ -130,7 +129,6 @@ pub async fn generate_ext_subkey_smt(
 }
 
 pub async fn generate_ext_social_smt(
-    db: &RocksDB,
     ext_social_req: ExtSocialReq,
 ) -> Result<(H256, ExtensionEntries), Error> {
     let mut update_leaves: Vec<(H256, H256)> = Vec::with_capacity(1);
@@ -156,7 +154,7 @@ pub async fn generate_ext_social_smt(
     }
 
     let smt_root = get_cota_smt_root(&ext_social_req.lock_script).await?;
-    let transaction = &StoreTransaction::new(db.transaction());
+    let transaction = &StoreTransaction::new(ROCKS_DB.transaction());
 
     let mut smt = init_smt(transaction, lock_hash)?;
     // Add lock to smt

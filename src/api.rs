@@ -48,7 +48,6 @@ use crate::response::withdrawal::{
     parse_sender_response, parse_withdrawal_response, parse_withdrawal_smt,
 };
 use crate::response::witness::cota::parse_cota_witness;
-use crate::smt::db::db::RocksDB;
 use crate::utils::error;
 use ckb_types::prelude::Entity;
 use cota_smt::smt::blake2b_256;
@@ -56,73 +55,71 @@ use jsonrpc_http_server::jsonrpc_core::serde_json::Map;
 use jsonrpc_http_server::jsonrpc_core::{Error, Params, Value};
 use log::info;
 
-pub async fn define_rpc(params: Params, db: &RocksDB) -> Result<Value, Error> {
+pub async fn define_rpc(params: Params) -> Result<Value, Error> {
     info!("Define request: {:?}", params);
     let map: Map<String, Value> = Params::parse(params)?;
     let define_req = DefineReq::from_map(&map).map_err(rpc_err)?;
-    let define_smt = generate_define_smt(db, define_req).await.map_err(rpc_err)?;
+    let define_smt = generate_define_smt(define_req).await.map_err(rpc_err)?;
     Ok(parse_define_smt(define_smt, tip_number()?))
 }
 
-pub async fn mint_rpc(params: Params, db: &RocksDB) -> Result<Value, Error> {
+pub async fn mint_rpc(params: Params) -> Result<Value, Error> {
     info!("Mint request: {:?}", params);
     let map: Map<String, Value> = Params::parse(params)?;
     let mint_req = MintReq::from_map(&map).map_err(rpc_err)?;
-    let mint_smt = generate_mint_smt(db, mint_req).await.map_err(rpc_err)?;
+    let mint_smt = generate_mint_smt(mint_req).await.map_err(rpc_err)?;
     Ok(parse_mint_smt(mint_smt, tip_number()?))
 }
 
-pub async fn withdrawal_rpc(params: Params, db: &RocksDB) -> Result<Value, Error> {
+pub async fn withdrawal_rpc(params: Params) -> Result<Value, Error> {
     info!("Withdrawal request: {:?}", params);
     let map: Map<String, Value> = Params::parse(params)?;
     let withdrawal_req = WithdrawalReq::from_map(&map).map_err(rpc_err)?;
-    let withdrawal_smt = generate_withdrawal_smt(db, withdrawal_req)
+    let withdrawal_smt = generate_withdrawal_smt(withdrawal_req)
         .await
         .map_err(rpc_err)?;
     Ok(parse_withdrawal_smt(withdrawal_smt, tip_number()?))
 }
 
-pub async fn claim_rpc(params: Params, db: &RocksDB) -> Result<Value, Error> {
+pub async fn claim_rpc(params: Params) -> Result<Value, Error> {
     info!("Claim request: {:?}", params);
     let map: Map<String, Value> = Params::parse(params)?;
     let claim_req = ClaimReq::from_map(&map).map_err(rpc_err)?;
-    let claim_smt = generate_claim_smt(db, claim_req).await.map_err(rpc_err)?;
+    let claim_smt = generate_claim_smt(claim_req).await.map_err(rpc_err)?;
     Ok(parse_claimed_smt(claim_smt, tip_number()?))
 }
 
-pub async fn update_rpc(params: Params, db: &RocksDB) -> Result<Value, Error> {
+pub async fn update_rpc(params: Params) -> Result<Value, Error> {
     info!("Update request: {:?}", params);
     let map: Map<String, Value> = Params::parse(params)?;
     let update_req = UpdateReq::from_map(&map).map_err(rpc_err)?;
-    let update_smt = generate_update_smt(db, update_req).await.map_err(rpc_err)?;
+    let update_smt = generate_update_smt(update_req).await.map_err(rpc_err)?;
     Ok(parse_update_smt(update_smt, tip_number()?))
 }
 
-pub async fn transfer_rpc(params: Params, db: &RocksDB) -> Result<Value, Error> {
+pub async fn transfer_rpc(params: Params) -> Result<Value, Error> {
     info!("Transfer request: {:?}", params);
     let map: Map<String, Value> = Params::parse(params)?;
     let transfer_req = TransferReq::from_map(&map).map_err(rpc_err)?;
-    let transfer_smt = generate_transfer_smt(db, transfer_req)
-        .await
-        .map_err(rpc_err)?;
+    let transfer_smt = generate_transfer_smt(transfer_req).await.map_err(rpc_err)?;
     Ok(parse_transfer_smt(transfer_smt, tip_number()?))
 }
 
-pub async fn claim_update_rpc(params: Params, db: &RocksDB) -> Result<Value, Error> {
+pub async fn claim_update_rpc(params: Params) -> Result<Value, Error> {
     info!("Claim & Update request: {:?}", params);
     let map: Map<String, Value> = Params::parse(params)?;
     let claim_update_req = ClaimUpdateReq::from_map(&map).map_err(rpc_err)?;
-    let claim_update_smt = generate_claim_update_smt(db, claim_update_req)
+    let claim_update_smt = generate_claim_update_smt(claim_update_req)
         .await
         .map_err(rpc_err)?;
     Ok(parse_claimed_update_smt(claim_update_smt, tip_number()?))
 }
 
-pub async fn transfer_update_rpc(params: Params, db: &RocksDB) -> Result<Value, Error> {
+pub async fn transfer_update_rpc(params: Params) -> Result<Value, Error> {
     info!("Transfer & Update request: {:?}", params);
     let map: Map<String, Value> = Params::parse(params)?;
     let transfer_update_req = TransferUpdateReq::from_map(&map).map_err(rpc_err)?;
-    let transfer_update_smt = generate_transfer_update_smt(db, transfer_update_req)
+    let transfer_update_smt = generate_transfer_update_smt(transfer_update_req)
         .await
         .map_err(rpc_err)?;
     Ok(parse_transfer_update_smt(
@@ -131,33 +128,29 @@ pub async fn transfer_update_rpc(params: Params, db: &RocksDB) -> Result<Value, 
     ))
 }
 
-pub async fn subkey_unlock_rpc(params: Params, db: &RocksDB) -> Result<Value, Error> {
+pub async fn subkey_unlock_rpc(params: Params) -> Result<Value, Error> {
     info!("Subkey unlock request: {:?}", params);
     let map: Map<String, Value> = Params::parse(params)?;
     let subkey_req = SubKeyUnlockReq::from_map(&map).map_err(rpc_err)?;
-    let subkey_smt = generate_subkey_unlock_smt(db, subkey_req)
+    let subkey_smt = generate_subkey_unlock_smt(subkey_req)
         .await
         .map_err(rpc_err)?;
     Ok(parse_subkey_unlock(subkey_smt, tip_number()?))
 }
 
-pub async fn extension_subkey_rpc(params: Params, db: &RocksDB) -> Result<Value, Error> {
+pub async fn extension_subkey_rpc(params: Params) -> Result<Value, Error> {
     info!("Extension subkey request: {:?}", params);
     let map: Map<String, Value> = Params::parse(params)?;
     let subkey_req = ExtSubkeysReq::from_map(&map).map_err(rpc_err)?;
-    let ext_subkey = generate_ext_subkey_smt(db, subkey_req)
-        .await
-        .map_err(rpc_err)?;
+    let ext_subkey = generate_ext_subkey_smt(subkey_req).await.map_err(rpc_err)?;
     Ok(parse_extension_smt(ext_subkey, tip_number()?))
 }
 
-pub async fn extension_social_rpc(params: Params, db: &RocksDB) -> Result<Value, Error> {
+pub async fn extension_social_rpc(params: Params) -> Result<Value, Error> {
     info!("Extension social request: {:?}", params);
     let map: Map<String, Value> = Params::parse(params)?;
     let social_req = ExtSocialReq::from_map(&map).map_err(rpc_err)?;
-    let ext_social = generate_ext_social_smt(db, social_req)
-        .await
-        .map_err(rpc_err)?;
+    let ext_social = generate_ext_social_smt(social_req).await.map_err(rpc_err)?;
     Ok(parse_extension_smt(ext_social, tip_number()?))
 }
 

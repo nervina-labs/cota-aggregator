@@ -31,7 +31,7 @@ mod utils;
 static ALLOC: tikv_jemallocator::Jemalloc = tikv_jemallocator::Jemalloc;
 
 lazy_static! {
-    static ref DB: RocksDB = RocksDB::default().expect("RocksDB open error");
+    static ref ROCKS_DB: RocksDB = RocksDB::default().expect("RocksDB open error");
     static ref POOL: SqlConnectionPool = init_connection_pool();
 }
 
@@ -49,32 +49,20 @@ fn main() {
     }
 
     let mut io = IoHandler::default();
-    io.add_method("generate_define_cota_smt", |req| define_rpc(req, &DB));
-    io.add_method("generate_mint_cota_smt", |req| mint_rpc(req, &DB));
-    io.add_method("generate_claim_cota_smt", |req| claim_rpc(req, &DB));
-    io.add_method("generate_update_cota_smt", |req| update_rpc(req, &DB));
-    io.add_method("generate_transfer_cota_smt", |req| transfer_rpc(req, &DB));
-    io.add_method("generate_withdrawal_cota_smt", |req| {
-        withdrawal_rpc(req, &DB)
-    });
-    io.add_method("generate_claim_update_cota_smt", |req| {
-        claim_update_rpc(req, &DB)
-    });
-    io.add_method("generate_transfer_update_cota_smt", |req| {
-        transfer_update_rpc(req, &DB)
-    });
+    io.add_method("generate_define_cota_smt", define_rpc);
+    io.add_method("generate_mint_cota_smt", mint_rpc);
+    io.add_method("generate_claim_cota_smt", claim_rpc);
+    io.add_method("generate_update_cota_smt", update_rpc);
+    io.add_method("generate_transfer_cota_smt", transfer_rpc);
+    io.add_method("generate_withdrawal_cota_smt", withdrawal_rpc);
+    io.add_method("generate_claim_update_cota_smt", claim_update_rpc);
+    io.add_method("generate_transfer_update_cota_smt", transfer_update_rpc);
+    io.add_method("generate_extension_subkey_smt", extension_subkey_rpc);
+    io.add_method("generate_subkey_unlock_smt", subkey_unlock_rpc);
+    io.add_method("generate_extension_social_smt", extension_social_rpc);
     io.add_method("get_hold_cota_nft", fetch_hold_rpc);
     io.add_method("get_withdrawal_cota_nft", fetch_withdrawal_rpc);
     io.add_method("get_mint_cota_nft", fetch_mint_rpc);
-    io.add_method("generate_extension_subkey_smt", |req| {
-        extension_subkey_rpc(req, &DB)
-    });
-    io.add_method("generate_subkey_unlock_smt", |req| {
-        subkey_unlock_rpc(req, &DB)
-    });
-    io.add_method("generate_extension_social_smt", |req| {
-        extension_social_rpc(req, &DB)
-    });
     io.add_method("is_claimed", is_claimed_rpc);
     io.add_method("get_cota_nft_sender", get_sender_account);
     io.add_method("get_define_info", get_define_info);

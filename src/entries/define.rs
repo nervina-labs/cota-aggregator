@@ -3,10 +3,10 @@ use crate::entries::helper::{generate_define_key, generate_define_value, with_lo
 use crate::entries::smt::{generate_history_smt, init_smt};
 use crate::models::block::get_syncer_tip_block_number;
 use crate::request::define::DefineReq;
-use crate::smt::db::db::RocksDB;
 use crate::smt::transaction::store_transaction::StoreTransaction;
 use crate::smt::RootSaver;
 use crate::utils::error::Error;
+use crate::ROCKS_DB;
 use cota_smt::common::*;
 use cota_smt::define::{DefineCotaNFTEntries, DefineCotaNFTEntriesBuilder};
 use cota_smt::molecule::prelude::*;
@@ -14,7 +14,6 @@ use cota_smt::smt::{blake2b_256, H256};
 use log::error;
 
 pub async fn generate_define_smt(
-    db: &RocksDB,
     define_req: DefineReq,
 ) -> Result<(H256, DefineCotaNFTEntries), Error> {
     let mut update_leaves: Vec<(H256, H256)> = Vec::with_capacity(1);
@@ -33,7 +32,7 @@ pub async fn generate_define_smt(
     previous_leaves.push((key, H256::zero()));
 
     let smt_root = get_cota_smt_root(&define_req.lock_script).await?;
-    let transaction = &StoreTransaction::new(db.transaction());
+    let transaction = &StoreTransaction::new(ROCKS_DB.transaction());
     let lock_hash = blake2b_256(&define_req.lock_script);
     let mut smt = init_smt(transaction, lock_hash)?;
     // Add lock to smt
