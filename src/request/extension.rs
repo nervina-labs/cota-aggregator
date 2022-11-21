@@ -63,7 +63,7 @@ impl ExtSocialReq {
         }
         let must = map.get_u8_filed("must")?;
         let total = map.get_u8_filed("total")?;
-        let signers = parse_vec_bytes(map, "friends")?;
+        let signers = parse_vec_bytes(map, "signers")?;
         let signers_len = signers.len() as u8;
         if signers_len != total || must > total {
             return Err(Error::CKBRPCError(
