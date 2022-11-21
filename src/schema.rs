@@ -121,6 +121,7 @@ diesel::table! {
         pub_key -> Char,
         credential_id -> Varchar,
         alg -> Char,
+        front_end -> Varchar,
         cota_cell_id -> Char,
         created_at -> Datetime,
         updated_at -> Datetime,
