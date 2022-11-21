@@ -60,6 +60,7 @@ fn main() {
     io.add_method("generate_extension_subkey_smt", extension_subkey_rpc);
     io.add_method("generate_subkey_unlock_smt", subkey_unlock_rpc);
     io.add_method("generate_extension_social_smt", extension_social_rpc);
+    io.add_method("generate_social_unlock_smt", social_unlock_rpc);
     io.add_method("get_hold_cota_nft", fetch_hold_rpc);
     io.add_method("get_withdrawal_cota_nft", fetch_withdrawal_rpc);
     io.add_method("get_mint_cota_nft", fetch_mint_rpc);

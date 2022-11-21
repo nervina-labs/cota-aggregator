@@ -5,6 +5,7 @@ use crate::entries::claim_update::generate_claim_update_smt;
 use crate::entries::define::generate_define_smt;
 use crate::entries::extension::{generate_ext_social_smt, generate_ext_subkey_smt};
 use crate::entries::mint::generate_mint_smt;
+use crate::entries::social::generate_social_unlock_smt;
 use crate::entries::subkey::generate_subkey_unlock_smt;
 use crate::entries::transfer::generate_transfer_smt;
 use crate::entries::transfer_update::generate_transfer_update_smt;
@@ -26,6 +27,7 @@ use crate::request::fetch::{
     FetchJoyIDReq, FetchReq, FetchTxsByBlockNumberReq,
 };
 use crate::request::mint::MintReq;
+use crate::request::social::SocialUnlockReq;
 use crate::request::subkey::SubKeyUnlockReq;
 use crate::request::transfer::{TransferReq, TransferUpdateReq};
 use crate::request::update::UpdateReq;
@@ -40,6 +42,7 @@ use crate::response::info::generate_aggregator_info;
 use crate::response::issuer::{parse_issuer_info_response, parse_issuer_response};
 use crate::response::joyid_metadata::parse_joyid_metadata_response;
 use crate::response::mint::{parse_mint_response, parse_mint_smt};
+use crate::response::social::parse_social_unlock;
 use crate::response::subkey::parse_subkey_unlock;
 use crate::response::transaction::{parse_cota_transactions, parse_history_transactions};
 use crate::response::transfer::{parse_transfer_smt, parse_transfer_update_smt};
@@ -152,6 +155,16 @@ pub async fn extension_social_rpc(params: Params) -> Result<Value, Error> {
     let social_req = ExtSocialReq::from_map(&map).map_err(rpc_err)?;
     let ext_social = generate_ext_social_smt(social_req).await.map_err(rpc_err)?;
     Ok(parse_extension_smt(ext_social, tip_number()?))
+}
+
+pub async fn social_unlock_rpc(params: Params) -> Result<Value, Error> {
+    info!("Social unlock request: {:?}", params);
+    let map: Map<String, Value> = Params::parse(params)?;
+    let social_req = SocialUnlockReq::from_map(&map).map_err(rpc_err)?;
+    let social_smt = generate_social_unlock_smt(social_req)
+        .await
+        .map_err(rpc_err)?;
+    Ok(parse_social_unlock(social_smt, tip_number()?))
 }
 
 pub async fn fetch_hold_rpc(params: Params) -> Result<Value, Error> {

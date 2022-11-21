@@ -121,7 +121,6 @@ diesel::table! {
         pub_key -> Char,
         credential_id -> Varchar,
         alg -> Char,
-        front_end -> Varchar,
         cota_cell_id -> Char,
         created_at -> Datetime,
         updated_at -> Datetime,
@@ -166,9 +165,9 @@ diesel::table! {
         block_number -> Unsigned<Bigint>,
         lock_hash -> Char,
         lock_hash_crc -> Unsigned<Integer>,
-        recovery_mode -> Tinyint,
-        must -> Tinyint,
-        total -> Tinyint,
+        recovery_mode -> Unsigned<Tinyint>,
+        must -> Unsigned<Tinyint>,
+        total -> Unsigned<Tinyint>,
         signers -> Text,
         created_at -> Datetime,
         updated_at -> Datetime,
@@ -183,6 +182,20 @@ diesel::table! {
         pub_key -> Char,
         credential_id -> Varchar,
         alg -> Char,
+        created_at -> Datetime,
+        updated_at -> Datetime,
+    }
+}
+
+diesel::table! {
+    sub_key_kv_pairs (id) {
+        id -> Bigint,
+        block_number -> Unsigned<Bigint>,
+        lock_hash -> Varchar,
+        sub_type -> Char,
+        ext_data -> Unsigned<Integer>,
+        alg_index -> Unsigned<Integer>,
+        pubkey_hash -> Char,
         created_at -> Datetime,
         updated_at -> Datetime,
     }
@@ -225,5 +238,6 @@ diesel::allow_tables_to_appear_in_same_query!(
     scripts,
     social_kv_pairs,
     sub_key_infos,
+    sub_key_kv_pairs,
     withdraw_cota_nft_kv_pairs,
 );
