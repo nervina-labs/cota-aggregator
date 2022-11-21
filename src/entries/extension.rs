@@ -183,7 +183,7 @@ pub async fn generate_ext_social_smt(
         .build();
 
     let ext_social_keys = vec![Byte32::from_slice(social_key.as_slice()).unwrap()];
-    let ext_social_values = vec![Byte32::from_slice(social_value.as_slice()).unwrap()];
+    let ext_social_values = vec![Byte32::from_slice(value.as_slice()).unwrap()];
     let social_entry = SocialEntryBuilder::default()
         .key(social_key)
         .value(social_value)

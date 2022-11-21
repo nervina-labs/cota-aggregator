@@ -1,6 +1,7 @@
 use super::error::Error;
 use chrono::prelude::*;
 use hex;
+use joyid_smt::smt::blake2b_256;
 use log::debug;
 use std::convert::TryInto;
 
@@ -39,6 +40,12 @@ pub fn parse_bytes(value: String) -> Result<Vec<u8>, Error> {
 pub fn diff_time(start_time: i64, message: &str) {
     let diff_time = (Local::now().timestamp_millis() - start_time) as f64 / 1000f64;
     debug!("{}: {}s", message, diff_time);
+}
+
+pub fn blake2b_160(value: &[u8]) -> [u8; 20] {
+    let mut temp = [0u8; 20];
+    temp.copy_from_slice(&blake2b_256(value)[0..20]);
+    temp
 }
 
 #[cfg(test)]

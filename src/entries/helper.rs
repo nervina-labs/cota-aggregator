@@ -3,6 +3,7 @@ use crate::entries::constants::{
     DEFINE_NFT_SMT_TYPE, HOLD_NFT_SMT_TYPE, WITHDRAWAL_NFT_SMT_TYPE,
 };
 use crate::entries::SMT_LOCK;
+use crate::models::extension::social::SocialRecoveryDb;
 use crate::request::extension::{ExtSocialReq, ExtSubkey};
 use crate::utils::error::Error;
 use cota_smt::common::{Uint16, Uint32, *};
@@ -224,6 +225,26 @@ pub fn generate_ext_social_value(social: &ExtSocialReq) -> (SocialValue, H256) {
         signers,
         ..
     } = social;
+    generate_social_leaf_value(recovery_mode, must, total, signers)
+}
+
+pub fn generate_unlock_social_value(social: &SocialRecoveryDb) -> (SocialValue, H256) {
+    let SocialRecoveryDb {
+        recovery_mode,
+        must,
+        total,
+        signers,
+        ..
+    } = social;
+    generate_social_leaf_value(recovery_mode, must, total, signers)
+}
+
+fn generate_social_leaf_value(
+    recovery_mode: &u8,
+    must: &u8,
+    total: &u8,
+    signers: &Vec<Vec<u8>>,
+) -> (SocialValue, H256) {
     let friends: Vec<common::Bytes> = signers
         .into_iter()
         .map(|signer| vec_to_bytes(&signer))
@@ -283,7 +304,7 @@ pub fn get_value_padding_block_height() -> u64 {
     }
 }
 
-fn vec_to_bytes(values: &[u8]) -> joyid_smt::common::Bytes {
+pub fn vec_to_bytes(values: &[u8]) -> joyid_smt::common::Bytes {
     joyid_smt::common::BytesBuilder::default()
         .set(values.iter().map(|v| Byte::from(*v)).collect())
         .build()
