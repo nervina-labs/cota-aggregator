@@ -40,6 +40,9 @@ pub enum Error {
     #[fail(display = "The subkey not found")]
     SubkeyLeafNotFound,
 
+    #[fail(display = "The social recovery config not found")]
+    SocialLeafNotFound,
+
     #[fail(display = "The social friends information '{}' error", _0)]
     SocialFriendInfoError(String),
 
@@ -107,6 +110,7 @@ impl Error {
                 "The withdrawal CoTA NFTs are not in one transaction".into()
             }
             Self::SubkeyLeafNotFound => "The subkey not found".into(),
+            Self::SocialLeafNotFound => "The social recovery config not found".into(),
             Self::SocialFriendInfoError(msg) => {
                 format!("The social friends information error: {}", msg)
             }

@@ -1,5 +1,6 @@
+use crate::ckb::indexer::get_cota_smt_root;
 use crate::entries::helper::with_lock;
-use crate::entries::smt::init_smt;
+use crate::entries::smt::{generate_history_smt, init_smt};
 use crate::models::extension::social::get_social_config_by_lock;
 use crate::models::extension::subkey::get_subkey_leaf_by_pubkey_hash;
 use crate::request::social::{SocialFriend, SocialUnlockReq};
@@ -29,15 +30,18 @@ pub async fn generate_social_unlock_smt(
     } = social_unlock_req;
     let lock_hash = blake2b_256(lock_script.clone());
 
-    let social = get_social_config_by_lock(lock_hash)?.ok_or(Error::SubkeyLeafNotFound)?;
+    let social = get_social_config_by_lock(lock_hash)?.ok_or(Error::SocialLeafNotFound)?;
     let (_, key) = generate_ext_social_key();
     let (social_value, _) = generate_unlock_social_value(&social);
 
+    let smt_root = get_cota_smt_root(&lock_script).await?;
     let transaction = &StoreTransaction::new(ROCKS_DB.transaction());
 
     let mut smt = init_smt(transaction, lock_hash)?;
     // Add lock to smt
-    with_lock(lock_hash, || generate_mysql_smt(&mut smt, lock_hash))?;
+    with_lock(lock_hash, || {
+        generate_history_smt(&mut smt, lock_hash, smt_root)
+    })?;
 
     let social_merkle_proof = smt.merkle_proof(vec![key]).map_err(|e| {
         error!("Social unlock SMT proof error: {:?}", e.to_string());
@@ -65,7 +69,7 @@ pub async fn generate_social_unlock_smt(
 fn generate_social_friends(friends: Vec<SocialFriend>) -> Result<FriendPubkeyVec, Error> {
     let mut friend_pubkeys = Vec::with_capacity(friends.len());
     for friend in friends {
-        if friend.unlock_mode != 1 || friend.unlock_mode != 2 {
+        if friend.unlock_mode != 1 && friend.unlock_mode != 2 {
             return Err(Error::SocialFriendInfoError("Unlock mode".to_owned()));
         }
         if friend.unlock_mode == 1 {
