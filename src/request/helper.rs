@@ -127,6 +127,7 @@ impl HexParser for Map<String, Value> {
 mod tests {
     use super::*;
     use jsonrpc_http_server::jsonrpc_core::Value;
+    use serde_json::{Number};
 
     #[test]
     fn test_get_hex_bytes_filed() {
@@ -143,6 +144,9 @@ mod tests {
         );
         map.insert("total".to_owned(), Value::String("0x0000008g".to_owned()));
         map.insert("page".to_owned(), Value::String("32".to_owned()));
+
+        map.insert("hex".to_owned(), Value::String("0x32".to_owned()));
+        map.insert("num".to_owned(), Value::Number(Number::from(32)));
 
         assert_eq!(
             map.get_hex_vec_filed("lock_hash").unwrap(),
@@ -177,6 +181,10 @@ mod tests {
         );
 
         assert_eq!(map.get_i64_filed("page"), Ok(32));
+
+        assert_eq!(map.get_u64_filed("hex"), Ok(0x32u64));
+
+        assert_eq!(map.get_u8_filed("num"), Ok(32));
     }
 
     // TODO: Add more tests

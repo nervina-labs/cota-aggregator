@@ -43,6 +43,10 @@ pub fn diff_time(start_time: i64, message: &str) {
 
 #[cfg(test)]
 mod tests {
+    use ckb_types::prelude::Entity;
+    use cota_smt::extension::ExtensionEntries;
+    use joyid_smt::joyid::SubKeyEntries;
+
     use super::*;
 
     #[test]
