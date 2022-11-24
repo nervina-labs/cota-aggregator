@@ -127,7 +127,7 @@ impl HexParser for Map<String, Value> {
 mod tests {
     use super::*;
     use jsonrpc_http_server::jsonrpc_core::Value;
-    use serde_json::{Number};
+    use serde_json::Number;
 
     #[test]
     fn test_get_hex_bytes_filed() {
