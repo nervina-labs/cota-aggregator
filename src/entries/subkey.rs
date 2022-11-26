@@ -1,3 +1,4 @@
+use crate::ckb::indexer::get_cota_smt_root;
 use crate::entries::helper::with_lock;
 use crate::entries::smt::init_smt;
 use crate::models::extension::subkey::get_subkey_leaf_by_pubkey_hash;
@@ -11,7 +12,7 @@ use joyid_smt::common::*;
 use joyid_smt::joyid::{SubKeyUnlockEntries, SubKeyUnlockEntriesBuilder};
 use log::error;
 
-use super::smt::generate_mysql_smt;
+use super::smt::generate_history_smt;
 
 pub async fn generate_subkey_unlock_smt(
     db: &RocksDB,
@@ -30,11 +31,14 @@ pub async fn generate_subkey_unlock_smt(
     let alg_index = Uint16::from_slice(&leaf.value[0..2])
         .map_err(|_| Error::Other("Parse uint16 error".to_owned()))?;
 
+    let smt_root = get_cota_smt_root(&lock_script).await?;
     let transaction = &StoreTransaction::new(db.transaction());
 
     let mut smt = init_smt(transaction, lock_hash)?;
     // Add lock to smt
-    with_lock(lock_hash, || generate_mysql_smt(&mut smt, lock_hash))?;
+    with_lock(lock_hash, || {
+        generate_history_smt(&mut smt, lock_hash, smt_root)
+    })?;
 
     let subkey_merkle_proof = smt.merkle_proof(vec![key]).map_err(|e| {
         error!("Subkey unlock SMT proof error: {:?}", e.to_string());
