@@ -2,7 +2,7 @@ use crate::ckb::indexer::get_cota_smt_root;
 use crate::entries::helper::with_lock;
 use crate::entries::smt::{generate_history_smt, init_smt};
 use crate::models::extension::social::get_social_config_by_lock;
-use crate::models::extension::subkey::get_subkey_leaf_by_pubkey_hash;
+use crate::models::extension::subkey::get_subkey_by_pubkey_hash;
 use crate::request::social::{SocialFriend, SocialUnlockReq};
 use crate::smt::transaction::store_transaction::StoreTransaction;
 use crate::utils::error::Error;
@@ -16,9 +16,10 @@ use joyid_smt::joyid::{
     SocialUnlockEntriesBuilder,
 };
 use log::error;
-use sparse_merkle_tree::H256;
 
-use super::helper::{generate_ext_social_key, generate_unlock_social_value, vec_to_bytes};
+use super::helper::{
+    generate_ext_social_key, generate_subkey_key, generate_unlock_social_value, vec_to_bytes,
+};
 use super::smt::generate_mysql_smt;
 
 pub async fn generate_social_unlock_smt(
@@ -84,12 +85,12 @@ fn generate_social_friends(friends: Vec<SocialFriend>) -> Result<FriendPubkeyVec
             let lock_hash = blake2b_256(&friend.lock_script);
             let pubkey_hash = blake2b_160(&friend.pubkey);
 
-            let leaf =
-                get_subkey_leaf_by_pubkey_hash(pubkey_hash)?.ok_or(Error::SubkeyLeafNotFound)?;
-            let key = H256::from(leaf.key);
-            let ext_data = Uint32::from_slice(&leaf.key[8..12])
+            let subkey = get_subkey_by_pubkey_hash(lock_hash, pubkey_hash)?
+                .ok_or(Error::SubkeyLeafNotFound)?;
+            let (_, key) = generate_subkey_key(subkey.ext_data);
+            let ext_data = Uint32::from_slice(&subkey.ext_data.to_be_bytes())
                 .map_err(|_| Error::Other("Parse uint32 error".to_owned()))?;
-            let alg_index = Uint16::from_slice(&leaf.value[0..2])
+            let alg_index = Uint16::from_slice(&subkey.alg_index.to_be_bytes())
                 .map_err(|_| Error::Other("Parse uint16 error".to_owned()))?;
 
             let transaction = &StoreTransaction::new(ROCKS_DB.transaction());

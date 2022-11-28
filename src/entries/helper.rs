@@ -191,16 +191,16 @@ pub fn generate_empty_value() -> (Byte32, H256) {
     (empty_value, value)
 }
 
-pub fn generate_ext_subkey_key(subkey: &ExtSubkey) -> (SubKey, H256) {
+pub fn generate_subkey_key(ext_data: u32) -> (SubKey, H256) {
     let mut ext_key = [0x00u8; 32];
     ext_key[0] = 0xFF;
     ext_key[2..8].copy_from_slice("subkey".as_bytes());
-    ext_key[8..12].copy_from_slice(&subkey.ext_data.to_be_bytes());
+    ext_key[8..12].copy_from_slice(&ext_data.to_be_bytes());
     let sub_key = SubKey::from_slice(&ext_key).unwrap();
     (sub_key, H256::from(ext_key))
 }
 
-pub fn generate_ext_subkey_value(subkey: &ExtSubkey) -> (SubValue, H256) {
+pub fn generate_subkey_value(subkey: &ExtSubkey) -> (SubValue, H256) {
     let mut ext_value = [0x00u8; 32];
     ext_value[1] = 0x01;
     ext_value[2..22].copy_from_slice(&subkey.pubkey_hash);

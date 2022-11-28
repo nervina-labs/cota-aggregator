@@ -1,7 +1,6 @@
 use super::constants::EXT_ACTION_ADD;
 use super::helper::{
-    generate_ext_social_key, generate_ext_social_value, generate_ext_subkey_key,
-    generate_ext_subkey_value,
+    generate_ext_social_key, generate_ext_social_value, generate_subkey_key, generate_subkey_value,
 };
 use crate::ckb::indexer::get_cota_smt_root;
 use crate::entries::helper::with_lock;
@@ -41,8 +40,8 @@ pub async fn generate_ext_subkey_smt(
     let mut sub_values = vec![];
     for index in 0..subkey_len {
         let subkey = subkeys.get(index).unwrap();
-        let (sub_key, key) = generate_ext_subkey_key(subkey);
-        let (sub_value, value) = generate_ext_subkey_value(subkey);
+        let (sub_key, key) = generate_subkey_key(subkey.ext_data);
+        let (sub_value, value) = generate_subkey_value(subkey);
         sub_keys.push(sub_key);
         sub_values.push(sub_value);
         update_leaves.push((key, value));

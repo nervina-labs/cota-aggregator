@@ -1,33 +1,56 @@
-use super::leaves::{parse_extension_leaves, ExtensionLeaf, ExtensionLeafDb};
 use crate::{
     models::get_conn,
-    schema::extension_kv_pairs::dsl::extension_kv_pairs,
-    schema::extension_kv_pairs::{key, value},
+    schema::sub_key_kv_pairs::dsl::sub_key_kv_pairs,
+    schema::sub_key_kv_pairs::{alg_index, ext_data, lock_hash, pubkey_hash},
     utils::{error::Error, helper::diff_time},
 };
 use chrono::prelude::*;
 use diesel::*;
 use log::error;
+use serde::Serialize;
 
-pub fn get_subkey_leaf_by_pubkey_hash(
-    pubkey_hash: [u8; 20],
-) -> Result<Option<ExtensionLeafDb>, Error> {
+#[derive(Serialize, Debug, Clone, Eq, PartialEq)]
+pub struct SubkeyDb {
+    pub ext_data:  u32,
+    pub alg_index: u16,
+}
+
+#[derive(Queryable, Debug, Clone, Eq, PartialEq)]
+struct Subkey {
+    pub ext_data:  u32,
+    pub alg_index: u32,
+}
+
+pub fn get_subkey_by_pubkey_hash(
+    lock_hash_: [u8; 32],
+    pubkey_hash_: [u8; 20],
+) -> Result<Option<SubkeyDb>, Error> {
     let start_time = Local::now().timestamp_millis();
-    let pubkey_hash_str = hex::encode(pubkey_hash);
-    let sub_type = hex::encode("subkey".as_bytes());
-    let leaves: Vec<ExtensionLeafDb> = extension_kv_pairs
-        .select((key, value))
-        .filter(value.like(format!("%{}%", pubkey_hash_str)))
-        .filter(key.like(format!("%{}%", sub_type)))
+    let pubkey_hash_str = hex::encode(pubkey_hash_);
+    let lock_hash_str = hex::encode(lock_hash_);
+    let subkeys: Vec<SubkeyDb> = sub_key_kv_pairs
+        .select((ext_data, alg_index))
+        .filter(pubkey_hash.eq(pubkey_hash_str))
+        .filter(lock_hash.eq(lock_hash_str))
         .limit(1)
-        .load::<ExtensionLeaf>(&get_conn())
+        .load::<Subkey>(&get_conn())
         .map_or_else(
             |e| {
-                error!("Query extension error: {}", e.to_string());
+                error!("Query subkey error: {}", e.to_string());
                 Err(Error::DatabaseQueryError(e.to_string()))
             },
-            |leaves_| Ok(parse_extension_leaves(leaves_)),
+            |subkeys_| Ok(parse_subkey(subkeys_)),
         )?;
-    diff_time(start_time, "SQL get_subkey_leaf_by_pubkey_hash");
-    Ok(leaves.first().cloned())
+    diff_time(start_time, "SQL get_subkey_by_pubkey_hash");
+    Ok(subkeys.first().cloned())
+}
+
+fn parse_subkey(subkeys: Vec<Subkey>) -> Vec<SubkeyDb> {
+    subkeys
+        .into_iter()
+        .map(|subkey| SubkeyDb {
+            ext_data:  subkey.ext_data,
+            alg_index: subkey.alg_index as u16,
+        })
+        .collect()
 }
