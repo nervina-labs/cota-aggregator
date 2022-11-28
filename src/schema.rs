@@ -234,7 +234,6 @@ diesel::allow_tables_to_appear_in_same_query!(
     hold_cota_nft_kv_pairs,
     issuer_infos,
     joy_id_infos,
-    register_cota_kv_pairs,
     schema_migrations,
     scripts,
     social_kv_pairs,
