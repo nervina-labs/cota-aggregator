@@ -25,7 +25,7 @@ pub struct ExtensionLeafDb {
 }
 
 #[derive(Queryable, Debug, Clone, Eq, PartialEq)]
-struct ExtensionLeaf {
+pub struct ExtensionLeaf {
     pub key:   String,
     pub value: String,
 }
@@ -88,7 +88,7 @@ pub fn get_extension_leaf_by_lock_hash(
     Ok(leaves.first().cloned())
 }
 
-fn parse_extension_leaves(leaves: Vec<ExtensionLeaf>) -> Vec<ExtensionLeafDb> {
+pub fn parse_extension_leaves(leaves: Vec<ExtensionLeaf>) -> Vec<ExtensionLeafDb> {
     leaves
         .into_iter()
         .map(|leaf| ExtensionLeafDb {

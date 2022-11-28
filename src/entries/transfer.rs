@@ -194,11 +194,6 @@ pub async fn generate_transfer_smt(
         .tx_proof(withdraw_info.tx_proof)
         .build();
 
-    debug!(
-        "transfer entries size: {}",
-        transfer_entries.as_slice().len()
-    );
-
     Ok((
         *transfer_smt.root(),
         transfer_entries,

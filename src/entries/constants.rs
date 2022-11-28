@@ -7,3 +7,6 @@ pub const CLAIM_NFT_SMT_TYPE: [u8; 2] = [129u8, 3u8]; // 0x8103
 // block height
 pub const BLOCK_HEIGHT_VALUE_PADDING_MAINNET: u64 = 7233113;
 pub const BLOCK_HEIGHT_VALUE_PADDING_TESTNET: u64 = 5476282;
+
+// extension action
+pub const EXT_ACTION_ADD: u8 = 0xF0;

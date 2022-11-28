@@ -3,8 +3,9 @@ use crate::business::transaction::{get_cota_txs_by_block_number, get_history_tra
 use crate::entries::claim::generate_claim_smt;
 use crate::entries::claim_update::generate_claim_update_smt;
 use crate::entries::define::generate_define_smt;
-use crate::entries::extension::generate_extension_smt;
+use crate::entries::extension::generate_ext_subkey_smt;
 use crate::entries::mint::generate_mint_smt;
+use crate::entries::subkey::generate_subkey_unlock_smt;
 use crate::entries::transfer::generate_transfer_smt;
 use crate::entries::transfer_update::generate_transfer_update_smt;
 use crate::entries::update::generate_update_smt;
@@ -19,12 +20,13 @@ use crate::models::issuer::get_issuer_info_by_lock_hash;
 use crate::models::joyid::get_joyid_info_by_lock_hash;
 use crate::request::claim::{ClaimReq, ClaimUpdateReq, IsClaimedReq};
 use crate::request::define::{DefineInfoReq, DefineReq};
-use crate::request::extension::ExtensionReq;
+use crate::request::extension::ExtSubkeysReq;
 use crate::request::fetch::{
     FetchCcidInfoReq, FetchCountReq, FetchHistoryTxsReq, FetchIssuerInfoReq, FetchIssuerReq,
     FetchJoyIDReq, FetchReq, FetchTxsByBlockNumberReq,
 };
 use crate::request::mint::MintReq;
+use crate::request::subkey::SubKeyUnlockReq;
 use crate::request::transfer::{TransferReq, TransferUpdateReq};
 use crate::request::update::UpdateReq;
 use crate::request::withdrawal::{SenderLockReq, WithdrawalReq};
@@ -38,6 +40,7 @@ use crate::response::info::generate_aggregator_info;
 use crate::response::issuer::{parse_issuer_info_response, parse_issuer_response};
 use crate::response::joyid_metadata::parse_joyid_metadata_response;
 use crate::response::mint::{parse_mint_response, parse_mint_smt};
+use crate::response::subkey::parse_subkey_unlock;
 use crate::response::transaction::{parse_cota_transactions, parse_history_transactions};
 use crate::response::transfer::{parse_transfer_smt, parse_transfer_update_smt};
 use crate::response::update::parse_update_smt;
@@ -128,14 +131,24 @@ pub async fn transfer_update_rpc(params: Params, db: &RocksDB) -> Result<Value, 
     ))
 }
 
-pub async fn extension_rpc(params: Params, db: &RocksDB) -> Result<Value, Error> {
-    info!("Extension request: {:?}", params);
+pub async fn subkey_unlock_rpc(params: Params, db: &RocksDB) -> Result<Value, Error> {
+    info!("Subkey unlock request: {:?}", params);
     let map: Map<String, Value> = Params::parse(params)?;
-    let extension_req = ExtensionReq::from_map(&map).map_err(rpc_err)?;
-    let extension_smt = generate_extension_smt(db, extension_req)
+    let subkey_req = SubKeyUnlockReq::from_map(&map).map_err(rpc_err)?;
+    let subkey_smt = generate_subkey_unlock_smt(db, subkey_req)
         .await
         .map_err(rpc_err)?;
-    Ok(parse_extension_smt(extension_smt, tip_number()?))
+    Ok(parse_subkey_unlock(subkey_smt, tip_number()?))
+}
+
+pub async fn extension_subkey_rpc(params: Params, db: &RocksDB) -> Result<Value, Error> {
+    info!("Extension subkey request: {:?}", params);
+    let map: Map<String, Value> = Params::parse(params)?;
+    let subkey_req = ExtSubkeysReq::from_map(&map).map_err(rpc_err)?;
+    let ext_subkey = generate_ext_subkey_smt(db, subkey_req)
+        .await
+        .map_err(rpc_err)?;
+    Ok(parse_extension_smt(ext_subkey, tip_number()?))
 }
 
 pub async fn fetch_hold_rpc(params: Params) -> Result<Value, Error> {

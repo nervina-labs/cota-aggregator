@@ -53,7 +53,6 @@ fn main() {
     io.add_method("generate_claim_cota_smt", |req| claim_rpc(req, &DB));
     io.add_method("generate_update_cota_smt", |req| update_rpc(req, &DB));
     io.add_method("generate_transfer_cota_smt", |req| transfer_rpc(req, &DB));
-    io.add_method("generate_extension_smt", |req| extension_rpc(req, &DB));
     io.add_method("generate_withdrawal_cota_smt", |req| {
         withdrawal_rpc(req, &DB)
     });
@@ -66,6 +65,12 @@ fn main() {
     io.add_method("get_hold_cota_nft", fetch_hold_rpc);
     io.add_method("get_withdrawal_cota_nft", fetch_withdrawal_rpc);
     io.add_method("get_mint_cota_nft", fetch_mint_rpc);
+    io.add_method("generate_extension_subkey_smt", |req| {
+        extension_subkey_rpc(req, &DB)
+    });
+    io.add_method("generate_subkey_unlock_smt", |req| {
+        subkey_unlock_rpc(req, &DB)
+    });
     io.add_method("is_claimed", is_claimed_rpc);
     io.add_method("get_cota_nft_sender", get_sender_account);
     io.add_method("get_define_info", get_define_info);

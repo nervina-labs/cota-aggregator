@@ -8,6 +8,7 @@ pub mod info;
 pub mod issuer;
 pub mod joyid_metadata;
 pub mod mint;
+pub mod subkey;
 pub mod transaction;
 pub mod transfer;
 pub mod update;
