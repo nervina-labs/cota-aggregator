@@ -660,20 +660,20 @@ dependencies = [
  "sentry",
  "serde",
  "serde_json",
- "sparse-merkle-tree",
+ "sparse-merkle-tree 0.6.1",
  "tikv-jemallocator",
  "tokio",
 ]
 
 [[package]]
 name = "cota-smt"
-version = "0.7.0"
-source = "git+https://github.com/nervina-labs/cota-smt?tag=0.7.0#d67ea75e3a5ccbc6b4df3825f517cb0a05e77513"
+version = "0.8.0"
+source = "git+https://github.com/nervina-labs/cota-smt?tag=0.8.0#1baab696db5023c00210b1433abd7a2b0e3c2e93"
 dependencies = [
  "blake2b-ref 0.3.1",
  "cfg-if 1.0.0",
- "ckb-types 0.101.7",
- "sparse-merkle-tree",
+ "ckb-types 0.103.0",
+ "sparse-merkle-tree 0.6.1",
 ]
 
 [[package]]
@@ -1275,7 +1275,7 @@ dependencies = [
  "blake2b-ref 0.3.1",
  "cfg-if 1.0.0",
  "ckb-types 0.101.7",
- "sparse-merkle-tree",
+ "sparse-merkle-tree 0.5.4",
 ]
 
 [[package]]
@@ -2283,6 +2283,17 @@ name = "sparse-merkle-tree"
 version = "0.5.4"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "003e22ea773521fc026fa2a1374bd3d89cd287b6ae10ad925c971faeb30f2139"
+dependencies = [
+ "blake2b-rs",
+ "cc",
+ "cfg-if 0.1.10",
+]
+
+[[package]]
+name = "sparse-merkle-tree"
+version = "0.6.1"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "8851f6c92491ebe5528eabc1244292175a739eb0162974f9f9670a7dc748748b"
 dependencies = [
  "blake2b-rs",
  "cc",

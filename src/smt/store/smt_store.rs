@@ -9,7 +9,7 @@ use molecule::prelude::{Builder, Entity};
 use sparse_merkle_tree::{
     error::Error as SMTError,
     traits::{StoreReadOps, StoreWriteOps},
-    tree::{BranchKey, BranchNode},
+    BranchKey, BranchNode,
 };
 use std::convert::TryInto;
 
