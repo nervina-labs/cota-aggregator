@@ -660,7 +660,7 @@ dependencies = [
  "sentry",
  "serde",
  "serde_json",
- "sparse-merkle-tree 0.6.1",
+ "sparse-merkle-tree",
  "tikv-jemallocator",
  "tokio",
 ]
@@ -673,7 +673,7 @@ dependencies = [
  "blake2b-ref 0.3.1",
  "cfg-if 1.0.0",
  "ckb-types 0.103.0",
- "sparse-merkle-tree 0.6.1",
+ "sparse-merkle-tree",
 ]
 
 [[package]]
@@ -1269,13 +1269,13 @@ dependencies = [
 
 [[package]]
 name = "joyid-smt"
-version = "0.4.0"
-source = "git+https://github.com/nervina-labs/joyid-smt?tag=v0.4.0#88e042c59d1c9f8de7f3570e9522b8cdbd12f058"
+version = "0.5.0"
+source = "git+https://github.com/nervina-labs/joyid-smt?tag=v0.5.0#1493b84d16f359aed39e4187cd15c0237f322058"
 dependencies = [
  "blake2b-ref 0.3.1",
  "cfg-if 1.0.0",
  "ckb-types 0.101.7",
- "sparse-merkle-tree 0.5.4",
+ "sparse-merkle-tree",
 ]
 
 [[package]]
@@ -2276,17 +2276,6 @@ checksum = "5dc90fe6c7be1a323296982db1836d1ea9e47b6839496dde9a541bc496df3516"
 dependencies = [
  "libc",
  "winapi",
-]
-
-[[package]]
-name = "sparse-merkle-tree"
-version = "0.5.4"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "003e22ea773521fc026fa2a1374bd3d89cd287b6ae10ad925c971faeb30f2139"
-dependencies = [
- "blake2b-rs",
- "cc",
- "cfg-if 0.1.10",
 ]
 
 [[package]]
