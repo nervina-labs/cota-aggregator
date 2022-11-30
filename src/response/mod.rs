@@ -1,4 +1,3 @@
-pub mod ccid;
 pub mod claim;
 pub mod define;
 pub mod extension;

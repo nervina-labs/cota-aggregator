@@ -7,7 +7,6 @@ CREATE TABLE IF NOT EXISTS joy_id_infos (
     avatar varchar(500) NOT NULL,
     description varchar(1000) NOT NULL,
     extension varchar(1000) NOT NULL,
-    nickname varchar(255) NOT NULL,
     pub_key char(128) NOT NULL,
     credential_id varchar(1500) NOT NULL,
     alg char(2) NOT NULL,

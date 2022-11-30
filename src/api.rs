@@ -13,9 +13,8 @@ use crate::entries::update::generate_update_smt;
 use crate::entries::withdrawal::generate_withdrawal_smt;
 use crate::models::block::get_syncer_tip_block_number;
 use crate::models::common::{
-    check_cota_claimed, get_ccid_account, get_define_info_by_cota_id, get_hold_cota,
-    get_issuer_by_cota_id, get_mint_cota, get_owned_cota_count, get_sender_account_by_cota_nft,
-    get_withdrawal_cota,
+    check_cota_claimed, get_define_info_by_cota_id, get_hold_cota, get_issuer_by_cota_id,
+    get_mint_cota, get_owned_cota_count, get_sender_account_by_cota_nft, get_withdrawal_cota,
 };
 use crate::models::issuer::get_issuer_info_by_lock_hash;
 use crate::models::joyid::get_joyid_info_by_lock_hash;
@@ -23,8 +22,8 @@ use crate::request::claim::{ClaimReq, ClaimUpdateReq, IsClaimedReq};
 use crate::request::define::{DefineInfoReq, DefineReq};
 use crate::request::extension::{ExtSocialReq, ExtSubkeysReq};
 use crate::request::fetch::{
-    FetchCcidInfoReq, FetchCountReq, FetchHistoryTxsReq, FetchIssuerInfoReq, FetchIssuerReq,
-    FetchJoyIDReq, FetchReq, FetchTxsByBlockNumberReq,
+    FetchCountReq, FetchHistoryTxsReq, FetchIssuerInfoReq, FetchIssuerReq, FetchJoyIDReq, FetchReq,
+    FetchTxsByBlockNumberReq,
 };
 use crate::request::mint::MintReq;
 use crate::request::social::SocialUnlockReq;
@@ -33,7 +32,6 @@ use crate::request::transfer::{TransferReq, TransferUpdateReq};
 use crate::request::update::UpdateReq;
 use crate::request::withdrawal::{SenderLockReq, WithdrawalReq};
 use crate::request::witness::WitnessReq;
-use crate::response::ccid::parse_ccid_response;
 use crate::response::claim::{parse_claimed_response, parse_claimed_smt, parse_claimed_update_smt};
 use crate::response::define::{parse_define_info, parse_define_smt};
 use crate::response::extension::parse_extension_smt;
@@ -319,24 +317,6 @@ pub async fn get_joyid_info(params: Params) -> Result<Value, Error> {
     };
     let joyid_info_opt = get_joyid_info_by_lock_hash(lock_hash).map_err(rpc_err)?;
     parse_joyid_metadata_response(joyid_info_opt, tip_number()?).map_err(rpc_err)
-}
-
-pub async fn get_ccid_info(params: Params) -> Result<Value, Error> {
-    info!("Get ccid info request: {:?}", params);
-    let map: Map<String, Value> = Params::parse(params)?;
-    let FetchCcidInfoReq {
-        address,
-        ccid,
-        joyid,
-    } = FetchCcidInfoReq::from_map(&map).map_err(rpc_err)?;
-    let lock_hash_opt = match address {
-        Some(addr) => Some(blake2b_256(
-            &script_from_address(addr).map_err(rpc_err)?.as_slice(),
-        )),
-        None => None,
-    };
-    let (ccid_info, joyid_opt) = get_ccid_account(lock_hash_opt, ccid, joyid).map_err(rpc_err)?;
-    parse_ccid_response(ccid_info, joyid_opt, tip_number()?).map_err(rpc_err)
 }
 
 pub async fn get_aggregator_info(_params: Params) -> Result<Value, Error> {
