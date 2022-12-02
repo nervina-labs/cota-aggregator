@@ -5,7 +5,6 @@ use jsonrpc_http_server::jsonrpc_core::Value;
 
 pub fn parse_ccid_response(
     ccid_info: Option<(String, u64)>,
-    nickname_opt: Option<String>,
     block_number: u64,
 ) -> Result<Value, Error> {
     let mut map = Map::new();
@@ -17,14 +16,6 @@ pub fn parse_ccid_response(
         None => {
             map.insert_null("address");
             map.insert_null("ccid");
-        }
-    }
-    match nickname_opt {
-        Some(nickname) => {
-            map.insert_str("joyid", nickname);
-        }
-        None => {
-            map.insert_null("joyid");
         }
     }
     map.insert_u64("block_number", block_number);

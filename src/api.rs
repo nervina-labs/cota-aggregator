@@ -308,19 +308,16 @@ pub async fn get_joyid_info(params: Params) -> Result<Value, Error> {
 pub async fn get_ccid_info(params: Params) -> Result<Value, Error> {
     info!("Get ccid info request: {:?}", params);
     let map: Map<String, Value> = Params::parse(params)?;
-    let FetchCcidInfoReq {
-        address,
-        ccid,
-        joyid,
-    } = FetchCcidInfoReq::from_map(&map).map_err(rpc_err)?;
+    let FetchCcidInfoReq { address, ccid, .. } =
+        FetchCcidInfoReq::from_map(&map).map_err(rpc_err)?;
     let lock_hash_opt = match address {
         Some(addr) => Some(blake2b_256(
             &script_from_address(addr).map_err(rpc_err)?.as_slice(),
         )),
         None => None,
     };
-    let (ccid_info, joyid_opt) = get_ccid_account(lock_hash_opt, ccid, joyid).map_err(rpc_err)?;
-    parse_ccid_response(ccid_info, joyid_opt, tip_number()?).map_err(rpc_err)
+    let ccid_info = get_ccid_account(lock_hash_opt, ccid).map_err(rpc_err)?;
+    parse_ccid_response(ccid_info, tip_number()?).map_err(rpc_err)
 }
 
 pub async fn get_aggregator_info(_params: Params) -> Result<Value, Error> {
