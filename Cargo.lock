@@ -660,7 +660,7 @@ dependencies = [
  "sentry",
  "serde",
  "serde_json",
- "sparse-merkle-tree",
+ "sparse-merkle-tree 0.6.1",
  "tikv-jemallocator",
  "tokio",
 ]
@@ -673,7 +673,7 @@ dependencies = [
  "blake2b-ref 0.3.1",
  "cfg-if 1.0.0",
  "ckb-types 0.101.7",
- "sparse-merkle-tree",
+ "sparse-merkle-tree 0.5.4",
 ]
 
 [[package]]
@@ -1275,7 +1275,7 @@ dependencies = [
  "blake2b-ref 0.3.1",
  "cfg-if 1.0.0",
  "ckb-types 0.101.7",
- "sparse-merkle-tree",
+ "sparse-merkle-tree 0.5.4",
 ]
 
 [[package]]
@@ -2283,6 +2283,17 @@ name = "sparse-merkle-tree"
 version = "0.5.4"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "003e22ea773521fc026fa2a1374bd3d89cd287b6ae10ad925c971faeb30f2139"
+dependencies = [
+ "blake2b-rs",
+ "cc",
+ "cfg-if 0.1.10",
+]
+
+[[package]]
+name = "sparse-merkle-tree"
+version = "0.6.1"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "8851f6c92491ebe5528eabc1244292175a739eb0162974f9f9670a7dc748748b"
 dependencies = [
  "blake2b-rs",
  "cc",
