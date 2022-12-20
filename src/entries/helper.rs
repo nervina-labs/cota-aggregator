@@ -202,7 +202,7 @@ pub fn generate_subkey_key(ext_data: u32) -> (SubKey, H256) {
 
 pub fn generate_subkey_value(subkey: &ExtSubkey) -> (SubValue, H256) {
     let mut ext_value = [0x00u8; 32];
-    ext_value[1] = 0x01;
+    ext_value[0..2].copy_from_slice(&subkey.alg_index.to_be_bytes());
     ext_value[2..22].copy_from_slice(&subkey.pubkey_hash);
     ext_value[31] = 0xFF;
     let sub_value = SubValue::from_slice(&ext_value).unwrap();
