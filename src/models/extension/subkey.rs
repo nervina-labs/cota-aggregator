@@ -24,6 +24,7 @@ struct Subkey {
 pub fn get_subkey_by_pubkey_hash(
     lock_hash_: [u8; 32],
     pubkey_hash_: [u8; 20],
+    alg_index_: u16,
 ) -> Result<Option<SubkeyDb>, Error> {
     let start_time = Local::now().timestamp_millis();
     let pubkey_hash_str = hex::encode(pubkey_hash_);
@@ -32,6 +33,7 @@ pub fn get_subkey_by_pubkey_hash(
         .select((ext_data, alg_index))
         .filter(pubkey_hash.eq(pubkey_hash_str))
         .filter(lock_hash.eq(lock_hash_str))
+        .filter(alg_index.eq(alg_index_ as u32))
         .limit(1)
         .load::<Subkey>(&get_conn())
         .map_or_else(

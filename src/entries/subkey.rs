@@ -19,17 +19,18 @@ pub async fn generate_subkey_unlock_smt(
     subkey_unlock_req: SubKeyUnlockReq,
 ) -> Result<SubKeyUnlockEntries, Error> {
     let SubKeyUnlockReq {
+        alg_index,
         pubkey_hash,
         lock_script,
     } = subkey_unlock_req;
     let lock_hash = blake2b_256(lock_script.clone());
 
-    let subkey =
-        get_subkey_by_pubkey_hash(lock_hash, pubkey_hash)?.ok_or(Error::SubkeyLeafNotFound)?;
+    let subkey = get_subkey_by_pubkey_hash(lock_hash, pubkey_hash, alg_index)?
+        .ok_or(Error::SubkeyLeafNotFound)?;
     let (_, key) = generate_subkey_key(subkey.ext_data);
     let ext_data = Uint32::from_slice(&subkey.ext_data.to_be_bytes())
         .map_err(|_| Error::Other("Parse uint32 error".to_owned()))?;
-    let alg_index = Uint16::from_slice(&subkey.alg_index.to_be_bytes())
+    let alg_index = Uint16::from_slice(&alg_index.to_be_bytes())
         .map_err(|_| Error::Other("Parse uint16 error".to_owned()))?;
 
     let smt_root = get_cota_smt_root(&lock_script).await?;

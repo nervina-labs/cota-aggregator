@@ -85,7 +85,7 @@ fn generate_social_friends(friends: Vec<SocialFriend>) -> Result<FriendPubkeyVec
             let lock_hash = blake2b_256(&friend.lock_script);
             let pubkey_hash = blake2b_160(&friend.pubkey);
 
-            let subkey = get_subkey_by_pubkey_hash(lock_hash, pubkey_hash)?
+            let subkey = get_subkey_by_pubkey_hash(lock_hash, pubkey_hash, friend.alg_index)?
                 .ok_or(Error::SubkeyLeafNotFound)?;
             let (_, key) = generate_subkey_key(subkey.ext_data);
             let ext_data = Uint32::from_slice(&subkey.ext_data.to_be_bytes())
