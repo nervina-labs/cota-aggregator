@@ -2,12 +2,11 @@ use crate::models::block::get_syncer_tip_block_number;
 use crate::models::helper::{generate_crc, PAGE_SIZE};
 use crate::models::helper::{parse_cota_id_index_pairs, parse_lock_hash};
 use crate::models::scripts::get_script_map_by_ids;
-use crate::models::{DBResult, DBTotalResult};
+use crate::models::{get_conn, DBResult, DBTotalResult};
 use crate::schema::withdraw_cota_nft_kv_pairs::dsl::withdraw_cota_nft_kv_pairs;
 use crate::schema::withdraw_cota_nft_kv_pairs::*;
 use crate::utils::error::Error;
 use crate::utils::helper::{diff_time, parse_bytes_n};
-use crate::POOL;
 use chrono::prelude::*;
 use diesel::*;
 use log::error;
@@ -44,7 +43,7 @@ pub fn get_withdrawal_cota_by_lock_hash(
     cota_id_index_pairs: &[([u8; 20], [u8; 4])],
 ) -> DBResult<WithdrawDb> {
     let start_time = Local::now().timestamp_millis();
-    let conn = &POOL.clone().get().expect("Mysql pool connection error");
+    let conn = &get_conn();
     let (lock_hash_hex, lock_hash_crc_) = parse_lock_hash(lock_hash_);
     let mut withdraw_nfts: Vec<WithdrawCotaNft> = vec![];
     match cota_id_index_pairs.len() {
@@ -106,7 +105,7 @@ pub fn get_withdrawal_cota_by_cota_ids(
     page_size: i64,
 ) -> DBTotalResult<WithdrawDb> {
     let start_time = Local::now().timestamp_millis();
-    let conn = &POOL.clone().get().expect("Mysql pool connection error");
+    let conn = &get_conn();
     let (lock_hash_hex, lock_hash_crc_) = parse_lock_hash(lock_hash_);
     let cota_ids_: Vec<String> = cota_ids
         .into_iter()
@@ -156,7 +155,7 @@ pub fn get_withdrawal_cota_by_script_id(
     cota_id_opt: Option<[u8; 20]>,
 ) -> DBTotalResult<WithdrawNFTDb> {
     let start_time = Local::now().timestamp_millis();
-    let conn = &POOL.clone().get().expect("Mysql pool connection error");
+    let conn = &get_conn();
     let total_result = match cota_id_opt {
         Some(cota_id_) => withdraw_cota_nft_kv_pairs
             .filter(receiver_lock_script_id.eq(script_id))
@@ -208,7 +207,6 @@ pub fn get_sender_lock_by_script_id(
     token_index_: [u8; 4],
 ) -> Result<Option<(String, Vec<u8>)>, Error> {
     let start_time = Local::now().timestamp_millis();
-    let conn = &POOL.clone().get().expect("Mysql pool connection error");
     let cota_id_hex = hex::encode(cota_id_);
     let token_index_u32 = u32::from_be_bytes(token_index_);
     let cota_id_crc_u32 = generate_crc(cota_id_hex.as_bytes());
@@ -220,7 +218,7 @@ pub fn get_sender_lock_by_script_id(
         .filter(receiver_lock_script_id.eq(script_id))
         .order(updated_at.desc())
         .limit(1)
-        .load::<SenderLockDb>(conn)
+        .load::<SenderLockDb>(&get_conn())
         .map_err(|e| {
             error!("Query withdraw error: {}", e.to_string());
             Error::DatabaseQueryError(e.to_string())

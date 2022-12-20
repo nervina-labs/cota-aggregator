@@ -1,3 +1,4 @@
+use super::get_conn;
 use super::helper::{parse_cota_id_index_pairs, parse_lock_hash};
 use crate::models::block::get_syncer_tip_block_number;
 use crate::models::helper::PAGE_SIZE;
@@ -6,7 +7,6 @@ use crate::schema::hold_cota_nft_kv_pairs::dsl::hold_cota_nft_kv_pairs;
 use crate::schema::hold_cota_nft_kv_pairs::*;
 use crate::utils::error::Error;
 use crate::utils::helper::{diff_time, parse_bytes_n};
-use crate::POOL;
 use chrono::prelude::*;
 use diesel::*;
 use log::error;
@@ -35,7 +35,7 @@ pub fn get_hold_cota_by_lock_hash(
     cota_id_index_pairs: &[([u8; 20], [u8; 4])],
 ) -> DBResult<HoldDb> {
     let start_time = Local::now().timestamp_millis();
-    let conn = &POOL.clone().get().expect("Mysql pool connection error");
+    let conn = &get_conn();
     let (lock_hash_hex, lock_hash_crc_) = parse_lock_hash(lock_hash_);
     let mut hold_vec: Vec<HoldDb> = vec![];
     let holds: Vec<HoldDb> = match cota_id_index_pairs.len() {
@@ -101,7 +101,6 @@ pub fn get_hold_cota_count_by_lock_hash(
     cota_id_: [u8; 20],
 ) -> Result<i64, Error> {
     let start_time = Local::now().timestamp_millis();
-    let conn = &POOL.clone().get().expect("Mysql pool connection error");
     let (lock_hash_hex, lock_hash_crc_) = parse_lock_hash(lock_hash_);
     let cota_id_str = hex::encode(cota_id_);
     let hold_count: i64 = hold_cota_nft_kv_pairs
@@ -109,7 +108,7 @@ pub fn get_hold_cota_count_by_lock_hash(
         .filter(lock_hash.eq(lock_hash_hex.clone()))
         .filter(cota_id.eq(cota_id_str))
         .count()
-        .get_result::<i64>(conn)
+        .get_result::<i64>(&get_conn())
         .map_err(|e| {
             error!("Query hold error: {}", e.to_string());
             Error::DatabaseQueryError(e.to_string())
@@ -123,7 +122,6 @@ pub fn check_hold_cota_by_lock_hash(
     cota_id_and_token_index_pair: ([u8; 20], [u8; 4]),
 ) -> Result<(bool, u64), Error> {
     let start_time = Local::now().timestamp_millis();
-    let conn = &POOL.clone().get().expect("Mysql pool connection error");
     let (lock_hash_hex, lock_hash_crc_) = parse_lock_hash(lock_hash_);
     let cota_id_str = hex::encode(cota_id_and_token_index_pair.0);
     let token_index_u32 = u32::from_be_bytes(cota_id_and_token_index_pair.1);
@@ -133,7 +131,7 @@ pub fn check_hold_cota_by_lock_hash(
         .filter(lock_hash_crc.eq(lock_hash_crc_))
         .filter(lock_hash.eq(lock_hash_hex.clone()))
         .count()
-        .get_result::<i64>(conn)
+        .get_result::<i64>(&get_conn())
         .map_err(|e| {
             error!("Check hold cota count error: {:?}", e.to_string());
             Error::DatabaseQueryError("Hold".to_string())
@@ -151,7 +149,7 @@ pub fn get_hold_cota_by_lock_hash_and_page(
     cota_id_opt: Option<[u8; 20]>,
 ) -> DBTotalResult<HoldDb> {
     let start_time = Local::now().timestamp_millis();
-    let conn = &POOL.clone().get().expect("Mysql pool connection error");
+    let conn = &get_conn();
     let (lock_hash_hex, lock_hash_crc_) = parse_lock_hash(lock_hash_);
     let total_result = match cota_id_opt {
         Some(cota_id_) => hold_cota_nft_kv_pairs

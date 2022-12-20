@@ -1,7 +1,6 @@
 use crate::schema::joy_id_infos::dsl::joy_id_infos;
 use crate::schema::joy_id_infos::{
-    alg, avatar, cota_cell_id, credential_id, description, extension, lock_hash, name, nickname,
-    pub_key,
+    alg, avatar, cota_cell_id, credential_id, description, extension, lock_hash, name, pub_key,
 };
 use crate::schema::sub_key_infos::dsl::sub_key_infos;
 use crate::schema::sub_key_infos::{
@@ -9,11 +8,11 @@ use crate::schema::sub_key_infos::{
     pub_key as sub_pub_key,
 };
 use crate::utils::error::Error;
-use crate::utils::helper::parse_bytes_n;
-use crate::POOL;
 use diesel::*;
 use log::error;
 use serde::{Deserialize, Serialize};
+
+use super::get_conn;
 
 #[derive(Serialize, Deserialize, Debug, Clone, Eq, PartialEq, Default)]
 pub struct JoyIDInfo {
@@ -21,8 +20,6 @@ pub struct JoyIDInfo {
     pub avatar:        String,
     pub description:   String,
     pub extension:     String,
-    #[serde(rename(serialize = "joyid"))]
-    pub nickname:      String,
     pub pub_key:       String,
     pub credential_id: String,
     pub alg:           String,
@@ -36,7 +33,6 @@ pub struct JoyIDInfoDb {
     pub avatar:        String,
     pub description:   String,
     pub extension:     String,
-    pub nickname:      String,
     pub pub_key:       String,
     pub credential_id: String,
     pub alg:           String,
@@ -51,15 +47,14 @@ pub struct SubKeyDb {
 }
 
 pub fn get_joyid_info_by_lock_hash(lock_hash_: [u8; 32]) -> Result<Option<JoyIDInfo>, Error> {
-    let conn = &POOL.clone().get().expect("Mysql pool connection error");
     let lock_hash_hex = hex::encode(lock_hash_);
+    let conn = &get_conn();
     let joyid_infos: Vec<JoyIDInfoDb> = joy_id_infos
         .select((
             name,
             avatar,
             description,
             extension,
-            nickname,
             pub_key,
             credential_id,
             alg,
@@ -91,7 +86,6 @@ pub fn get_joyid_info_by_lock_hash(lock_hash_: [u8; 32]) -> Result<Option<JoyIDI
         avatar: info.avatar,
         description: info.description,
         extension: info.extension,
-        nickname: info.nickname,
         pub_key: info.pub_key,
         credential_id: info.credential_id,
         alg: info.alg,
@@ -99,22 +93,4 @@ pub fn get_joyid_info_by_lock_hash(lock_hash_: [u8; 32]) -> Result<Option<JoyIDI
         sub_keys,
     });
     Ok(joyid_info)
-}
-
-pub fn get_lock_hash_by_nickname(nickname_: &str) -> Result<Option<[u8; 32]>, Error> {
-    let conn = &POOL.clone().get().expect("Mysql pool connection error");
-    let lock_hashes = joy_id_infos
-        .select(lock_hash)
-        .filter(nickname.eq(nickname_.to_string()))
-        .limit(1)
-        .load::<String>(conn)
-        .map_err(|e| {
-            error!("Query lock hash by nickname error: {}", e.to_string());
-            Error::DatabaseQueryError(e.to_string())
-        })?;
-    let lock_hash_ = lock_hashes
-        .get(0)
-        .cloned()
-        .map(|hash| parse_bytes_n::<32>(hash).unwrap());
-    Ok(lock_hash_)
 }

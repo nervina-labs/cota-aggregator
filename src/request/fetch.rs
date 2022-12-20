@@ -166,37 +166,3 @@ impl FetchJoyIDReq {
         })
     }
 }
-
-#[derive(Clone, Eq, PartialEq)]
-pub struct FetchCcidInfoReq {
-    pub address: Option<String>,
-    pub ccid:    Option<u64>,
-    pub joyid:   Option<String>,
-}
-
-impl FetchCcidInfoReq {
-    pub fn from_map(map: &Map<String, Value>) -> Result<Self, Error> {
-        let address = match map.get("address") {
-            Some(_) => Some(map.get_str_filed("address")?),
-            None => None,
-        };
-        let ccid = match map.get("ccid") {
-            Some(_) => Some(map.get_u64_filed("ccid")?),
-            None => None,
-        };
-        let joyid = match map.get("joyid") {
-            Some(_) => Some(map.get_str_filed("joyid")?),
-            None => None,
-        };
-        if address.is_none() && ccid.is_none() && joyid.is_none() {
-            return Err(Error::RequestParamTypeError(
-                "address, ccid and joyid cannot be all null".to_string(),
-            ));
-        }
-        Ok(FetchCcidInfoReq {
-            address,
-            ccid,
-            joyid,
-        })
-    }
-}

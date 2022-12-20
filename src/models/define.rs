@@ -1,3 +1,4 @@
+use super::get_conn;
 use super::helper::parse_lock_hash;
 use crate::models::block::get_syncer_tip_block_number;
 use crate::models::helper::PAGE_SIZE;
@@ -5,7 +6,6 @@ use crate::models::DBResult;
 use crate::schema::define_cota_nft_kv_pairs::dsl::*;
 use crate::utils::error::Error;
 use crate::utils::helper::{diff_time, parse_bytes_n};
-use crate::POOL;
 use chrono::prelude::*;
 use diesel::*;
 use log::error;
@@ -33,7 +33,6 @@ pub struct DefineDb {
 
 pub fn get_define_cota_by_lock_hash(lock_hash_: [u8; 32]) -> DBResult<DefineDb> {
     let start_time = Local::now().timestamp_millis();
-    let conn = &POOL.clone().get().expect("Mysql pool connection error");
     let (lock_hash_hex, lock_hash_crc_) = parse_lock_hash(lock_hash_);
     let mut page: i64 = 0;
     let mut defines: Vec<DefineDb> = Vec::new();
@@ -44,7 +43,7 @@ pub fn get_define_cota_by_lock_hash(lock_hash_: [u8; 32]) -> DBResult<DefineDb> 
             .filter(lock_hash.eq(lock_hash_hex.clone()))
             .limit(PAGE_SIZE)
             .offset(PAGE_SIZE * page)
-            .load::<DefineCotaNft>(conn)
+            .load::<DefineCotaNft>(&get_conn())
             .map_or_else(
                 |e| {
                     error!("Query define error: {}", e.to_string());
@@ -69,7 +68,6 @@ pub fn get_define_cota_by_lock_hash_and_cota_id(
     cota_id_: [u8; 20],
 ) -> Result<Option<DefineDb>, Error> {
     let start_time = Local::now().timestamp_millis();
-    let conn = &POOL.clone().get().expect("Mysql pool connection error");
     let (lock_hash_hex, lock_hash_crc_) = parse_lock_hash(lock_hash_);
     let cota_id_hex = hex::encode(cota_id_);
     let defines: Vec<DefineDb> = define_cota_nft_kv_pairs
@@ -78,7 +76,7 @@ pub fn get_define_cota_by_lock_hash_and_cota_id(
         .filter(lock_hash.eq(lock_hash_hex))
         .filter(cota_id.eq(cota_id_hex))
         .limit(1)
-        .load::<DefineCotaNft>(conn)
+        .load::<DefineCotaNft>(&get_conn())
         .map_or_else(
             |e| {
                 error!("Query define error: {}", e.to_string());
@@ -92,13 +90,12 @@ pub fn get_define_cota_by_lock_hash_and_cota_id(
 
 pub fn get_define_cota_by_cota_id(cota_id_: [u8; 20]) -> Result<Option<DefineDb>, Error> {
     let start_time = Local::now().timestamp_millis();
-    let conn = &POOL.clone().get().expect("Mysql pool connection error");
     let cota_id_hex = hex::encode(cota_id_);
     let defines: Vec<DefineDb> = define_cota_nft_kv_pairs
         .select(get_selection())
         .filter(cota_id.eq(cota_id_hex))
         .limit(1)
-        .load::<DefineCotaNft>(conn)
+        .load::<DefineCotaNft>(&get_conn())
         .map_or_else(
             |e| {
                 error!("Query define error: {}", e.to_string());
@@ -111,13 +108,12 @@ pub fn get_define_cota_by_cota_id(cota_id_: [u8; 20]) -> Result<Option<DefineDb>
 }
 
 pub fn get_lock_hash_by_cota_id(cota_id_: [u8; 20]) -> Result<[u8; 32], Error> {
-    let conn = &POOL.clone().get().expect("Mysql pool connection error");
     let cota_id_hex = hex::encode(cota_id_);
     define_cota_nft_kv_pairs
         .select(lock_hash)
         .filter(cota_id.eq(cota_id_hex))
         .limit(1)
-        .first::<String>(conn)
+        .first::<String>(&get_conn())
         .map_or_else(
             |e| {
                 error!("Query lock hash by cota id error: {}", e.to_string());

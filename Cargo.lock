@@ -667,12 +667,12 @@ dependencies = [
 
 [[package]]
 name = "cota-smt"
-version = "0.7.0"
-source = "git+https://github.com/nervina-labs/cota-smt?tag=0.7.0#d67ea75e3a5ccbc6b4df3825f517cb0a05e77513"
+version = "0.8.0"
+source = "git+https://github.com/nervina-labs/cota-smt?tag=0.8.0#1baab696db5023c00210b1433abd7a2b0e3c2e93"
 dependencies = [
  "blake2b-ref 0.3.1",
  "cfg-if 1.0.0",
- "ckb-types 0.101.7",
+ "ckb-types 0.103.0",
  "sparse-merkle-tree",
 ]
 
@@ -1269,8 +1269,8 @@ dependencies = [
 
 [[package]]
 name = "joyid-smt"
-version = "0.4.0"
-source = "git+https://github.com/nervina-labs/joyid-smt?tag=v0.4.0#88e042c59d1c9f8de7f3570e9522b8cdbd12f058"
+version = "0.5.0"
+source = "git+https://github.com/nervina-labs/joyid-smt?tag=v0.5.0#1493b84d16f359aed39e4187cd15c0237f322058"
 dependencies = [
  "blake2b-ref 0.3.1",
  "cfg-if 1.0.0",
@@ -2280,9 +2280,9 @@ dependencies = [
 
 [[package]]
 name = "sparse-merkle-tree"
-version = "0.5.4"
+version = "0.6.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "003e22ea773521fc026fa2a1374bd3d89cd287b6ae10ad925c971faeb30f2139"
+checksum = "8851f6c92491ebe5528eabc1244292175a739eb0162974f9f9670a7dc748748b"
 dependencies = [
  "blake2b-rs",
  "cc",

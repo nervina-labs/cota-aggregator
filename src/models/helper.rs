@@ -1,10 +1,9 @@
+use super::SqlConnectionPool;
 use crc::{Crc, CRC_32_ISO_HDLC};
 use diesel::mysql::MysqlConnection;
-use diesel::r2d2::{self, ConnectionManager, Pool};
+use diesel::r2d2::{self, ConnectionManager};
 use jsonrpc_http_server::jsonrpc_core::serde_json::from_str;
 use std::env;
-
-pub type SqlConnectionPool = Pool<ConnectionManager<MysqlConnection>>;
 
 pub const PAGE_SIZE: i64 = 1000;
 

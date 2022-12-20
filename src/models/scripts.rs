@@ -4,7 +4,6 @@ use crate::schema::scripts::*;
 use crate::schema::scripts::{args, code_hash, hash_type};
 use crate::utils::error::Error;
 use crate::utils::helper::{diff_time, parse_bytes, parse_bytes_n};
-use crate::POOL;
 use chrono::prelude::*;
 use cota_smt::ckb_types::packed::{Byte32, BytesBuilder, Script as LockScript, ScriptBuilder};
 use cota_smt::ckb_types::prelude::*;
@@ -13,6 +12,8 @@ use diesel::*;
 use log::error;
 use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
+
+use super::get_conn;
 
 #[derive(Serialize, Deserialize, Queryable, Debug)]
 pub struct Script {
@@ -32,14 +33,13 @@ pub struct ScriptDb {
 
 pub fn get_script_map_by_ids(script_ids: Vec<i64>) -> Result<HashMap<i64, Vec<u8>>, Error> {
     let start_time = Local::now().timestamp_millis();
-    let conn = &POOL.clone().get().expect("Mysql pool connection error");
     let mut scripts_dbs: Vec<ScriptDb> = vec![];
     let script_ids_subs: Vec<&[i64]> = script_ids.chunks(PAGE_SIZE as usize).collect();
     for script_ids_sub in script_ids_subs.into_iter() {
         let scripts_db = scripts
             .select((id, code_hash, hash_type, args))
             .filter(id.eq_any(script_ids_sub))
-            .load::<Script>(conn)
+            .load::<Script>(&get_conn())
             .map_or_else(
                 |e| {
                     error!("Query script error: {}", e.to_string());
@@ -60,7 +60,6 @@ pub fn get_script_map_by_ids(script_ids: Vec<i64>) -> Result<HashMap<i64, Vec<u8
 
 pub fn get_script_id_by_lock_script(lock_script: &[u8]) -> Result<Option<i64>, Error> {
     let start_time = Local::now().timestamp_millis();
-    let conn = &POOL.clone().get().expect("Mysql pool connection error");
     let lock = LockScript::from_slice(lock_script).unwrap();
 
     let lock_code_hash = hex::encode(lock.code_hash().as_slice());
@@ -77,7 +76,7 @@ pub fn get_script_id_by_lock_script(lock_script: &[u8]) -> Result<Option<i64>, E
         .filter(code_hash.eq(lock_code_hash))
         .filter(args.eq(lock_args))
         .limit(1)
-        .load::<i64>(conn)
+        .load::<i64>(&get_conn())
         .map_err(|e| {
             error!("Query script error: {}", e.to_string());
             Error::DatabaseQueryError(e.to_string())

@@ -8,10 +8,10 @@ use crate::entries::witness::parse_witness_withdraw_proof;
 use crate::models::claim::is_exist_in_claim;
 use crate::models::withdrawal::nft::{get_withdrawal_cota_by_lock_hash, WithdrawDb};
 use crate::request::claim::ClaimUpdateReq;
-use crate::smt::db::db::RocksDB;
 use crate::smt::transaction::store_transaction::StoreTransaction;
 use crate::smt::RootSaver;
 use crate::utils::error::Error;
+use crate::ROCKS_DB;
 use cota_smt::common::*;
 use cota_smt::molecule::prelude::*;
 use cota_smt::smt::{blake2b_256, H256};
@@ -19,7 +19,6 @@ use cota_smt::transfer_update::{ClaimUpdateCotaNFTV2Entries, ClaimUpdateCotaNFTV
 use log::error;
 
 pub async fn generate_claim_update_smt(
-    db: &RocksDB,
     claim_update_req: ClaimUpdateReq,
 ) -> Result<(H256, ClaimUpdateCotaNFTV2Entries, H256), Error> {
     let nfts = claim_update_req.nfts;
@@ -120,7 +119,7 @@ pub async fn generate_claim_update_smt(
     let claim_smt_root = get_cota_smt_root(&claim_lock_script).await?;
 
     let claim_lock_hash = blake2b_256(&claim_lock_script);
-    let transaction = &StoreTransaction::new(db.transaction());
+    let transaction = &StoreTransaction::new(ROCKS_DB.transaction());
     let mut claim_smt = init_smt(transaction, claim_lock_hash)?;
     // Add lock to smt
     with_lock(claim_lock_hash, || {
