@@ -140,8 +140,6 @@ pub fn slice_to_branch_node(slice: &[u8]) -> BranchNode {
                 },
             }
         }
-        _ => {
-            unreachable!()
-        }
+        _ => unreachable!(),
     }
 }

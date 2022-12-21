@@ -28,7 +28,7 @@ jobs:
       - uses: actions-rs/toolchain@v1
         with:
           profile: minimal
-          toolchain: nightly-2022-01-19
+          toolchain: nightly-2021-12-25
           override: true
 
       - name: Check Rust format
