@@ -1,6 +1,7 @@
 use crate::{
     models::{
         block::get_syncer_tip_block_number,
+        get_conn,
         helper::{parse_lock_hash, PAGE_SIZE},
         DBResult,
     },
@@ -10,7 +11,6 @@ use crate::{
         error::Error,
         helper::{diff_time, parse_bytes_n},
     },
-    POOL,
 };
 use chrono::prelude::*;
 use diesel::*;
@@ -25,14 +25,13 @@ pub struct ExtensionLeafDb {
 }
 
 #[derive(Queryable, Debug, Clone, Eq, PartialEq)]
-struct ExtensionLeaf {
+pub struct ExtensionLeaf {
     pub key:   String,
     pub value: String,
 }
 
 pub fn get_extension_leaves_by_lock_hash(lock_hash_: [u8; 32]) -> DBResult<ExtensionLeafDb> {
     let start_time = Local::now().timestamp_millis();
-    let conn = &POOL.clone().get().expect("Mysql pool connection error");
     let (lock_hash_hex, lock_hash_crc_) = parse_lock_hash(lock_hash_);
     let mut page: i64 = 0;
     let mut leaves: Vec<ExtensionLeafDb> = Vec::new();
@@ -43,7 +42,7 @@ pub fn get_extension_leaves_by_lock_hash(lock_hash_: [u8; 32]) -> DBResult<Exten
             .filter(lock_hash.eq(lock_hash_hex.clone()))
             .limit(PAGE_SIZE)
             .offset(PAGE_SIZE * page)
-            .load::<ExtensionLeaf>(conn)
+            .load::<ExtensionLeaf>(&get_conn())
             .map_or_else(
                 |e| {
                     error!("Query extension error: {}", e.to_string());
@@ -68,7 +67,6 @@ pub fn get_extension_leaf_by_lock_hash(
     key_: H256,
 ) -> Result<Option<ExtensionLeafDb>, Error> {
     let start_time = Local::now().timestamp_millis();
-    let conn = &POOL.clone().get().expect("Mysql pool connection error");
     let (lock_hash_hex, lock_hash_crc_) = parse_lock_hash(lock_hash_);
     let leaves: Vec<ExtensionLeafDb> = extension_kv_pairs
         .select((key, value))
@@ -76,7 +74,7 @@ pub fn get_extension_leaf_by_lock_hash(
         .filter(lock_hash.eq(lock_hash_hex.clone()))
         .filter(key.eq(hex::encode(key_.as_slice())))
         .limit(1)
-        .load::<ExtensionLeaf>(conn)
+        .load::<ExtensionLeaf>(&get_conn())
         .map_or_else(
             |e| {
                 error!("Query extension error: {}", e.to_string());
@@ -88,7 +86,7 @@ pub fn get_extension_leaf_by_lock_hash(
     Ok(leaves.first().cloned())
 }
 
-fn parse_extension_leaves(leaves: Vec<ExtensionLeaf>) -> Vec<ExtensionLeafDb> {
+pub fn parse_extension_leaves(leaves: Vec<ExtensionLeaf>) -> Vec<ExtensionLeafDb> {
     leaves
         .into_iter()
         .map(|leaf| ExtensionLeafDb {

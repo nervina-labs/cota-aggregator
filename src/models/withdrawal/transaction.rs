@@ -1,12 +1,11 @@
 use crate::models::block::get_syncer_tip_block_number;
 use crate::models::helper::generate_crc;
 use crate::models::scripts::get_script_map_by_ids;
-use crate::models::{DBResult, DBTotalResult};
+use crate::models::{get_conn, DBResult, DBTotalResult};
 use crate::schema::withdraw_cota_nft_kv_pairs::dsl::withdraw_cota_nft_kv_pairs;
 use crate::schema::withdraw_cota_nft_kv_pairs::*;
 use crate::utils::error::Error;
 use crate::utils::helper::parse_bytes_n;
-use crate::POOL;
 use diesel::*;
 use log::error;
 use serde::{Deserialize, Serialize};
@@ -34,7 +33,7 @@ pub fn get_all_transactions(
     page: i64,
     page_size: i64,
 ) -> DBTotalResult<WithdrawHistoryTx> {
-    let conn = &POOL.clone().get().expect("Mysql pool connection error");
+    let conn = &get_conn();
     let cota_id_hex = hex::encode(cota_id_);
     let token_index_u32 = u32::from_be_bytes(token_index_);
     let cota_id_crc_u32 = generate_crc(cota_id_hex.as_bytes());
@@ -95,7 +94,6 @@ pub fn get_all_transactions(
 }
 
 pub fn get_first_tx_block_number(cota_id_: [u8; 20], token_index_: [u8; 4]) -> Result<u64, Error> {
-    let conn = &POOL.clone().get().expect("Mysql pool connection error");
     let cota_id_hex = hex::encode(cota_id_);
     let token_index_u32 = u32::from_be_bytes(token_index_);
     let cota_id_crc_u32 = generate_crc(cota_id_hex.as_bytes());
@@ -106,7 +104,7 @@ pub fn get_first_tx_block_number(cota_id_: [u8; 20], token_index_: [u8; 4]) -> R
         .filter(token_index.eq(token_index_u32))
         .filter(cota_id.eq(cota_id_hex))
         .order(block_number.asc())
-        .first::<u64>(conn)
+        .first::<u64>(&get_conn())
         .map_err(|e| {
             error!("Query withdraw tx block number error: {}", e.to_string());
             Error::DatabaseQueryError(e.to_string())
@@ -132,7 +130,6 @@ pub struct WithdrawTransaction {
     pub receiver_lock_script: Vec<u8>,
 }
 pub fn get_transactions_by_block_number(block_number_: u64) -> DBResult<WithdrawTransaction> {
-    let conn = &POOL.clone().get().expect("Mysql pool connection error");
     let db_transactions: Vec<WithdrawTransactionDb> = withdraw_cota_nft_kv_pairs
         .select((
             cota_id,
@@ -142,7 +139,7 @@ pub fn get_transactions_by_block_number(block_number_: u64) -> DBResult<Withdraw
             receiver_lock_script_id,
         ))
         .filter(block_number.eq(block_number_))
-        .load::<WithdrawTransactionDb>(conn)
+        .load::<WithdrawTransactionDb>(&get_conn())
         .map_err(|e| {
             error!("Query withdraw transaction error: {}", e.to_string());
             Error::DatabaseQueryError(e.to_string())

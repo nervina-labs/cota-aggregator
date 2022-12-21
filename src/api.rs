@@ -3,33 +3,35 @@ use crate::business::transaction::{get_cota_txs_by_block_number, get_history_tra
 use crate::entries::claim::generate_claim_smt;
 use crate::entries::claim_update::generate_claim_update_smt;
 use crate::entries::define::generate_define_smt;
-use crate::entries::extension::generate_extension_smt;
+use crate::entries::extension::{generate_ext_social_smt, generate_ext_subkey_smt};
 use crate::entries::mint::generate_mint_smt;
+use crate::entries::social::generate_social_unlock_smt;
+use crate::entries::subkey::generate_subkey_unlock_smt;
 use crate::entries::transfer::generate_transfer_smt;
 use crate::entries::transfer_update::generate_transfer_update_smt;
 use crate::entries::update::generate_update_smt;
 use crate::entries::withdrawal::generate_withdrawal_smt;
 use crate::models::block::get_syncer_tip_block_number;
 use crate::models::common::{
-    check_cota_claimed, get_ccid_account, get_define_info_by_cota_id, get_hold_cota,
-    get_issuer_by_cota_id, get_mint_cota, get_owned_cota_count, get_sender_account_by_cota_nft,
-    get_withdrawal_cota,
+    check_cota_claimed, get_define_info_by_cota_id, get_hold_cota, get_issuer_by_cota_id,
+    get_mint_cota, get_owned_cota_count, get_sender_account_by_cota_nft, get_withdrawal_cota,
 };
 use crate::models::issuer::get_issuer_info_by_lock_hash;
 use crate::models::joyid::get_joyid_info_by_lock_hash;
 use crate::request::claim::{ClaimReq, ClaimUpdateReq, IsClaimedReq};
 use crate::request::define::{DefineInfoReq, DefineReq};
-use crate::request::extension::ExtensionReq;
+use crate::request::extension::{ExtSocialReq, ExtSubkeysReq};
 use crate::request::fetch::{
-    FetchCcidInfoReq, FetchCountReq, FetchHistoryTxsReq, FetchIssuerInfoReq, FetchIssuerReq,
-    FetchJoyIDReq, FetchReq, FetchTxsByBlockNumberReq,
+    FetchCountReq, FetchHistoryTxsReq, FetchIssuerInfoReq, FetchIssuerReq, FetchJoyIDReq, FetchReq,
+    FetchTxsByBlockNumberReq,
 };
 use crate::request::mint::MintReq;
+use crate::request::social::SocialUnlockReq;
+use crate::request::subkey::SubKeyUnlockReq;
 use crate::request::transfer::{TransferReq, TransferUpdateReq};
 use crate::request::update::UpdateReq;
 use crate::request::withdrawal::{SenderLockReq, WithdrawalReq};
 use crate::request::witness::WitnessReq;
-use crate::response::ccid::parse_ccid_response;
 use crate::response::claim::{parse_claimed_response, parse_claimed_smt, parse_claimed_update_smt};
 use crate::response::define::{parse_define_info, parse_define_smt};
 use crate::response::extension::parse_extension_smt;
@@ -38,6 +40,8 @@ use crate::response::info::generate_aggregator_info;
 use crate::response::issuer::{parse_issuer_info_response, parse_issuer_response};
 use crate::response::joyid_metadata::parse_joyid_metadata_response;
 use crate::response::mint::{parse_mint_response, parse_mint_smt};
+use crate::response::social::parse_social_unlock;
+use crate::response::subkey::parse_subkey_unlock;
 use crate::response::transaction::{parse_cota_transactions, parse_history_transactions};
 use crate::response::transfer::{parse_transfer_smt, parse_transfer_update_smt};
 use crate::response::update::parse_update_smt;
@@ -45,7 +49,6 @@ use crate::response::withdrawal::{
     parse_sender_response, parse_withdrawal_response, parse_withdrawal_smt,
 };
 use crate::response::witness::cota::parse_cota_witness;
-use crate::smt::db::db::RocksDB;
 use crate::utils::error;
 use ckb_types::prelude::Entity;
 use cota_smt::smt::blake2b_256;
@@ -53,73 +56,71 @@ use jsonrpc_http_server::jsonrpc_core::serde_json::Map;
 use jsonrpc_http_server::jsonrpc_core::{Error, Params, Value};
 use log::info;
 
-pub async fn define_rpc(params: Params, db: &RocksDB) -> Result<Value, Error> {
+pub async fn define_rpc(params: Params) -> Result<Value, Error> {
     info!("Define request: {:?}", params);
     let map: Map<String, Value> = Params::parse(params)?;
     let define_req = DefineReq::from_map(&map).map_err(rpc_err)?;
-    let define_smt = generate_define_smt(db, define_req).await.map_err(rpc_err)?;
+    let define_smt = generate_define_smt(define_req).await.map_err(rpc_err)?;
     Ok(parse_define_smt(define_smt, tip_number()?))
 }
 
-pub async fn mint_rpc(params: Params, db: &RocksDB) -> Result<Value, Error> {
+pub async fn mint_rpc(params: Params) -> Result<Value, Error> {
     info!("Mint request: {:?}", params);
     let map: Map<String, Value> = Params::parse(params)?;
     let mint_req = MintReq::from_map(&map).map_err(rpc_err)?;
-    let mint_smt = generate_mint_smt(db, mint_req).await.map_err(rpc_err)?;
+    let mint_smt = generate_mint_smt(mint_req).await.map_err(rpc_err)?;
     Ok(parse_mint_smt(mint_smt, tip_number()?))
 }
 
-pub async fn withdrawal_rpc(params: Params, db: &RocksDB) -> Result<Value, Error> {
+pub async fn withdrawal_rpc(params: Params) -> Result<Value, Error> {
     info!("Withdrawal request: {:?}", params);
     let map: Map<String, Value> = Params::parse(params)?;
     let withdrawal_req = WithdrawalReq::from_map(&map).map_err(rpc_err)?;
-    let withdrawal_smt = generate_withdrawal_smt(db, withdrawal_req)
+    let withdrawal_smt = generate_withdrawal_smt(withdrawal_req)
         .await
         .map_err(rpc_err)?;
     Ok(parse_withdrawal_smt(withdrawal_smt, tip_number()?))
 }
 
-pub async fn claim_rpc(params: Params, db: &RocksDB) -> Result<Value, Error> {
+pub async fn claim_rpc(params: Params) -> Result<Value, Error> {
     info!("Claim request: {:?}", params);
     let map: Map<String, Value> = Params::parse(params)?;
     let claim_req = ClaimReq::from_map(&map).map_err(rpc_err)?;
-    let claim_smt = generate_claim_smt(db, claim_req).await.map_err(rpc_err)?;
+    let claim_smt = generate_claim_smt(claim_req).await.map_err(rpc_err)?;
     Ok(parse_claimed_smt(claim_smt, tip_number()?))
 }
 
-pub async fn update_rpc(params: Params, db: &RocksDB) -> Result<Value, Error> {
+pub async fn update_rpc(params: Params) -> Result<Value, Error> {
     info!("Update request: {:?}", params);
     let map: Map<String, Value> = Params::parse(params)?;
     let update_req = UpdateReq::from_map(&map).map_err(rpc_err)?;
-    let update_smt = generate_update_smt(db, update_req).await.map_err(rpc_err)?;
+    let update_smt = generate_update_smt(update_req).await.map_err(rpc_err)?;
     Ok(parse_update_smt(update_smt, tip_number()?))
 }
 
-pub async fn transfer_rpc(params: Params, db: &RocksDB) -> Result<Value, Error> {
+pub async fn transfer_rpc(params: Params) -> Result<Value, Error> {
     info!("Transfer request: {:?}", params);
     let map: Map<String, Value> = Params::parse(params)?;
     let transfer_req = TransferReq::from_map(&map).map_err(rpc_err)?;
-    let transfer_smt = generate_transfer_smt(db, transfer_req)
-        .await
-        .map_err(rpc_err)?;
+    let transfer_smt = generate_transfer_smt(transfer_req).await.map_err(rpc_err)?;
     Ok(parse_transfer_smt(transfer_smt, tip_number()?))
 }
 
-pub async fn claim_update_rpc(params: Params, db: &RocksDB) -> Result<Value, Error> {
+pub async fn claim_update_rpc(params: Params) -> Result<Value, Error> {
     info!("Claim & Update request: {:?}", params);
     let map: Map<String, Value> = Params::parse(params)?;
     let claim_update_req = ClaimUpdateReq::from_map(&map).map_err(rpc_err)?;
-    let claim_update_smt = generate_claim_update_smt(db, claim_update_req)
+    let claim_update_smt = generate_claim_update_smt(claim_update_req)
         .await
         .map_err(rpc_err)?;
     Ok(parse_claimed_update_smt(claim_update_smt, tip_number()?))
 }
 
-pub async fn transfer_update_rpc(params: Params, db: &RocksDB) -> Result<Value, Error> {
+pub async fn transfer_update_rpc(params: Params) -> Result<Value, Error> {
     info!("Transfer & Update request: {:?}", params);
     let map: Map<String, Value> = Params::parse(params)?;
     let transfer_update_req = TransferUpdateReq::from_map(&map).map_err(rpc_err)?;
-    let transfer_update_smt = generate_transfer_update_smt(db, transfer_update_req)
+    let transfer_update_smt = generate_transfer_update_smt(transfer_update_req)
         .await
         .map_err(rpc_err)?;
     Ok(parse_transfer_update_smt(
@@ -128,14 +129,40 @@ pub async fn transfer_update_rpc(params: Params, db: &RocksDB) -> Result<Value, 
     ))
 }
 
-pub async fn extension_rpc(params: Params, db: &RocksDB) -> Result<Value, Error> {
-    info!("Extension request: {:?}", params);
+pub async fn subkey_unlock_rpc(params: Params) -> Result<Value, Error> {
+    info!("Subkey unlock request: {:?}", params);
     let map: Map<String, Value> = Params::parse(params)?;
-    let extension_req = ExtensionReq::from_map(&map).map_err(rpc_err)?;
-    let extension_smt = generate_extension_smt(db, extension_req)
+    let subkey_req = SubKeyUnlockReq::from_map(&map).map_err(rpc_err)?;
+    let subkey_smt = generate_subkey_unlock_smt(subkey_req)
         .await
         .map_err(rpc_err)?;
-    Ok(parse_extension_smt(extension_smt, tip_number()?))
+    Ok(parse_subkey_unlock(subkey_smt, tip_number()?))
+}
+
+pub async fn extension_subkey_rpc(params: Params) -> Result<Value, Error> {
+    info!("Extension subkey request: {:?}", params);
+    let map: Map<String, Value> = Params::parse(params)?;
+    let subkey_req = ExtSubkeysReq::from_map(&map).map_err(rpc_err)?;
+    let ext_subkey = generate_ext_subkey_smt(subkey_req).await.map_err(rpc_err)?;
+    Ok(parse_extension_smt(ext_subkey, tip_number()?))
+}
+
+pub async fn extension_social_rpc(params: Params) -> Result<Value, Error> {
+    info!("Extension social request: {:?}", params);
+    let map: Map<String, Value> = Params::parse(params)?;
+    let social_req = ExtSocialReq::from_map(&map).map_err(rpc_err)?;
+    let ext_social = generate_ext_social_smt(social_req).await.map_err(rpc_err)?;
+    Ok(parse_extension_smt(ext_social, tip_number()?))
+}
+
+pub async fn social_unlock_rpc(params: Params) -> Result<Value, Error> {
+    info!("Social unlock request: {:?}", params);
+    let map: Map<String, Value> = Params::parse(params)?;
+    let social_req = SocialUnlockReq::from_map(&map).map_err(rpc_err)?;
+    let social_smt = generate_social_unlock_smt(social_req)
+        .await
+        .map_err(rpc_err)?;
+    Ok(parse_social_unlock(social_smt, tip_number()?))
 }
 
 pub async fn fetch_hold_rpc(params: Params) -> Result<Value, Error> {
@@ -290,24 +317,6 @@ pub async fn get_joyid_info(params: Params) -> Result<Value, Error> {
     };
     let joyid_info_opt = get_joyid_info_by_lock_hash(lock_hash).map_err(rpc_err)?;
     parse_joyid_metadata_response(joyid_info_opt, tip_number()?).map_err(rpc_err)
-}
-
-pub async fn get_ccid_info(params: Params) -> Result<Value, Error> {
-    info!("Get ccid info request: {:?}", params);
-    let map: Map<String, Value> = Params::parse(params)?;
-    let FetchCcidInfoReq {
-        address,
-        ccid,
-        joyid,
-    } = FetchCcidInfoReq::from_map(&map).map_err(rpc_err)?;
-    let lock_hash_opt = match address {
-        Some(addr) => Some(blake2b_256(
-            &script_from_address(addr).map_err(rpc_err)?.as_slice(),
-        )),
-        None => None,
-    };
-    let (ccid_info, joyid_opt) = get_ccid_account(lock_hash_opt, ccid, joyid).map_err(rpc_err)?;
-    parse_ccid_response(ccid_info, joyid_opt, tip_number()?).map_err(rpc_err)
 }
 
 pub async fn get_aggregator_info(_params: Params) -> Result<Value, Error> {

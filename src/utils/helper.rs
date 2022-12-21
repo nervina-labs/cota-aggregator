@@ -1,6 +1,7 @@
 use super::error::Error;
 use chrono::prelude::*;
 use hex;
+use joyid_smt::smt::blake2b_256;
 use log::debug;
 use std::convert::TryInto;
 
@@ -41,15 +42,34 @@ pub fn diff_time(start_time: i64, message: &str) {
     debug!("{}: {}s", message, diff_time);
 }
 
+pub fn blake2b_160(value: &[u8]) -> [u8; 20] {
+    let mut temp = [0u8; 20];
+    temp.copy_from_slice(&blake2b_256(value)[0..20]);
+    temp
+}
+
 #[cfg(test)]
 mod tests {
+    use ckb_types::prelude::Entity;
+    use cota_smt::extension::ExtensionEntries;
+    use joyid_smt::joyid::SubKeyEntries;
+
     use super::*;
+
     #[test]
     fn test_remove_0x() {
         assert_eq!(remove_0x("0x123456"), "123456");
         assert_eq!(remove_0x("123456"), "123456");
         assert_eq!(remove_0x("0"), "0");
         assert_eq!(remove_0x("0x"), "");
+    }
+
+    #[test]
+    fn test_subkey_entries() {
+        let str = "f500000010000000970000009d0000008700000014000000380000005c0000008000000001000000ff007375626b6579000000010000000000000000000000000000000000000000010000000001a479e697ba1af48df75b090b03058d056cca0f2e000000000000000000ff010000000000000000000000000000000000000000000000000000000000000000000000030000004c4f007375626b657954000000540000000c0000003000000001000000ff007375626b6579000000010000000000000000000000000000000000000000010000000001a479e697ba1af48df75b090b03058d056cca0f2e000000000000000000ff";
+        let entries = ExtensionEntries::from_slice(&hex::decode(str).unwrap()).unwrap();
+        let subkey = SubKeyEntries::from_slice(&entries.raw_data().raw_data()).unwrap();
+        println!("subkey: {:?}", subkey);
     }
 
     #[test]

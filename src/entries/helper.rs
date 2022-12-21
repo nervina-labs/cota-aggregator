@@ -3,11 +3,16 @@ use crate::entries::constants::{
     DEFINE_NFT_SMT_TYPE, HOLD_NFT_SMT_TYPE, WITHDRAWAL_NFT_SMT_TYPE,
 };
 use crate::entries::SMT_LOCK;
+use crate::models::extension::social::SocialRecoveryDb;
+use crate::request::extension::{ExtSocialReq, ExtSubkey};
 use crate::utils::error::Error;
 use cota_smt::common::{Uint16, Uint32, *};
 use cota_smt::molecule::prelude::*;
 use cota_smt::smt::{blake2b_256, H256};
-use rand::{thread_rng, Rng};
+use joyid_smt::common;
+use joyid_smt::joyid::{
+    LockScriptVecBuilder, SocialKey, SocialValue, SocialValueBuilder, SubKey, SubValue,
+};
 use serde_json::from_str;
 use std::env;
 use std::sync::Arc;
@@ -186,19 +191,73 @@ pub fn generate_empty_value() -> (Byte32, H256) {
     (empty_value, value)
 }
 
-pub fn generate_extension_key() -> (Byte32, H256) {
-    let mut rng = thread_rng();
-    let mut key: [u8; 32] = rng.gen::<[u8; 32]>().into();
-    key[0..2].copy_from_slice(&[0xFF, 0x00]);
-    let ext_key = Byte32::from_slice(key.as_slice()).unwrap();
-    (ext_key, H256::from(key))
+pub fn generate_subkey_key(ext_data: u32) -> (SubKey, H256) {
+    let mut ext_key = [0x00u8; 32];
+    ext_key[0] = 0xFF;
+    ext_key[2..8].copy_from_slice("subkey".as_bytes());
+    ext_key[8..12].copy_from_slice(&ext_data.to_be_bytes());
+    let sub_key = SubKey::from_slice(&ext_key).unwrap();
+    (sub_key, H256::from(ext_key))
 }
 
-pub fn generate_extension_value() -> (Byte32, H256) {
-    let mut rng = thread_rng();
-    let value: H256 = rng.gen::<[u8; 32]>().into();
-    let ext_value = Byte32::from_slice(value.as_slice()).unwrap();
-    (ext_value, value)
+pub fn generate_subkey_value(subkey: &ExtSubkey) -> (SubValue, H256) {
+    let mut ext_value = [0x00u8; 32];
+    ext_value[0..2].copy_from_slice(&subkey.alg_index.to_be_bytes());
+    ext_value[2..22].copy_from_slice(&subkey.pubkey_hash);
+    ext_value[31] = 0xFF;
+    let sub_value = SubValue::from_slice(&ext_value).unwrap();
+    (sub_value, H256::from(ext_value))
+}
+
+pub fn generate_ext_social_key() -> (SocialKey, H256) {
+    let mut ext_key = [0x00u8; 32];
+    ext_key[0] = 0xFF;
+    ext_key[2..8].copy_from_slice("social".as_bytes());
+    let social_key = SocialKey::from_slice(&ext_key).unwrap();
+    (social_key, H256::from(ext_key))
+}
+
+pub fn generate_ext_social_value(social: &ExtSocialReq) -> (SocialValue, H256) {
+    let ExtSocialReq {
+        recovery_mode,
+        must,
+        total,
+        signers,
+        ..
+    } = social;
+    generate_social_leaf_value(recovery_mode, must, total, signers)
+}
+
+pub fn generate_unlock_social_value(social: &SocialRecoveryDb) -> (SocialValue, H256) {
+    let SocialRecoveryDb {
+        recovery_mode,
+        must,
+        total,
+        signers,
+        ..
+    } = social;
+    generate_social_leaf_value(recovery_mode, must, total, signers)
+}
+
+fn generate_social_leaf_value(
+    recovery_mode: &u8,
+    must: &u8,
+    total: &u8,
+    signers: &Vec<Vec<u8>>,
+) -> (SocialValue, H256) {
+    let friends: Vec<common::Bytes> = signers
+        .into_iter()
+        .map(|signer| vec_to_bytes(&signer))
+        .collect();
+    let signers = LockScriptVecBuilder::default().set(friends).build();
+    let social_value = SocialValueBuilder::default()
+        .recovery_mode(Byte::from_slice(&[*recovery_mode]).unwrap())
+        .must(Byte::from_slice(&[*must]).unwrap())
+        .total(Byte::from_slice(&[*total]).unwrap())
+        .signers(signers)
+        .build();
+    let value = H256::from(blake2b_256(social_value.as_slice()));
+    (social_value, value)
 }
 
 pub fn generate_cota_index(cota_id: [u8; 20], token_index: [u8; 4]) -> Vec<u8> {
@@ -243,4 +302,10 @@ pub fn get_value_padding_block_height() -> u64 {
     } else {
         BLOCK_HEIGHT_VALUE_PADDING_TESTNET
     }
+}
+
+pub fn vec_to_bytes(values: &[u8]) -> joyid_smt::common::Bytes {
+    joyid_smt::common::BytesBuilder::default()
+        .set(values.iter().map(|v| Byte::from(*v)).collect())
+        .build()
 }

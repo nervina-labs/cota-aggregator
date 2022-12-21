@@ -5,23 +5,20 @@ use crate::entries::smt::{generate_history_smt, init_smt};
 use crate::models::block::get_syncer_tip_block_number;
 use crate::models::define::{get_define_cota_by_lock_hash_and_cota_id, DefineDb};
 use crate::request::mint::{MintReq, MintWithdrawal};
-use crate::smt::db::db::RocksDB;
 use crate::smt::transaction::store_transaction::StoreTransaction;
 use crate::smt::RootSaver;
 use crate::utils::error::Error;
 use crate::utils::helper::diff_time;
+use crate::ROCKS_DB;
 use chrono::prelude::*;
 use cota_smt::common::*;
 use cota_smt::mint::{MintCotaNFTV1Entries, MintCotaNFTV1EntriesBuilder};
 use cota_smt::molecule::prelude::*;
 use cota_smt::smt::{blake2b_256, H256};
-use log::{debug, error};
+use log::error;
 use molecule::hex_string;
 
-pub async fn generate_mint_smt(
-    db: &RocksDB,
-    mint_req: MintReq,
-) -> Result<(H256, MintCotaNFTV1Entries), Error> {
+pub async fn generate_mint_smt(mint_req: MintReq) -> Result<(H256, MintCotaNFTV1Entries), Error> {
     let withdrawals = mint_req.withdrawals;
     let withdrawals_len = withdrawals.len();
     if withdrawals_len == 0 {
@@ -108,7 +105,7 @@ pub async fn generate_mint_smt(
 
     let smt_root = get_cota_smt_root(&mint_req.lock_script).await?;
     let lock_hash = blake2b_256(&mint_req.lock_script);
-    let transaction = &StoreTransaction::new(db.transaction());
+    let transaction = &StoreTransaction::new(ROCKS_DB.transaction());
     let mut smt = init_smt(transaction, lock_hash)?;
     // Add lock to smt
     with_lock(lock_hash, || {
@@ -132,7 +129,6 @@ pub async fn generate_mint_smt(
     diff_time(start_time, "Generate mint smt proof");
 
     let merkel_proof_vec: Vec<u8> = mint_merkle_proof_compiled.into();
-    debug!("mint proof size: {}", merkel_proof_vec.len());
     let merkel_proof_bytes = BytesBuilder::default()
         .extend(merkel_proof_vec.iter().map(|v| Byte::from(*v)))
         .build();

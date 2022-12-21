@@ -84,7 +84,6 @@ https://cota.nervina.dev/aggregator
 - [get_issuer_info](#get_issuer_info)
 - [get_issuer_info_by_cota_id](#get_issuer_info_by_cota_id)
 - [get_joyid_info](#get_joyid_info)
-- [get_ccid_info](#get_ccid_info)
 - [parse_witness](#parse_witness)
 - [get_cota_count](#get_cota_count)
 - [get_history_transactions](#get_history_transactions)
@@ -897,7 +896,6 @@ joyid - The joyid metadata joyid
 pub_key - The joyid metadata public key
 credential_id - The joyid metadata WebAuthn credential_id
 alg - The joyid metadata WebAuthn algorithm
-cota_cell_id - The joyid metadata cota cell id(CCID)
 sub_keys - The joyid metadata sub public keys
     pub_key - The joyid metadata public key
     credential_id - The joyid metadata WebAuthn credential_id
@@ -916,7 +914,6 @@ sub_keys - The joyid metadata sub public keys
         "description":"Web3 Developer",
         "extension":"",
         "name":"Dylan",
-        "joyid":"Dylan#2923",
         "pub_key":"650e48cf029c8a04788c02d7d88bad7b62918714137d0cd486b5b3aff53d0c2baecabd8d23107933f85fdf13cd814a0ba3d1848329b0504d7134a88962e9bde3",
         "sub_keys":[
             {
@@ -930,57 +927,6 @@ sub_keys - The joyid metadata sub public keys
                 "pub_key":"290e48cf029c8a04788c02d7d88bad7b62918714137d0cd486b5b3aff53d0c2baecabd8d23107933f85fdf13cd814a0ba3d1848329b0504d7134a88962e9bde3"
             }
         ]
-    },
-    "id":2
-}
-```
-
-### get_ccid_info
-
-Get CCID, address and joyid of joyid account
-
-#### Parameters
-
-```
-address - The joyid ckb address
-ccid - The CoTA Cell Id
-joyid - The joyid like cipher#1234
-```
-> At least one of address, ccid and joyid must be non-null
-
-```shell
-echo '{
-    "id":2,
-    "jsonrpc":"2.0",
-    "method":"get_ccid_info",
-    "params":{
-        "address": "ckt1qpexcgzey7lepv7per00j7fn8edqf78c9c2cu234mm595e6s6wx0zqgp4e67ve5ek37kc9udt55z4m547v7qjpt74ev2uq",
-        "ccid": "2923",
-        "joyid": "Dylan#2923"
-    }
-}' \
-| tr -d '\n' \
-| curl -H 'content-type: application/json' -d @- \
-http://127.0.0.1:3030
-```
-
-#### Response
-
-```
-block_number - The latest block number of cota-syncer
-address - The joyid ckb address
-ccid - The CoTA Cell Id
-joyid - The joyid like cipher#1234
-```
-
-```json
-{
-    "jsonrpc":"2.0",
-    "result":{
-        "address":"ckt1qpexcgzey7lepv7per00j7fn8edqf78c9c2cu234mm595e6s6wx0zqgp4e67ve5ek37kc9udt55z4m547v7qjpt74ev2uq",
-        "block_number":7030848,
-        "ccid":2923,
-        "joyid":"Dylan#2923"
     },
     "id":2
 }

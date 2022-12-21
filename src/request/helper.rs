@@ -24,11 +24,31 @@ pub fn parse_vec_map<T: ReqParser>(map: &Map<String, Value>, key: &str) -> Resul
     Ok(vec)
 }
 
+pub fn parse_vec_bytes(map: &Map<String, Value>, key: &str) -> Result<Vec<Vec<u8>>, Error> {
+    let value = map
+        .get(key)
+        .ok_or(Error::RequestParamNotFound(key.to_owned()))?;
+    if !value.is_array() {
+        return Err(Error::RequestParamTypeError(key.to_owned()));
+    }
+    let mut vec: Vec<Vec<u8>> = Vec::new();
+    for element in value.as_array().unwrap() {
+        if !element.is_string() {
+            return Err(Error::RequestParamTypeError(key.to_owned()));
+        }
+        vec.push(parse_bytes(element.as_str().unwrap().to_owned())?);
+    }
+    Ok(vec)
+}
+
 pub trait HexParser {
     fn get_hex_bytes_filed<const N: usize>(&self, key: &str) -> Result<[u8; N], Error>;
     fn get_hex_vec_filed(&self, key: &str) -> Result<Vec<u8>, Error>;
+    fn get_int_filed(&self, key: &str) -> Result<u64, Error>;
     fn get_i64_filed(&self, key: &str) -> Result<i64, Error>;
     fn get_u64_filed(&self, key: &str) -> Result<u64, Error>;
+    fn get_u32_filed(&self, key: &str) -> Result<u32, Error>;
+    fn get_u16_filed(&self, key: &str) -> Result<u16, Error>;
     fn get_u8_filed(&self, key: &str) -> Result<u8, Error>;
     fn get_str_filed(&self, key: &str) -> Result<String, Error>;
 }
@@ -69,40 +89,43 @@ impl HexParser for Map<String, Value> {
         Ok(result)
     }
 
-    fn get_i64_filed(&self, key: &str) -> Result<i64, Error> {
+    fn get_int_filed(&self, key: &str) -> Result<u64, Error> {
         let v = self
             .get(key)
             .ok_or(Error::RequestParamNotFound(key.to_owned()))?;
-        if !v.is_string() {
-            return Err(Error::RequestParamTypeError(key.to_owned()));
+        if v.is_u64() {
+            return Ok(v.as_u64().unwrap());
         }
-        let result: i64 = v.as_str().unwrap().parse().unwrap();
-        if result < 0 {
-            return Err(Error::RequestParamTypeError(key.to_owned()));
+        if v.is_string() {
+            let mut temp = v.as_str().unwrap();
+            if temp.starts_with("0x") {
+                temp = remove_0x(temp);
+                return Ok(u64::from_str_radix(temp, 16).unwrap());
+            } else {
+                return Ok(u64::from_str_radix(temp, 10).unwrap());
+            }
         }
-        Ok(result)
+        return Err(Error::RequestParamTypeError(key.to_owned()));
+    }
+
+    fn get_i64_filed(&self, key: &str) -> Result<i64, Error> {
+        Ok(self.get_int_filed(key)? as i64)
     }
 
     fn get_u64_filed(&self, key: &str) -> Result<u64, Error> {
-        let v = self
-            .get(key)
-            .ok_or(Error::RequestParamNotFound(key.to_owned()))?;
-        if !v.is_string() {
-            return Err(Error::RequestParamTypeError(key.to_owned()));
-        }
-        let result: u64 = v.as_str().unwrap().parse().unwrap();
-        Ok(result)
+        Ok(self.get_int_filed(key)?)
+    }
+
+    fn get_u32_filed(&self, key: &str) -> Result<u32, Error> {
+        Ok(self.get_int_filed(key)? as u32)
+    }
+
+    fn get_u16_filed(&self, key: &str) -> Result<u16, Error> {
+        Ok(self.get_int_filed(key)? as u16)
     }
 
     fn get_u8_filed(&self, key: &str) -> Result<u8, Error> {
-        let v = self
-            .get(key)
-            .ok_or(Error::RequestParamNotFound(key.to_owned()))?;
-        if !v.is_string() {
-            return Err(Error::RequestParamTypeError(key.to_owned()));
-        }
-        let result: u8 = v.as_str().unwrap().parse().unwrap();
-        Ok(result)
+        Ok(self.get_int_filed(key)? as u8)
     }
 
     fn get_str_filed(&self, key: &str) -> Result<String, Error> {
@@ -121,6 +144,7 @@ impl HexParser for Map<String, Value> {
 mod tests {
     use super::*;
     use jsonrpc_http_server::jsonrpc_core::Value;
+    use serde_json::Number;
 
     #[test]
     fn test_get_hex_bytes_filed() {
@@ -137,6 +161,9 @@ mod tests {
         );
         map.insert("total".to_owned(), Value::String("0x0000008g".to_owned()));
         map.insert("page".to_owned(), Value::String("32".to_owned()));
+
+        map.insert("hex".to_owned(), Value::String("0x32".to_owned()));
+        map.insert("num".to_owned(), Value::Number(Number::from(32)));
 
         assert_eq!(
             map.get_hex_vec_filed("lock_hash").unwrap(),
@@ -171,6 +198,10 @@ mod tests {
         );
 
         assert_eq!(map.get_i64_filed("page"), Ok(32));
+
+        assert_eq!(map.get_u64_filed("hex"), Ok(0x32u64));
+
+        assert_eq!(map.get_u8_filed("num"), Ok(32));
     }
 
     // TODO: Add more tests

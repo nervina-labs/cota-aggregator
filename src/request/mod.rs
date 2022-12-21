@@ -4,6 +4,8 @@ pub(crate) mod extension;
 pub(crate) mod fetch;
 mod helper;
 pub(crate) mod mint;
+pub(crate) mod social;
+pub(crate) mod subkey;
 pub(crate) mod transfer;
 pub(crate) mod update;
 pub(crate) mod withdrawal;

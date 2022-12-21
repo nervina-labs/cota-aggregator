@@ -10,11 +10,11 @@ use crate::models::claim::is_exist_in_claim;
 use crate::models::withdrawal::nft::{get_withdrawal_cota_by_lock_hash, WithdrawDb};
 use crate::request::transfer::TransferReq;
 use crate::request::withdrawal::TransferWithdrawal;
-use crate::smt::db::db::RocksDB;
 use crate::smt::transaction::store_transaction::StoreTransaction;
 use crate::smt::RootSaver;
 use crate::utils::error::Error;
 use crate::utils::helper::diff_time;
+use crate::ROCKS_DB;
 use chrono::prelude::*;
 use cota_smt::common::*;
 use cota_smt::molecule::prelude::*;
@@ -24,7 +24,6 @@ use log::{debug, error};
 use molecule::hex_string;
 
 pub async fn generate_transfer_smt(
-    db: &RocksDB,
     transfer_req: TransferReq,
 ) -> Result<(H256, TransferCotaNFTV2Entries, H256), Error> {
     let transfers = transfer_req.transfers;
@@ -124,7 +123,7 @@ pub async fn generate_transfer_smt(
 
     let transfer_smt_root = get_cota_smt_root(&transfer_lock_script).await?;
 
-    let transaction = &StoreTransaction::new(db.transaction());
+    let transaction = &StoreTransaction::new(ROCKS_DB.transaction());
     let transfer_lock_hash = blake2b_256(&transfer_lock_script);
     let mut transfer_smt = init_smt(transaction, transfer_lock_hash)?;
     // Add lock to transfer smt
@@ -193,11 +192,6 @@ pub async fn generate_transfer_smt(
         .output_index(withdraw_info.output_index)
         .tx_proof(withdraw_info.tx_proof)
         .build();
-
-    debug!(
-        "transfer entries size: {}",
-        transfer_entries.as_slice().len()
-    );
 
     Ok((
         *transfer_smt.root(),

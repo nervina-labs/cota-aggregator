@@ -1,8 +1,4 @@
-use sparse_merkle_tree::{
-    merge::MergeValue,
-    tree::{BranchKey, BranchNode},
-    H256,
-};
+use sparse_merkle_tree::{merge::MergeValue, BranchKey, BranchNode, H256};
 use std::convert::TryInto;
 
 pub fn branch_key_to_vec(lock_hash: [u8; 32], key: &BranchKey) -> Vec<u8> {
@@ -144,8 +140,6 @@ pub fn slice_to_branch_node(slice: &[u8]) -> BranchNode {
                 },
             }
         }
-        _ => {
-            unreachable!()
-        }
+        _ => unreachable!(),
     }
 }
