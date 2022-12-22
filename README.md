@@ -1086,7 +1086,7 @@ transactions - The transaction list of the sepcific CoTA NFT
     from - The sender address of the CoTA NFT transfer or mint transaction
     to - The receiver address of the CoTA NFT transfer or mint transaction
     tx_hash - The hash of the CoTA NFT transfer or mint transaction
-    type - The type of the CoTA NFT transaction: 'transfer' or 'mint'
+    tx_type - The type of the CoTA NFT transaction: 'transfer' or 'mint'
 ```
 
 ```json
