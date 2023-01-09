@@ -75,6 +75,10 @@ https://cota.nervina.dev/aggregator
 - [generate_define_cota_smt](#generate_define_cota_smt)
 - [generate_mint_cota_smt](#generate_mint_cota_smt)
 - [generate_transfer_cota_smt](#generate_transfer_cota_smt)
+- [generate_extension_subkey_smt](#generate_extension_subkey_smt)
+- [generate_subkey_unlock_smt](#generate_subkey_unlock_smt)
+- [generate_extension_social_smt](#generate_extension_social_smt)
+- [generate_social_unlock_smt](#generate_social_unlock_smt)
 - [get_hold_cota_nft](#get_hold_cota_nft)
 - [get_withdrawal_cota_nft](#get_withdrawal_cota_nft)
 - [get_mint_cota_nft](#get_mint_cota_nft)
@@ -267,6 +271,232 @@ mint_smt_entry - The SMT transfer information (origin SMT leaves, SMT proof and 
         "transfer_smt_entry":"4b03000020000000560000007a000000980000002b01000036010000d10200000100000081034f3b21fc113bfc423f1185ba6c37f16d02c6c71e00000000fb22817c592d8e96982e708d4a6c2135627ee8950000000001000000ffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff0100000081024f3b21fc113bfc423f1185ba6c37f16d02c6c71e0000000093000000080000008b000000100000002600000073000000c00000000000000000000000000000000000000000004900000049000000100000003000000031000000577a5e5930e2ecdd6200765f3442e6119dc99e87df474f22f13cab819c80b24201140000009cc2405a07d067c98bf6824134b2759b44079629777347181a25dc39c31ad290b9e2d52ded42295000000000070000004c4fff4c4fff48970100004c4f095109d2beef40bb50b06b1701f6bbae63be2b4123a9a57171b35f794926ef26c9735381000000000000000000000000000000000000000000000000000000000000004fa051a00000e96fe831821c10fe6cfec6e6d334688a5e7e11c6d263e3d900b0702b8664000054c0f76c724f432ff9b0b1f282ed81a17f342301000000000000000000004f0451018e9e5d7cfc6fe1c855d97930ea5737f4aae49897a79765515ff02ed27a53c88900000000000000000000000000000000000000000000000000000000000000004f185118fdc39dedf04b0a51bc3f190a0bab16aa78e36a171a944a799520a4151ed9495900000000000000000000000000000000000000000000000000000000000000005034c98329580d675bc226969e982888bf506dc2fce273b3a9df7d7adb5fc0541d5098969dc267aa28b349b9beacae7edc7ee10faf8d9f68ca13385c1a331be900e451021ae9d0fc52005e139df54ad1b4581f0537028a339558d7d6c639975f3f5b4a8600000000000000000000000000000000000000000000000000000000000000004f34760000005472616e7366657220746865204e4654204f3b21fc113bfc423f1185ba6c37f16d02c6c71e0000000020746f2049000000100000003000000031000000577a5e5930e2ecdd6200765f3442e6119dc99e87df474f22f13cab819c80b24201140000009cc2405a07d067c98bf6824134b2759b44079629"
     },
     "id":2
+}
+```
+
+### generate_extension_subkey_smt
+
+Generate smt data(`smt_entry` for `witness_args.input_type` and `smt_root` for cell data) for subkey extension transaction
+
+#### Parameters
+
+```
+lock_script - The sender's lock script
+ext_action - The extension action: add(0xF0) and update(0xF1)
+subkeys - The information of subkeys
+    ext_data - The subkey unique id
+    alg_index - The algorithm index: secp256r1 => 0x0001, secp256k1-eth => 0x0002
+    pubkey_hash - The blake2b_hash[0..20] of secp256r1 uncompressed pubkey and keccak256_hash[12..32] of secp256k1 uncompressed pubkey
+```
+
+```shell
+echo '{
+    "id":1672972637363,
+    "jsonrpc":"2.0",
+    "method":"generate_extension_subkey_smt",
+    "params":{
+        "lock_script":"0x4b000000100000003000000031000000d23761b364210735c19c60561d213fb3beae2fd6172743719eff6920e020baac01160000000001d547ad44cbf2421670601a561d83af144b49bdf0",
+        "ext_action":240,
+        "subkeys":[
+            {
+                "ext_data":1,
+                "alg_index":1,
+                "pubkey_hash":"0xd6cafa89c6a4ad735e45f7938b3dac63c9262958"
+            }
+        ]
+    }
+}' \
+| tr -d '\n' \
+| curl -H 'content-type: application/json' -d @- \
+http://127.0.0.1:3030
+```
+
+#### Response
+
+```
+block_number - The latest block number of cota-syncer
+smt_root_hash - The latest SMT root hash after adding or updating subkey extension
+extension_smt_entry - The SMT extension information (origin SMT leaves, SMT proof and other information)
+```
+
+```json
+{
+    "jsonrpc":"2.0",
+    "result":{
+        "block_number":7905660,
+        "extension_smt_entry":"f500000010000000970000009d0000008700000014000000380000005c0000008000000001000000ff007375626b6579000000010000000000000000000000000000000000000000010000000001d6cafa89c6a4ad735e45f7938b3dac63c9262958000000000000000000ff010000000000000000000000000000000000000000000000000000000000000000000000030000004c4f007375626b657954000000540000000c0000003000000001000000ff007375626b6579000000010000000000000000000000000000000000000000010000000001d6cafa89c6a4ad735e45f7938b3dac63c9262958000000000000000000ff",
+        "smt_root_hash":"cf71d48840033f455bd05a20c971bdbdeac827ef282d43c968083aa1c1b6f139"
+    },
+    "id":1672972637363
+}
+```
+
+### generate_subkey_unlock_smt
+
+Generate smt data(`smt_entry` for `witness_args.input_type` and `smt_root` for cell data) for subkey unlock transaction
+
+#### Parameters
+
+```
+lock_script - The sender's lock script
+alg_index - The algorithm index: secp256r1 => 0x0001, secp256k1-eth => 0x0002
+pubkey_hash - The blake2b_hash[0..20] of secp256r1 uncompressed pubkey and keccak256_hash[12..32] of secp256k1 uncompressed pubkey
+```
+
+```shell
+echo '{
+    "id":1672973081419,
+    "jsonrpc":"2.0",
+    "method":"generate_subkey_unlock_smt",
+    "params":{
+        "lock_script":"0x4b000000100000003000000031000000d23761b364210735c19c60561d213fb3beae2fd6172743719eff6920e020baac011600000000026500fc0e86fd49ef7dfc4b25dfd654eacaad53fb",
+        "pubkey_hash":"0x03d6da431853478e5eb67adf726d49cd46919128",
+        "alg_index":2
+    }
+}' \
+| tr -d '\n' \
+| curl -H 'content-type: application/json' -d @- \
+http://127.0.0.1:3030
+```
+
+#### Response
+
+```
+block_number - The latest block number of cota-syncer
+unlock_entry - The subkey unlock SMT information (origin SMT leaves, SMT proof and other information)
+```
+
+```json
+{
+    "jsonrpc":"2.0",
+    "result":{
+        "block_number":7905660,
+        "unlock_entry":"a3000000100000001400000016000000000000030002890000004c4f5851588473b84c21c9a8c296fea1c37adac79cec5c8c955c816d0a2a30618c32e13edbff007375626b65790000000000000000000000000000000000000000000000005159f65192a5a69f2b97b4ff2aaf2947136d09f647a4165b28a2d9e685c23b6e28c2ff007375626b65790000000100000000000000000000000000000000000000004fa6"
+    },
+    "id":1672973081419
+}
+```
+
+### generate_extension_social_smt
+
+Generate smt data(`smt_entry` for `witness_args.input_type` and `smt_root` for cell data) for social recovery extension transaction
+
+#### Parameters
+
+```
+lock_script - The sender's lock script
+ext_action - The extension action: add(0xF0) and update(0xF1)
+recovery_mode - The recovery mode(only support joyid(0x00) now)
+must - Minimum number of signers
+total - Total number of signers
+signers - The signers' lock scripts
+```
+
+```shell
+echo '{
+    "id":1672973328346,
+    "jsonrpc":"2.0",
+    "method":"generate_extension_social_smt",
+    "params":{
+        "lock_script":"0x4b000000100000003000000031000000d23761b364210735c19c60561d213fb3beae2fd6172743719eff6920e020baac011600000000016091d93dbab12f16640fb3a0a8f1e77e03fbc51c",
+        "ext_action":241,
+        "recovery_mode":0,
+        "must":2,
+        "total":4,
+        "signers":[
+            "0x4b000000100000003000000031000000d23761b364210735c19c60561d213fb3beae2fd6172743719eff6920e020baac01160000000001d547ad44cbf2421670601a561d83af144b49bdf0",
+            "0x4b000000100000003000000031000000d23761b364210735c19c60561d213fb3beae2fd6172743719eff6920e020baac011600000000019cd26babc8ce7142bf73327aef889f7f6a35c590",
+            "0x4b000000100000003000000031000000d23761b364210735c19c60561d213fb3beae2fd6172743719eff6920e020baac01160000000001794c31a0af71e723be68d3e0d1b57f99c79b55df",
+            "0x4b000000100000003000000031000000d23761b364210735c19c60561d213fb3beae2fd6172743719eff6920e020baac01160000000001b55f338f004e5986651302e1c620a750e426433d"
+        ]
+    }
+}' \
+| tr -d '\n' \
+| curl -H 'content-type: application/json' -d @- \
+http://127.0.0.1:3030
+```
+
+#### Response
+
+```
+block_number - The latest block number of cota-syncer
+smt_root_hash - The latest SMT root hash after adding or updating social recovery extension
+extension_smt_entry - The SMT extension information (origin SMT leaves, SMT proof and other information)
+```
+
+```json
+{
+    "jsonrpc":"2.0",
+    "result":{
+        "block_number":7905660,
+        "extension_smt_entry":"ba020000100000001d010000230100000d01000014000000380000005c0000008000000001000000ff00736f6369616c00000000000000000000000000000000000000000000000001000000e2ec22507d1e03656a7811d05ac1f372f22bd377a4f42f12386655dc5a114bf601000000e2ec22507d1e03656a7811d05ac1f372f22bd377a4f42f12386655dc5a114bf6890000004c4f58515802cce886db7e14c95b39cdbabd1b61e71bc472138dbf56c07f4202277bf51ac5ff007375626b657900000000000000000000000000000000000000000000000051599c6a0f6086139d03271333a1a0055a1887970297c265ae13e5646a900bf56469ff007375626b65790000000100000000000000000000000000000000000000004fa6736f6369616c93010000930100000c0000002c000000ff00736f6369616c0000000000000000000000000000000000000000000000006701000014000000150000001600000017000000000204500100001400000063000000b2000000010100004b0000004b000000100000003000000031000000d23761b364210735c19c60561d213fb3beae2fd6172743719eff6920e020baac01160000000001d547ad44cbf2421670601a561d83af144b49bdf04b0000004b000000100000003000000031000000d23761b364210735c19c60561d213fb3beae2fd6172743719eff6920e020baac011600000000019cd26babc8ce7142bf73327aef889f7f6a35c5904b0000004b000000100000003000000031000000d23761b364210735c19c60561d213fb3beae2fd6172743719eff6920e020baac01160000000001794c31a0af71e723be68d3e0d1b57f99c79b55df4b0000004b000000100000003000000031000000d23761b364210735c19c60561d213fb3beae2fd6172743719eff6920e020baac01160000000001b55f338f004e5986651302e1c620a750e426433d",
+        "smt_root_hash":"ef96e5c2d6709de3c80b5a887caf25e27cd110e468040ac776c80c58072acc99"
+    },
+    "id":1672973328346
+}
+```
+
+### generate_social_unlock_smt
+
+Generate smt data(`smt_entry` for `witness_args.input_type` and `smt_root` for cell data) for social recovery unlock transaction
+
+#### Parameters
+
+```
+lock_script - The sender's lock script
+friends - The social recovery friends' information
+    lock_script - The friend's lock script
+    pubkey - The secp256r1 uncompressed public key or secp256k1 uncompressed public key keccak256_hash[12..32]
+    signature - The signature of the priend for the social recovery message
+    unlock_mode - The unlock mode: native mode(0x01), subkey mode(0x02)
+    alg_index - The algorithm index: secp256r1 => 0x0001, secp256k1-eth => 0x0002
+```
+
+```shell
+echo '{
+    "id":1672973921765,
+    "jsonrpc":"2.0",
+    "method":"generate_social_unlock_smt",
+    "params":{
+        "lock_script":"0x4b000000100000003000000031000000d23761b364210735c19c60561d213fb3beae2fd6172743719eff6920e020baac011600000000016091d93dbab12f16640fb3a0a8f1e77e03fbc51c",
+        "friends":[
+            {
+                "lock_script":"0x4b000000100000003000000031000000d23761b364210735c19c60561d213fb3beae2fd6172743719eff6920e020baac01160000000001d547ad44cbf2421670601a561d83af144b49bdf0",
+                "pubkey":"0xe605dadda83f3a3c6f9e5827cc1ba814f12b72949144b77767c76c5475ae695fdcdb9f5d6527bd1594225908a0fa9b6fe411b5f6b61083ec56986d219967689e",
+                "signature":"e328c4d94ad18dd0cac05b7da0d3394472a91c4c80c8f89e0d0b563906c2c35e1b96dbdc83ca20a2b83b1dea5f344397acb9a1241e4b2c200978ccb6b860d54a",
+                "unlock_mode":2,
+                "alg_index":1
+            },
+            {
+                "lock_script":"0x4b000000100000003000000031000000d23761b364210735c19c60561d213fb3beae2fd6172743719eff6920e020baac011600000000019cd26babc8ce7142bf73327aef889f7f6a35c590",
+                "pubkey":"0xaf054531ef20e1e7d74022808b9e077ed52f34f0b80d26a8541a77f29d28c9ecb2b469fae98d2d79bec38f05c7321c89eefb1c823f0acdb09c80e476e4e492d7",
+                "signature":"5990df96d0e3abd6d808c95028c051690c42aa5d38b8a3b63953e6ef337471d0a5bcd05a0891336550c36f18929f68e7b81668ea3062e42d3d77c19ac258998c",
+                "unlock_mode":1,
+                "alg_index":1
+            }
+        ]
+    }
+}' \
+| tr -d '\n' \
+| curl -H 'content-type: application/json' -d @- \
+http://127.0.0.1:3030
+```
+
+#### Response
+
+```
+block_number - The latest block number of cota-syncer
+unlock_entry - The social recovery unlock SMT information (origin SMT leaves, SMT proof and other information)
+```
+
+```json
+{
+    "jsonrpc":"2.0",
+    "result":{
+        "block_number":7905660,
+        "unlock_entry":"710300001000000077010000040200006701000014000000150000001600000017000000000204500100001400000063000000b2000000010100004b0000004b000000100000003000000031000000d23761b364210735c19c60561d213fb3beae2fd6172743719eff6920e020baac01160000000001d547ad44cbf2421670601a561d83af144b49bdf04b0000004b000000100000003000000031000000d23761b364210735c19c60561d213fb3beae2fd6172743719eff6920e020baac011600000000019cd26babc8ce7142bf73327aef889f7f6a35c5904b0000004b000000100000003000000031000000d23761b364210735c19c60561d213fb3beae2fd6172743719eff6920e020baac01160000000001794c31a0af71e723be68d3e0d1b57f99c79b55df4b0000004b000000100000003000000031000000d23761b364210735c19c60561d213fb3beae2fd6172743719eff6920e020baac01160000000001b55f338f004e5986651302e1c620a750e426433d890000004c4f58515802cce886db7e14c95b39cdbabd1b61e71bc472138dbf56c07f4202277bf51ac5ff007375626b657900000000000000000000000000000000000000000000000051599c6a0f6086139d03271333a1a0055a1887970297c265ae13e5646a900bf56469ff007375626b65790000000100000000000000000000000000000000000000004fa66d0100000c000000be000000b20000001c0000001d0000001f00000063000000a7000000ab00000002000140000000e605dadda83f3a3c6f9e5827cc1ba814f12b72949144b77767c76c5475ae695fdcdb9f5d6527bd1594225908a0fa9b6fe411b5f6b61083ec56986d219967689e40000000e328c4d94ad18dd0cac05b7da0d3394472a91c4c80c8f89e0d0b563906c2c35e1b96dbdc83ca20a2b83b1dea5f344397acb9a1241e4b2c200978ccb6b860d54a00000001030000004c4f00af0000001c0000001d0000001f00000063000000a7000000ab00000001000140000000af054531ef20e1e7d74022808b9e077ed52f34f0b80d26a8541a77f29d28c9ecb2b469fae98d2d79bec38f05c7321c89eefb1c823f0acdb09c80e476e4e492d7400000005990df96d0e3abd6d808c95028c051690c42aa5d38b8a3b63953e6ef337471d0a5bcd05a0891336550c36f18929f68e7b81668ea3062e42d3d77c19ac258998c0000000000000000"
+    },
+    "id":1672973921765
 }
 ```
 
@@ -875,8 +1105,8 @@ echo '{
     "jsonrpc":"2.0",
     "method":"get_joyid_info",
     "params":{
-        "lock_script":"0x4a000000100000003000000031000000726c205927bf90b3c1c8def979333e5a04f8f82e158e2a35dee85a6750d38cf1011500000001ae75e66699b47d6c178d5d282aee95f33c09057e",
-        "address": "ckt1q3excgzey7lepv7per00j7fn8edqf78c9c2cu234mm595e6s6wx0zqdwwhnxdxd504kp0r2a9q4wa90n8sys2lse0p2jy"
+        "lock_script":"0x4b000000100000003000000031000000d23761b364210735c19c60561d213fb3beae2fd6172743719eff6920e020baac011600000000012bddb76a4d23141063cc59c6560b2117e1fff38c",
+        "address": "ckt1qrfrwcdnvssswdwpn3s9v8fp87emat306ctjwsm3nmlkjg8qyza2cqgqqy4amdm2f533gyrre3vuv4styyt7rlln3sxvqp4s"
     }
 }' \
 | tr -d '\n' \
@@ -892,7 +1122,6 @@ avatar - The joyid metadata avatar
 name - The joyid metadata name
 description - The joyid metadata description
 extension - The joyid metadata extension
-joyid - The joyid metadata joyid
 pub_key - The joyid metadata public key
 credential_id - The joyid metadata WebAuthn credential_id
 alg - The joyid metadata WebAuthn algorithm
@@ -908,24 +1137,27 @@ sub_keys - The joyid metadata sub public keys
     "result":{
         "alg":"01",
         "avatar":"https://i.loli.net/2021/04/29/IigbpOWP8fw9qDn.png",
-        "block_number":6836259,
+        "block_number":7948294,
         "cota_cell_id":"0000000000000b6b",
         "credential_id":"459d12c09a65e58e22a9d8d6fa843c3d",
         "description":"Web3 Developer",
         "extension":"",
+        "front_end":"https:://app.joy.id",
         "name":"Dylan",
         "pub_key":"650e48cf029c8a04788c02d7d88bad7b62918714137d0cd486b5b3aff53d0c2baecabd8d23107933f85fdf13cd814a0ba3d1848329b0504d7134a88962e9bde3",
         "sub_keys":[
             {
                 "alg":"01",
                 "credential_id":"459d12c09a65e58e22a9d8d6fa843c3d",
+                "front_end":"",
                 "pub_key":"650e48cf029c8a04788c02d7d88bad7b62918714137d0cd486b5b3aff53d0c2baecabd8d23107933f85fdf13cd814a0ba3d1848329b0504d7134a88962e9bde3"
             },
             {
                 "alg":"01",
                 "credential_id":"369d12c09a65e58e22a9d8d6fa843c3d",
+                "front_end":"",
                 "pub_key":"290e48cf029c8a04788c02d7d88bad7b62918714137d0cd486b5b3aff53d0c2baecabd8d23107933f85fdf13cd814a0ba3d1848329b0504d7134a88962e9bde3"
-            }
+            },
         ]
     },
     "id":2
@@ -1086,7 +1318,7 @@ transactions - The transaction list of the sepcific CoTA NFT
     from - The sender address of the CoTA NFT transfer or mint transaction
     to - The receiver address of the CoTA NFT transfer or mint transaction
     tx_hash - The hash of the CoTA NFT transfer or mint transaction
-    type - The type of the CoTA NFT transaction: 'transfer' or 'mint'
+    tx_type - The type of the CoTA NFT transaction: 'transfer' or 'mint'
 ```
 
 ```json
@@ -1154,7 +1386,7 @@ transactions - The transaction list of the sepcific CoTA NFT
     from - The sender address of the CoTA NFT transfer or mint transaction
     to - The receiver address of the CoTA NFT transfer or mint transaction
     tx_hash - The hash of the CoTA NFT transfer or mint transaction
-    type - The type of the CoTA NFT transaction: 'transfer' or 'mint'
+    tx_type - The type of the CoTA NFT transaction: 'transfer' or 'mint'
 ```
 
 ```json
