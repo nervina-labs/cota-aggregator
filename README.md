@@ -1105,8 +1105,8 @@ echo '{
     "jsonrpc":"2.0",
     "method":"get_joyid_info",
     "params":{
-        "lock_script":"0x4a000000100000003000000031000000726c205927bf90b3c1c8def979333e5a04f8f82e158e2a35dee85a6750d38cf1011500000001ae75e66699b47d6c178d5d282aee95f33c09057e",
-        "address": "ckt1q3excgzey7lepv7per00j7fn8edqf78c9c2cu234mm595e6s6wx0zqdwwhnxdxd504kp0r2a9q4wa90n8sys2lse0p2jy"
+        "lock_script":"0x4b000000100000003000000031000000d23761b364210735c19c60561d213fb3beae2fd6172743719eff6920e020baac011600000000012bddb76a4d23141063cc59c6560b2117e1fff38c",
+        "address": "ckt1qrfrwcdnvssswdwpn3s9v8fp87emat306ctjwsm3nmlkjg8qyza2cqgqqy4amdm2f533gyrre3vuv4styyt7rlln3sxvqp4s"
     }
 }' \
 | tr -d '\n' \
@@ -1137,14 +1137,14 @@ sub_keys - The joyid metadata sub public keys
     "result":{
         "alg":"01",
         "avatar":"https://i.loli.net/2021/04/29/IigbpOWP8fw9qDn.png",
-        "block_number":7948236,
-        "cota_cell_id":"",
-        "credential_id":"",
+        "block_number":7948294,
+        "cota_cell_id":"0000000000000b6b",
+        "credential_id":"459d12c09a65e58e22a9d8d6fa843c3d",
         "description":"Web3 Developer",
         "extension":"",
-        "front_end":"",
+        "front_end":"https:://app.joy.id",
         "name":"Dylan",
-        "pub_key":"",
+        "pub_key":"650e48cf029c8a04788c02d7d88bad7b62918714137d0cd486b5b3aff53d0c2baecabd8d23107933f85fdf13cd814a0ba3d1848329b0504d7134a88962e9bde3",
         "sub_keys":[
             {
                 "alg":"01",
@@ -1157,7 +1157,7 @@ sub_keys - The joyid metadata sub public keys
                 "credential_id":"369d12c09a65e58e22a9d8d6fa843c3d",
                 "front_end":"",
                 "pub_key":"290e48cf029c8a04788c02d7d88bad7b62918714137d0cd486b5b3aff53d0c2baecabd8d23107933f85fdf13cd814a0ba3d1848329b0504d7134a88962e9bde3"
-            }
+            },
         ]
     },
     "id":2
