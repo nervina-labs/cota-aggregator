@@ -84,7 +84,10 @@ fn generate_social_friends(friends: Vec<SocialFriend>) -> Result<FriendPubkeyVec
                 if friend.web_authn_msg.is_empty() {
                     return Err(Error::RequestParamNotFound("web_authn_msg".to_string()));
                 }
-                friend_pubkey = friend_pubkey.as_builder().web_authn_msg(vec_to_bytes(&friend.web_authn_msg)).build();
+                friend_pubkey = friend_pubkey
+                    .as_builder()
+                    .web_authn_msg(vec_to_bytes(&friend.web_authn_msg))
+                    .build();
             }
             friend_pubkeys.push(friend_pubkey);
         } else {
@@ -132,7 +135,10 @@ fn generate_social_friends(friends: Vec<SocialFriend>) -> Result<FriendPubkeyVec
                 if friend.web_authn_msg.is_empty() {
                     return Err(Error::RequestParamNotFound("web_authn_msg".to_string()));
                 }
-                friend_pubkey = friend_pubkey.as_builder().web_authn_msg(vec_to_bytes(&friend.web_authn_msg)).build();
+                friend_pubkey = friend_pubkey
+                    .as_builder()
+                    .web_authn_msg(vec_to_bytes(&friend.web_authn_msg))
+                    .build();
             }
             friend_pubkeys.push(friend_pubkey);
         }
