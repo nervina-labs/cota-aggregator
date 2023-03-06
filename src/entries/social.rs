@@ -131,7 +131,7 @@ fn generate_social_friends(friends: Vec<SocialFriend>) -> Result<FriendPubkeyVec
                 .ext_data(ext_data)
                 .subkey_proof(merkel_proof_bytes)
                 .build();
-            if friend.alg_index == 1 {
+            if friend.alg_index == 1 || friend.alg_index == 3 {
                 if friend.web_authn_msg.is_empty() {
                     return Err(Error::RequestParamNotFound("web_authn_msg".to_string()));
                 }
