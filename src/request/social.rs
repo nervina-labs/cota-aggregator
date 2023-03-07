@@ -19,7 +19,7 @@ impl ReqParser for SocialFriend {
             lock_script:   map.get_hex_vec_filed("lock_script")?,
             pubkey:        map.get_hex_vec_filed("pubkey")?,
             signature:     map.get_hex_vec_filed("signature")?,
-            web_authn_msg: map.get_hex_vec_filed("web_authn_msg")?,
+            web_authn_msg: map.get_optional_hex_vec_filed("web_authn_msg")?,
             unlock_mode:   map.get_u8_filed("unlock_mode")?,
             alg_index:     map.get_u16_filed("alg_index")?,
         })

@@ -80,7 +80,7 @@ fn generate_social_friends(friends: Vec<SocialFriend>) -> Result<FriendPubkeyVec
                 .pubkey(vec_to_bytes(&friend.pubkey))
                 .signature(vec_to_bytes(&friend.signature))
                 .build();
-            if friend.alg_index == 1 {
+            if friend.alg_index == 1 || friend.alg_index == 3 {
                 if friend.web_authn_msg.is_empty() {
                     return Err(Error::RequestParamNotFound("web_authn_msg".to_string()));
                 }
@@ -92,7 +92,13 @@ fn generate_social_friends(friends: Vec<SocialFriend>) -> Result<FriendPubkeyVec
             friend_pubkeys.push(friend_pubkey);
         } else {
             let lock_hash = blake2b_256(&friend.lock_script);
-            let pubkey_hash = blake2b_160(&friend.pubkey);
+            let pubkey_hash = if friend.alg_index == 2 {
+                let mut hash = [0u8; 20];
+                hash.copy_from_slice(&friend.pubkey);
+                hash
+            } else {
+                blake2b_160(&friend.pubkey)
+            };
 
             let subkey = get_subkey_by_pubkey_hash(lock_hash, pubkey_hash, friend.alg_index)?
                 .ok_or(Error::SubkeyLeafNotFound)?;
