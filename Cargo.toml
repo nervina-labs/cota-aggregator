@@ -1,6 +1,6 @@
 [package]
 name = "cota-aggregator"
-version = "0.9.1"
+version = "0.10.0"
 edition = "2018"
 
 [dependencies]
@@ -28,7 +28,7 @@ rand = "0.8"
 parking_lot = "0.12.1"
 sentry = "0.27.0"
 cota-smt = {package = "cota-smt", git = "https://github.com/nervina-labs/cota-smt", tag = "0.8.0"}
-joyid-smt = {package = "joyid-smt", git = "https://github.com/nervina-labs/joyid-smt", tag = "v0.5.0"}
+joyid-smt = {package = "joyid-smt", git = "https://github.com/nervina-labs/joyid-smt", tag = "v0.8.0"}
 ckb-sdk = "1.0.1"
 
 [target.'cfg(all(not(target_env = "msvc"), not(target_os="macos")))'.dependencies]

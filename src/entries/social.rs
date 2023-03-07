@@ -74,12 +74,21 @@ fn generate_social_friends(friends: Vec<SocialFriend>) -> Result<FriendPubkeyVec
             return Err(Error::SocialFriendInfoError("Unlock mode".to_owned()));
         }
         if friend.unlock_mode == 1 {
-            let friend_pubkey = FriendPubkeyBuilder::default()
+            let mut friend_pubkey = FriendPubkeyBuilder::default()
                 .unlock_mode(Byte::from_slice(&[friend.unlock_mode]).unwrap())
                 .alg_index(Uint16::from_slice(&friend.alg_index.to_be_bytes()).unwrap())
                 .pubkey(vec_to_bytes(&friend.pubkey))
                 .signature(vec_to_bytes(&friend.signature))
                 .build();
+            if friend.alg_index == 1 {
+                if friend.web_authn_msg.is_empty() {
+                    return Err(Error::RequestParamNotFound("web_authn_msg".to_string()));
+                }
+                friend_pubkey = friend_pubkey
+                    .as_builder()
+                    .web_authn_msg(vec_to_bytes(&friend.web_authn_msg))
+                    .build();
+            }
             friend_pubkeys.push(friend_pubkey);
         } else {
             let lock_hash = blake2b_256(&friend.lock_script);
@@ -114,7 +123,7 @@ fn generate_social_friends(friends: Vec<SocialFriend>) -> Result<FriendPubkeyVec
                 .extend(merkel_proof_vec.iter().map(|v| Byte::from(*v)))
                 .build();
 
-            let friend_pubkey = FriendPubkeyBuilder::default()
+            let mut friend_pubkey = FriendPubkeyBuilder::default()
                 .unlock_mode(Byte::from_slice(&[friend.unlock_mode]).unwrap())
                 .alg_index(alg_index)
                 .pubkey(vec_to_bytes(&friend.pubkey))
@@ -122,6 +131,15 @@ fn generate_social_friends(friends: Vec<SocialFriend>) -> Result<FriendPubkeyVec
                 .ext_data(ext_data)
                 .subkey_proof(merkel_proof_bytes)
                 .build();
+            if friend.alg_index == 1 || friend.alg_index == 3 {
+                if friend.web_authn_msg.is_empty() {
+                    return Err(Error::RequestParamNotFound("web_authn_msg".to_string()));
+                }
+                friend_pubkey = friend_pubkey
+                    .as_builder()
+                    .web_authn_msg(vec_to_bytes(&friend.web_authn_msg))
+                    .build();
+            }
             friend_pubkeys.push(friend_pubkey);
         }
     }
