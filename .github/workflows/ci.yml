@@ -19,7 +19,7 @@ jobs:
         include:
           - build: linux
             os: ubuntu-latest
-            rust: 1.59.0
+            rust: 1.72.0
 
     steps:
       - uses: actions/checkout@v3
@@ -30,7 +30,7 @@ jobs:
       - uses: actions-rs/toolchain@v1
         with:
           profile: minimal
-          toolchain: nightly-2021-12-25
+          toolchain: nightly-2023-06-12
           override: true
 
       - name: Check Rust format
