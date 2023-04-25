@@ -7,6 +7,7 @@ use cota_smt::define::DefineCotaNFTEntries;
 use cota_smt::smt::H256;
 use jsonrpc_http_server::jsonrpc_core::serde_json::Map;
 use jsonrpc_http_server::jsonrpc_core::Value;
+use serde::Serialize;
 
 use super::helper::parse_json_err;
 
@@ -23,12 +24,23 @@ pub fn parse_define_smt(
     Value::Object(map)
 }
 
+#[derive(Serialize, Clone, Eq, PartialEq, Default)]
+struct DefineInfo {
+    pub total:     u32,
+    pub issued:    u32,
+    pub configure: String,
+}
+
 pub fn parse_define_info(
     define_info: Option<DefineDb>,
     class_info: Option<ClassInfoDb>,
     block_number: u64,
 ) -> Result<Value, Error> {
-    let define = define_info.map_or(DefineDb::default(), |define| define);
+    let define = define_info.map_or(DefineInfo::default(), |define| DefineInfo {
+        total:     define.total,
+        issued:    define.issued,
+        configure: format!("0x{}", hex::encode(&[define.configure])),
+    });
     let define_json = serde_json::to_string(&define).map_err(parse_json_err)?;
     let mut map: Map<String, Value> = serde_json::from_str(&define_json).map_err(parse_json_err)?;
 
