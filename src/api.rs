@@ -18,12 +18,13 @@ use crate::models::common::{
 };
 use crate::models::issuer::get_issuer_info_by_lock_hash;
 use crate::models::joyid::get_joyid_info_by_lock_hash;
+use crate::models::withdrawal::nft::get_cota_info_by_cota_id_token_index;
 use crate::request::claim::{ClaimReq, ClaimUpdateReq, IsClaimedReq};
 use crate::request::define::{DefineInfoReq, DefineReq};
 use crate::request::extension::{ExtSocialReq, ExtSubkeysReq};
 use crate::request::fetch::{
-    FetchCountReq, FetchHistoryTxsReq, FetchIssuerInfoReq, FetchIssuerReq, FetchJoyIDReq, FetchReq,
-    FetchTxsByBlockNumberReq,
+    FetchCotaNftInfoReq, FetchCountReq, FetchHistoryTxsReq, FetchIssuerInfoReq, FetchIssuerReq,
+    FetchJoyIDReq, FetchReq, FetchTxsByBlockNumberReq,
 };
 use crate::request::mint::MintReq;
 use crate::request::social::SocialUnlockReq;
@@ -36,7 +37,7 @@ use crate::response::claim::{parse_claimed_response, parse_claimed_smt, parse_cl
 use crate::response::define::{parse_define_info, parse_define_smt};
 use crate::response::extension::parse_extension_smt;
 use crate::response::hold::{parse_hold_response, parse_owned_nft_count};
-use crate::response::info::generate_aggregator_info;
+use crate::response::info::{generate_aggregator_info, parse_cota_nft_info_response};
 use crate::response::issuer::{parse_issuer_info_response, parse_issuer_response};
 use crate::response::joyid_metadata::parse_joyid_metadata_response;
 use crate::response::mint::{parse_mint_response, parse_mint_smt};
@@ -257,6 +258,17 @@ pub async fn get_issuer_info(params: Params) -> Result<Value, Error> {
     };
     let issuer_info_opt = get_issuer_info_by_lock_hash(lock_hash).map_err(rpc_err)?;
     parse_issuer_response(issuer_info_opt, tip_number()?).map_err(rpc_err)
+}
+
+pub async fn get_cota_nft_info(params: Params) -> Result<Value, Error> {
+    info!("Get nft info request: {:?}", params);
+    let map: Map<String, Value> = Params::parse(params)?;
+    let FetchCotaNftInfoReq {
+        cota_id,
+        token_index,
+    } = FetchCotaNftInfoReq::from_map(&map).map_err(rpc_err)?;
+    let nft_info = get_cota_info_by_cota_id_token_index(cota_id, token_index).map_err(rpc_err)?;
+    parse_cota_nft_info_response(nft_info, tip_number()?).map_err(rpc_err)
 }
 
 pub async fn parse_witness(params: Params) -> Result<Value, Error> {

@@ -140,7 +140,7 @@ pub fn get_withdrawal_cota_by_cota_ids(
     Ok((withdrawals, total, block_height))
 }
 
-#[derive(Debug, Clone, Eq, PartialEq)]
+#[derive(Debug, Clone, Eq, PartialEq, Default)]
 pub struct WithdrawNFTDb {
     pub cota_id:        [u8; 20],
     pub token_index:    [u8; 4],
@@ -194,6 +194,28 @@ pub fn get_withdrawal_cota_by_script_id(
     let block_height = get_syncer_tip_block_number()?;
     diff_time(start_time, "SQL get_withdrawal_cota_by_script_id");
     Ok((withdrawals, total, block_height))
+}
+
+pub fn get_cota_info_by_cota_id_token_index(
+    cota_id_: [u8; 20],
+    token_index_: [u8; 4],
+) -> Result<Option<WithdrawNFTDb>, Error> {
+    let start_time = Local::now().timestamp_millis();
+    let conn = &get_conn();
+    let token_index_u32 = u32::from_be_bytes(token_index_);
+    let withdraw_cota_nfts: Vec<WithdrawCotaNft> = withdraw_cota_nft_kv_pairs
+        .select(get_selection())
+        .filter(cota_id.eq(hex::encode(&cota_id_)))
+        .filter(token_index.eq(token_index_u32))
+        .limit(1)
+        .load::<WithdrawCotaNft>(conn)
+        .map_err(|e| {
+            error!("Query withdraw error: {}", e.to_string());
+            Error::DatabaseQueryError(e.to_string())
+        })?;
+    let withdrawals = parse_withdraw_cota_nft(withdraw_cota_nfts);
+    diff_time(start_time, "SQL get_cota_info_by_cota_id_token_index");
+    Ok(withdrawals.get(0).cloned())
 }
 
 #[derive(Serialize, Deserialize, Queryable, Debug, Clone)]
