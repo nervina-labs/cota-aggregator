@@ -166,3 +166,18 @@ impl FetchJoyIDReq {
         })
     }
 }
+
+#[derive(Clone, Eq, PartialEq)]
+pub struct FetchCotaNftInfoReq {
+    pub cota_id:     [u8; 20],
+    pub token_index: [u8; 4],
+}
+
+impl FetchCotaNftInfoReq {
+    pub fn from_map(map: &Map<String, Value>) -> Result<Self, Error> {
+        Ok(FetchCotaNftInfoReq {
+            cota_id:     map.get_hex_bytes_filed::<20>("cota_id")?,
+            token_index: map.get_hex_bytes_filed::<4>("token_index")?,
+        })
+    }
+}

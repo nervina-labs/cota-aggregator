@@ -87,6 +87,7 @@ https://cota.nervina.dev/aggregator
 - [get_define_info](#get_define_info)
 - [get_issuer_info](#get_issuer_info)
 - [get_issuer_info_by_cota_id](#get_issuer_info_by_cota_id)
+- [get_cota_nft_info](#get_cota_nft_info)
 - [get_joyid_info](#get_joyid_info)
 - [parse_witness](#parse_witness)
 - [get_cota_count](#get_cota_count)
@@ -1082,6 +1083,55 @@ description - The issuer's description
         "block_number":6836177,
         "description":"Melting Two Worlds Together.",
         "name":"Nervina Labs"
+    },
+    "id":2
+}
+```
+
+### get_cota_nft_info
+
+Get Cota NFT information by cota_id and token_index
+
+#### Parameters
+
+```
+cota_id - CoTA NFT Class Unique ID
+token_index - The index of the NFT Class (increment from zero)
+```
+
+```shell
+echo '{
+    "id":2,
+    "jsonrpc":"2.0",
+    "method":"get_cota_nft_info",
+    "params":{
+        "cota_id":"0xd3b2bc022b52ce7282b354d97f9e5e5baf6698d7",
+        "token_index": "0x00000000"
+    }
+}' \
+| tr -d '\n' \
+| curl -H 'content-type: application/json' -d @- \
+http://localhost:3030
+
+```
+
+#### Response
+
+```
+block_number - The latest block number of cota-nft-entries-syncer
+configure - A bitmap variable to constrain the behavior of the NFT items issued by the NFT Class
+characteristic - A user defined variable to set up the NFT, we could consider it as the DNA of the items
+state - Used for indication of current NFT state
+```
+
+```json
+{
+    "jsonrpc":"2.0",
+    "result":{
+        "block_number":8402110,
+        "characteristic":"0x0505050505050505050505050505050505050505",
+        "configure":"0x00",
+        "state":"0x00"
     },
     "id":2
 }
