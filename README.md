@@ -1081,6 +1081,7 @@ description - The issuer's description
     "result":{
         "avatar":"https://i.loli.net/2021/04/29/IigbpOWP8fw9qDn.png",
         "block_number":6836177,
+        "lock_hash":"0xc93128c8dec5bcffc6bfccc70559089050fe4232bb2cddf3aa57e1daf6a814dc",
         "description":"Melting Two Worlds Together.",
         "name":"Nervina Labs"
     },
