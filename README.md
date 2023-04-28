@@ -1023,19 +1023,23 @@ http://127.0.0.1:3030
 
 ```
 block_number - The latest block number of cota-syncer
+version - The issuer's version
 avatar - The issuer's avatar
 name - The issuer's name
 description - The issuer's description
+localization - The issuer's localization
 ```
 
 ```json
 {
     "jsonrpc":"2.0",
     "result":{
+        "version":"0",
         "avatar":"https://i.loli.net/2021/04/29/IigbpOWP8fw9qDn.png",
         "block_number":6836177,
         "description":"Melting Two Worlds Together.",
-        "name":"Nervina Labs"
+        "name":"Nervina Labs",
+        "localization":""
     },
     "id":2
 }
@@ -1070,19 +1074,24 @@ http://127.0.0.1:3030
 ```
 block_number - The latest block number of cota-nft-entries-syncer
 lock_hash - The lock script hash of issuer
+version - The issuer's version
 avatar - The issuer's avatar
 name - The issuer's name
 description - The issuer's description
+localization - The issuer's localization
 ```
 
 ```json
 {
     "jsonrpc":"2.0",
     "result":{
+        "version":"0",
         "avatar":"https://i.loli.net/2021/04/29/IigbpOWP8fw9qDn.png",
         "block_number":6836177,
+        "lock_hash":"0xc93128c8dec5bcffc6bfccc70559089050fe4232bb2cddf3aa57e1daf6a814dc",
         "description":"Melting Two Worlds Together.",
-        "name":"Nervina Labs"
+        "name":"Nervina Labs",
+        "localization":""
     },
     "id":2
 }
