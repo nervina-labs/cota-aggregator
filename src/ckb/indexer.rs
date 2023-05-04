@@ -30,13 +30,13 @@ pub async fn get_cota_smt_root(lock_script: &[u8]) -> Result<Option<[u8; 32]>, E
 }
 
 pub async fn get_indexer_tip_block_number() -> Result<u64, Error> {
-    let result = build_rpc::<Tip>("get_tip", None).await?;
+    let result = build_rpc::<Tip>("get_indexer_tip", None).await?;
     Ok(u64::from(result.block_number))
 }
 
 async fn build_rpc<T: DeserializeOwned>(method: &str, params: Option<Value>) -> Result<T, Error> {
-    let ckb_indexer_url =
-        env::var("CKB_INDEXER").map_err(|_e| Error::Other("CKB_INDEXER must be set".to_owned()))?;
+    let ckb_node_url =
+        env::var("CKB_NODE").map_err(|_e| Error::Other("CKB_NODE must be set".to_owned()))?;
 
     let mut req_json = Map::new();
     req_json.insert("id".to_owned(), json!("1"));
@@ -49,15 +49,15 @@ async fn build_rpc<T: DeserializeOwned>(method: &str, params: Option<Value>) -> 
     let client = reqwest::Client::new();
 
     let resp = client
-        .post(ckb_indexer_url)
+        .post(ckb_node_url)
         .json(&req_json)
         .send()
         .await
-        .map_err(|e| Error::Other(format!("CKB Indexer rpc error: {:?}", e.to_string())))?;
+        .map_err(|e| Error::Other(format!("CKB node indexer rpc error: {:?}", e.to_string())))?;
     let output = resp
         .json::<jsonrpc_core::response::Output>()
         .await
-        .map_err(|e| Error::Other(format!("CKB Indexer rpc error: {:?}", e.to_string())))?;
+        .map_err(|e| Error::Other(format!("CKB node indexer rpc error: {:?}", e.to_string())))?;
     match output {
         jsonrpc_core::response::Output::Success(success) => {
             serde_json::from_value::<T>(success.result)
