@@ -34,8 +34,7 @@ Then put the `RUSTFLAGS='-L/opt/homebrew/opt/mysql-client/lib' ` in front of `ca
 
 - Rename `.env.example` to `.env`
   - Update the database connection string in `DATABASE_URL` key
-  - Update the ckb-indexer url string in `CKB_INDEXER`
-  - Update the ckb-node url string in `CKB_NODE`
+  - Update the ckb-node url string in `CKB_NODE`(Indexer module needs to be enable)
   - Update the mainnet or testnet in `IS_MAINNET`
 - Build with release profile: `make build-release`
 - Run with release profile: `make run-release`
@@ -43,7 +42,7 @@ Then put the `RUSTFLAGS='-L/opt/homebrew/opt/mysql-client/lib' ` in front of `ca
 ### Release
 
 ```shell
-RUST_LOG=info DATABASE_URL=mysql://root:password@localhost:3306/db_name CKB_NODE=http://localhost:8114 CKB_INDEXER=http://localhost:8116 IS_MAINNET=false ./cota-aggregator
+RUST_LOG=info DATABASE_URL=mysql://root:password@localhost:3306/db_name CKB_NODE=http://localhost:8114 IS_MAINNET=false ./cota-aggregator
 ```
 
 ### docker
