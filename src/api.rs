@@ -249,14 +249,18 @@ pub async fn get_issuer_info(params: Params) -> Result<Value, Error> {
     let FetchIssuerReq {
         lock_script,
         address,
+        lock_hash,
     } = FetchIssuerReq::from_map(&map).map_err(rpc_err)?;
-    let lock_hash = if lock_script.is_some() {
+    let lock_hash_ = if lock_script.is_some() {
         blake2b_256(&lock_script.unwrap())
-    } else {
+    } else if address.is_some() {
         let lock = script_from_address(address.unwrap()).map_err(rpc_err)?;
         blake2b_256(&lock.as_slice())
+    } else {
+        lock_hash.unwrap()
     };
-    let issuer_info_opt = get_issuer_info_by_lock_hash(lock_hash).map_err(rpc_err)?;
+    println!("lock_hash: {:?}", hex::encode(lock_hash_));
+    let issuer_info_opt = get_issuer_info_by_lock_hash(lock_hash_).map_err(rpc_err)?;
     parse_issuer_response(issuer_info_opt, tip_number()?).map_err(rpc_err)
 }
 

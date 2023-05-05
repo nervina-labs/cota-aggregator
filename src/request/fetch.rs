@@ -36,6 +36,7 @@ impl FetchReq {
 pub struct FetchIssuerReq {
     pub lock_script: Option<Vec<u8>>,
     pub address:     Option<String>,
+    pub lock_hash:   Option<[u8; 32]>,
 }
 
 impl FetchIssuerReq {
@@ -55,14 +56,21 @@ impl FetchIssuerReq {
             Some(_) => Some(map.get_str_filed("address")?),
             None => None,
         };
-        if lock_script.is_none() && address.is_none() {
+
+        let lock_hash = match map.get("lock_hash") {
+            Some(_) => Some(map.get_hex_bytes_filed::<32>("lock_hash")?),
+            None => None,
+        };
+
+        if lock_script.is_none() && address.is_none() && lock_hash.is_none() {
             return Err(Error::RequestParamTypeError(
-                "lock script and address".to_string(),
+                "lock script, lock hash or address".to_string(),
             ));
         }
         Ok(FetchIssuerReq {
             lock_script,
             address,
+            lock_hash,
         })
     }
 }
