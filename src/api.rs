@@ -259,7 +259,6 @@ pub async fn get_issuer_info(params: Params) -> Result<Value, Error> {
     } else {
         lock_hash.unwrap()
     };
-    println!("lock_hash: {:?}", hex::encode(lock_hash_));
     let issuer_info_opt = get_issuer_info_by_lock_hash(lock_hash_).map_err(rpc_err)?;
     parse_issuer_response(issuer_info_opt, tip_number()?).map_err(rpc_err)
 }
