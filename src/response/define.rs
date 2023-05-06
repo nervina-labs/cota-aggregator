@@ -1,4 +1,4 @@
-use crate::models::class::ClassInfoDb;
+use crate::models::class::ClassInfo;
 use crate::models::define::DefineDb;
 use crate::response::helper::Inserter;
 use crate::utils::error::Error;
@@ -33,7 +33,7 @@ struct DefineInfo {
 
 pub fn parse_define_info(
     define_info: Option<DefineDb>,
-    class_info: Option<ClassInfoDb>,
+    class_info: Option<ClassInfo>,
     block_number: u64,
 ) -> Result<Value, Error> {
     let define = define_info.map_or(DefineInfo::default(), |define| DefineInfo {
@@ -44,7 +44,7 @@ pub fn parse_define_info(
     let define_json = serde_json::to_string(&define).map_err(parse_json_err)?;
     let mut map: Map<String, Value> = serde_json::from_str(&define_json).map_err(parse_json_err)?;
 
-    let class = class_info.map_or(ClassInfoDb::default(), |class| class);
+    let class = class_info.map_or(ClassInfo::default(), |class| class);
     let class_json = serde_json::to_string(&class).map_err(parse_json_err)?;
     let mut class_map: Map<String, Value> =
         serde_json::from_str(&class_json).map_err(parse_json_err)?;

@@ -1,5 +1,5 @@
 use crate::business::helper::address_from_script;
-use crate::models::class::ClassInfoDb;
+use crate::models::class::ClassInfo;
 use crate::models::withdrawal::nft::WithdrawNFTDb;
 use crate::response::helper::Inserter;
 use crate::utils::error::Error;
@@ -12,7 +12,7 @@ use jsonrpc_http_server::jsonrpc_core::Value;
 use super::helper::parse_json_err;
 
 pub fn parse_withdrawal_response(
-    withdrawals: Vec<(WithdrawNFTDb, Option<ClassInfoDb>)>,
+    withdrawals: Vec<(WithdrawNFTDb, Option<ClassInfo>)>,
     total: i64,
     page_size: i64,
     block_number: u64,
@@ -30,7 +30,7 @@ pub fn parse_withdrawal_response(
 }
 
 fn parse_withdrawal_value(
-    (withdrawal, class_info): (WithdrawNFTDb, Option<ClassInfoDb>),
+    (withdrawal, class_info): (WithdrawNFTDb, Option<ClassInfo>),
 ) -> Result<Value, Error> {
     let mut map = Map::new();
     map.insert_hex("cota_id", &withdrawal.cota_id);
@@ -39,7 +39,7 @@ fn parse_withdrawal_value(
     map.insert_hex("configure", &[withdrawal.configure]);
     map.insert_hex("characteristic", &withdrawal.characteristic);
 
-    let class = class_info.map_or(ClassInfoDb::default(), |class| class);
+    let class = class_info.map_or(ClassInfo::default(), |class| class);
     let class_json = serde_json::to_string(&class).map_err(parse_json_err)?;
     let mut class_map: Map<String, Value> =
         serde_json::from_str(&class_json).map_err(parse_json_err)?;

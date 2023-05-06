@@ -123,7 +123,7 @@ echo '{
 }' \
 | tr -d '\n' \
 | curl -H 'content-type: application/json' -d @- \
-http://127.0.0.1:3030
+http://localhost:3030
 ```
 
 #### Response
@@ -190,7 +190,7 @@ echo '{
 }' \
 | tr -d '\n' \
 | curl -H 'content-type: application/json' -d @- \
-http://127.0.0.1:3030
+http://localhost:3030
 ```
 
 #### Response
@@ -249,7 +249,7 @@ echo '{
 }' \
 | tr -d '\n' \
 | curl -H 'content-type: application/json' -d @- \
-http://127.0.0.1:3030
+http://localhost:3030
 ```
 
 #### Response
@@ -308,7 +308,7 @@ echo '{
 }' \
 | tr -d '\n' \
 | curl -H 'content-type: application/json' -d @- \
-http://127.0.0.1:3030
+http://localhost:3030
 ```
 
 #### Response
@@ -356,7 +356,7 @@ echo '{
 }' \
 | tr -d '\n' \
 | curl -H 'content-type: application/json' -d @- \
-http://127.0.0.1:3030
+http://localhost:3030
 ```
 
 #### Response
@@ -413,7 +413,7 @@ echo '{
 }' \
 | tr -d '\n' \
 | curl -H 'content-type: application/json' -d @- \
-http://127.0.0.1:3030
+http://localhost:3030
 ```
 
 #### Response
@@ -479,7 +479,7 @@ echo '{
 }' \
 | tr -d '\n' \
 | curl -H 'content-type: application/json' -d @- \
-http://127.0.0.1:3030
+http://localhost:3030
 ```
 
 #### Response
@@ -521,27 +521,28 @@ cota_id - CoTA NFT Class Unique ID (optional)
     "jsonrpc":"2.0",
     "method":"get_hold_cota_nft",
     "params":{
-        "lock_script":"0x490000001000000030000000310000009bd7e06f3ecf4be0f2fcd2188b23f1b9fcc88e5d4b65a8637b17723bbda3cce80114000000dc70f33de86fdf381b4fc5bf092bb23d02774801",
+        "lock_script":"0x490000001000000030000000310000009bd7e06f3ecf4be0f2fcd2188b23f1b9fcc88e5d4b65a8637b17723bbda3cce80114000000f86332ab26fe5baa89f7a8f458cffd8de379f255",
         "page":"0",
         "page_size":"2"
     }
 }' \
 | tr -d '\n' \
 | curl -H 'content-type: application/json' -d @- \
-http://127.0.0.1:3030
+http://localhost:3030
 ```
 
 ```json
 {
     "jsonrpc":"2.0",
     "result":{
-        "block_number":4875330,
+        "block_number":9210781,
         "nfts":[
             {
                 "audio":"",
-                "characteristic":"0xa5a5a50505050505050505050505050505050505",
+                "audios":[],
+                "characteristic":"0x0505050505050505050505050505050505050505",
                 "configure":"0x00",
-                "cota_id":"0x780ae7e2eb39ce4985f632567224ccdd1dccfefe",
+                "cota_id":"0xb066e0f068aa8be6548063a18d811c489a9e2141",
                 "description":"First step to Blockchain mass adoption. NFT platform launch memento.\n\n-- Nervina Labs & Lay2 Tech, 4/30/2021.",
                 "image":"https://i.loli.net/2021/04/29/qyJNSE4iHAas7GL.png",
                 "meta_characteristic":"",
@@ -549,27 +550,43 @@ http://127.0.0.1:3030
                 "name":"First Step",
                 "properties":"",
                 "state":"0x00",
-                "token_index":"0x00000001",
+                "symbol":"",
+                "token_index":"0x00000002",
                 "video":""
             },
             {
                 "audio":"",
-                "characteristic":"0xa5a5a50505050505050505050505050505050505",
+                "audios":[
+                    {
+                        "cota_id":"0x1deb31f603652bf59ff5027b522e1d81c288b72f",
+                        "idx":0,
+                        "name":"audio01",
+                        "url":"https://i.loli.net/2021/04/29/qyJNSE4iHAas7GL.png"
+                    },
+                    {
+                        "cota_id":"0x1deb31f603652bf59ff5027b522e1d81c288b72f",
+                        "idx":1,
+                        "name":"audio02",
+                        "url":"https://i.loli.net/2021/04/29/qyJNSE4iHAas7GL.png"
+                    }
+                ],
+                "characteristic":"0x0a0a0a0a0a0a0a0a0a0a0a0a0a0a0a0a0a0a0a0a",
                 "configure":"0x00",
-                "cota_id":"0x2d1ac02ac52548c9b002067e3fed31ad9981b027",
+                "cota_id":"0x1deb31f603652bf59ff5027b522e1d81c288b72f",
                 "description":"First step to Blockchain mass adoption. NFT platform launch memento.\n\n-- Nervina Labs & Lay2 Tech, 4/30/2021.",
                 "image":"https://i.loli.net/2021/04/29/qyJNSE4iHAas7GL.png",
                 "meta_characteristic":"",
                 "model":"",
-                "name":"First Step",
+                "name":"Update First Step",
                 "properties":"",
                 "state":"0x00",
-                "token_index":"0x00000001",
+                "symbol":"",
+                "token_index":"0x00000000",
                 "video":""
             }
         ],
         "page_size":2,
-        "total":250
+        "total":2
     },
     "id":2
 }
@@ -583,15 +600,15 @@ echo '{
     "jsonrpc":"2.0",
     "method":"get_hold_cota_nft",
     "params":{
-        "lock_script":"0x490000001000000030000000310000009bd7e06f3ecf4be0f2fcd2188b23f1b9fcc88e5d4b65a8637b17723bbda3cce80114000000dc70f33de86fdf381b4fc5bf092bb23d02774801",
+        "lock_script":"0x490000001000000030000000310000009bd7e06f3ecf4be0f2fcd2188b23f1b9fcc88e5d4b65a8637b17723bbda3cce80114000000f86332ab26fe5baa89f7a8f458cffd8de379f255",
         "page":"0",
         "page_size":"2",
-        "cota_id": "0x780ae7e2eb39ce4985f632567224ccdd1dccfefe"
+        "cota_id": "0x1deb31f603652bf59ff5027b522e1d81c288b72f"
     }
 }' \
 | tr -d '\n' \
 | curl -H 'content-type: application/json' -d @- \
-http://127.0.0.1:3030
+http://localhost:3030
 
 ```
 
@@ -599,21 +616,36 @@ http://127.0.0.1:3030
 {
     "jsonrpc":"2.0",
     "result":{
-        "block_number":4949226,
+        "block_number":9210827,
         "nfts":[
             {
                 "audio":"",
-                "characteristic":"0xa5a5a50505050505050505050505050505050505",
+                "audios":[
+                    {
+                        "cota_id":"1deb31f603652bf59ff5027b522e1d81c288b72f",
+                        "idx":0,
+                        "name":"audio01",
+                        "url":"https://i.loli.net/2021/04/29/qyJNSE4iHAas7GL.png"
+                    },
+                    {
+                        "cota_id":"1deb31f603652bf59ff5027b522e1d81c288b72f",
+                        "idx":1,
+                        "name":"audio02",
+                        "url":"https://i.loli.net/2021/04/29/qyJNSE4iHAas7GL.png"
+                    }
+                ],
+                "characteristic":"0x0a0a0a0a0a0a0a0a0a0a0a0a0a0a0a0a0a0a0a0a",
                 "configure":"0x00",
-                "cota_id":"0x780ae7e2eb39ce4985f632567224ccdd1dccfefe",
+                "cota_id":"0x1deb31f603652bf59ff5027b522e1d81c288b72f",
                 "description":"First step to Blockchain mass adoption. NFT platform launch memento.\n\n-- Nervina Labs & Lay2 Tech, 4/30/2021.",
                 "image":"https://i.loli.net/2021/04/29/qyJNSE4iHAas7GL.png",
                 "meta_characteristic":"",
                 "model":"",
-                "name":"First Step",
+                "name":"Update First Step",
                 "properties":"",
                 "state":"0x00",
-                "token_index":"0x00000001",
+                "symbol":"",
+                "token_index":"0x00000000",
                 "video":""
             }
         ],
@@ -652,7 +684,7 @@ cota_id - CoTA NFT Class Unique ID (optional)
 }' \
 | tr -d '\n' \
 | curl -H 'content-type: application/json' -d @- \
-http://127.0.0.1:3030
+http://localhost:3030
 ```
 
 ```json
@@ -663,6 +695,7 @@ http://127.0.0.1:3030
         "nfts":[
             {
                 "audio":"",
+                "audios":[],
                 "characteristic":"0x0505050505050505050505050505050505050505",
                 "configure":"0x00",
                 "cota_id":"0x3766e323d1b70a5536ab2d8dfcfaa03f9b5c4fea",
@@ -678,6 +711,7 @@ http://127.0.0.1:3030
             },
             {
                 "audio":"",
+                "audios":[],
                 "characteristic":"0x0505050505050505050505050505050505050505",
                 "configure":"0x00",
                 "cota_id":"0x3766e323d1b70a5536ab2d8dfcfaa03f9b5c4fea",
@@ -693,6 +727,7 @@ http://127.0.0.1:3030
             },
             {
                 "audio":"",
+                "audios":[],
                 "characteristic":"0x0505050505050505050505050505050505050505",
                 "configure":"0x00",
                 "cota_id":"0xc27aaf7033c51364be0232d1831e33addd90f9ed",
@@ -730,7 +765,7 @@ http://127.0.0.1:3030
 }' \
 | tr -d '\n' \
 | curl -H 'content-type: application/json' -d @- \
-http://127.0.0.1:3030
+http://localhost:3030
 
 ```
 
@@ -742,6 +777,7 @@ http://127.0.0.1:3030
         "nfts":[
             {
                 "audio":"",
+                "audios":[],
                 "characteristic":"0x0505050505050505050505050505050505050505",
                 "configure":"0x00",
                 "cota_id":"0x3766e323d1b70a5536ab2d8dfcfaa03f9b5c4fea",
@@ -757,6 +793,7 @@ http://127.0.0.1:3030
             },
             {
                 "audio":"",
+                "audios":[],
                 "characteristic":"0x0505050505050505050505050505050505050505",
                 "configure":"0x00",
                 "cota_id":"0x3766e323d1b70a5536ab2d8dfcfaa03f9b5c4fea",
@@ -798,55 +835,54 @@ echo '{
     "params":{
         "lock_script":"0x490000001000000030000000310000009bd7e06f3ecf4be0f2fcd2188b23f1b9fcc88e5d4b65a8637b17723bbda3cce80114000000f86332ab26fe5baa89f7a8f458cffd8de379f255",
         "page":"0",
-        "page_size":"2"
+        "page_size":"1"
     }
 }' \
 | tr -d '\n' \
 | curl -H 'content-type: application/json' -d @- \
-http://127.0.0.1:3030
+http://localhost:3030
 ```
 
 ```json
 {
     "jsonrpc":"2.0",
     "result":{
-        "block_number":4875342,
+        "block_number":9210863,
         "nfts":[
             {
                 "audio":"",
-                "characteristic":"0x0000000000000000000000000000000000000000",
+                "audios":[
+                    {
+                        "cota_id":"c27328c95e27723d42770261d05355977aa5c89a",
+                        "idx":0,
+                        "name":"audio01",
+                        "url":"https://i.loli.net/2021/04/29/qyJNSE4iHAas7GL.png"
+                    },
+                    {
+                        "cota_id":"c27328c95e27723d42770261d05355977aa5c89a",
+                        "idx":1,
+                        "name":"audio02",
+                        "url":"https://i.loli.net/2021/04/29/qyJNSE4iHAas7GL.png"
+                    }
+                ],
+                "characteristic":"0x0505050505050505050505050505050505050505",
                 "configure":"0x00",
-                "cota_id":"0xd3b2bc022b52ce7282b354d97f9e5e5baf6698d7",
-                "description":"Test 1 desc",
-                "image":"ipfs://bafyreidq5eujpiq5fkygqtmiy7ansuyeujsvpnwieagekmr4y6gllzdsq4/metadata.json",
+                "cota_id":"0xc27328c95e27723d42770261d05355977aa5c89a",
+                "description":"First step to Blockchain mass adoption. NFT platform launch memento.\n\n-- Nervina Labs & Lay2 Tech, 4/30/2021.",
+                "image":"https://i.loli.net/2021/04/29/qyJNSE4iHAas7GL.png",
                 "meta_characteristic":"",
                 "model":"",
-                "name":"Test 1",
+                "name":"Update First Step",
                 "properties":"",
-                "receiver_lock":"0x49000000100000003000000031000000081dbffa88dab54ba426d231ca64eb760cea2fe9e16761a1da400da1b2cbe1280114000000657d0af440ef3804e01f9250b57b8eae1c3cf60d",
+                "receiver_lock":"0x490000001000000030000000310000009bd7e06f3ecf4be0f2fcd2188b23f1b9fcc88e5d4b65a8637b17723bbda3cce80114000000864b1331e8cdf54fa09b9f75f87463e4981534d6",
                 "state":"0x00",
-                "token_index":"0x0000000d",
-                "video":""
-            },
-            {
-                "audio":"",
-                "characteristic":"0x0000000000000000000000000000000000000000",
-                "configure":"0x00",
-                "cota_id":"0xd3b2bc022b52ce7282b354d97f9e5e5baf6698d7",
-                "description":"Test 1 desc",
-                "image":"ipfs://bafyreidq5eujpiq5fkygqtmiy7ansuyeujsvpnwieagekmr4y6gllzdsq4/metadata.json",
-                "meta_characteristic":"",
-                "model":"",
-                "name":"Test 1",
-                "properties":"",
-                "receiver_lock":"0x490000001000000030000000310000009bd7e06f3ecf4be0f2fcd2188b23f1b9fcc88e5d4b65a8637b17723bbda3cce80114000000971117321898d14ac238b0f403e109140388b444",
-                "state":"0x00",
-                "token_index":"0x0000000b",
+                "symbol":"",
+                "token_index":"0x00000016",
                 "video":""
             }
         ],
-        "page_size":2,
-        "total":55
+        "page_size":1,
+        "total":1049
     },
     "id":2
 }
@@ -877,7 +913,7 @@ token_index - The index of the NFT Class (increment from zero)
 }' \
 | tr -d '\n' \
 | curl -H 'content-type: application/json' -d @- \
-http://127.0.0.1:3030
+http://localhost:3030
 ```
 
 #### Response
@@ -923,7 +959,7 @@ echo '{
 }' \
 | tr -d '\n' \
 | curl -H 'content-type: application/json' -d @- \
-http://127.0.0.1:3030
+http://localhost:3030
 ```
 
 #### Response
@@ -962,12 +998,12 @@ echo '{
     "jsonrpc":"2.0",
     "method":"get_define_info",
     "params":{
-        "cota_id":"0xd3b2bc022b52ce7282b354d97f9e5e5baf6698d7"
+        "cota_id":"0x1deb31f603652bf59ff5027b522e1d81c288b72f"
     }
 }' \
 | tr -d '\n' \
 | curl -H 'content-type: application/json' -d @- \
-http://127.0.0.1:3030
+http://localhost:3030
 ```
 
 ```json
@@ -975,15 +1011,30 @@ http://127.0.0.1:3030
     "jsonrpc":"2.0",
     "result":{
         "audio":"",
-        "block_number":4948295,
+        "audios":[
+            {
+                "cota_id":"1deb31f603652bf59ff5027b522e1d81c288b72f",
+                "idx":0,
+                "name":"audio01",
+                "url":"https://i.loli.net/2021/04/29/qyJNSE4iHAas7GL.png"
+            },
+            {
+                "cota_id":"1deb31f603652bf59ff5027b522e1d81c288b72f",
+                "idx":1,
+                "name":"audio02",
+                "url":"https://i.loli.net/2021/04/29/qyJNSE4iHAas7GL.png"
+            }
+        ],
+        "block_number":9210849,
         "configure":"0x00",
-        "description":"Test 1 desc",
-        "image":"ipfs://bafyreidq5eujpiq5fkygqtmiy7ansuyeujsvpnwieagekmr4y6gllzdsq4/metadata.json",
-        "issued":26,
+        "description":"First step to Blockchain mass adoption. NFT platform launch memento.\n\n-- Nervina Labs & Lay2 Tech, 4/30/2021.",
+        "image":"https://i.loli.net/2021/04/29/qyJNSE4iHAas7GL.png",
+        "issued":2,
         "meta_characteristic":"",
         "model":"",
-        "name":"Test 1",
+        "name":"Update First Step",
         "properties":"",
+        "symbol":"",
         "total":100,
         "video":""
     },
@@ -1017,7 +1068,7 @@ echo '{
 }' \
 | tr -d '\n' \
 | curl -H 'content-type: application/json' -d @- \
-http://127.0.0.1:3030
+http://localhost:3030
 ```
 
 #### Response
@@ -1067,7 +1118,7 @@ echo '{
 }' \
 | tr -d '\n' \
 | curl -H 'content-type: application/json' -d @- \
-http://127.0.0.1:3030
+http://localhost:3030
 ```
 
 #### Response
@@ -1165,13 +1216,13 @@ echo '{
     "jsonrpc":"2.0",
     "method":"get_joyid_info",
     "params":{
-        "lock_script":"0x4b000000100000003000000031000000d23761b364210735c19c60561d213fb3beae2fd6172743719eff6920e020baac011600000000012bddb76a4d23141063cc59c6560b2117e1fff38c",
-        "address": "ckt1qrfrwcdnvssswdwpn3s9v8fp87emat306ctjwsm3nmlkjg8qyza2cqgqqy4amdm2f533gyrre3vuv4styyt7rlln3sxvqp4s"
+        "lock_script":"0x4b000000100000003000000031000000d23761b364210735c19c60561d213fb3beae2fd6172743719eff6920e020baac01160000000001766925e09913c839daa5ba162878781bbd424163",
+        "address": "ckt1qrfrwcdnvssswdwpn3s9v8fp87emat306ctjwsm3nmlkjg8qyza2cqgqq9mxjf0qnyfusww65kapv2rc0qdm6sjpvvadd4hp"
     }
 }' \
 | tr -d '\n' \
 | curl -H 'content-type: application/json' -d @- \
-http://127.0.0.1:3030
+http://localhost:3030
 ```
 
 #### Response
@@ -1185,10 +1236,16 @@ extension - The joyid metadata extension
 pub_key - The joyid metadata public key
 credential_id - The joyid metadata WebAuthn credential_id
 alg - The joyid metadata WebAuthn algorithm
+front_end - The website url for submitting joyid info
+device_name - The device name for submitting joyid info
+device_type - The device type for submitting joyid info
 sub_keys - The joyid metadata sub public keys
     pub_key - The joyid metadata public key
     credential_id - The joyid metadata WebAuthn credential_id
     alg - The joyid metadata WebAuthn algorithm
+    front_end - The website url for submitting joyid subkey info
+    device_name - The device name for submitting joyid subkey info
+    device_type - The device type for submitting joyid subkey info
 ```
 
 ```json
@@ -1196,28 +1253,26 @@ sub_keys - The joyid metadata sub public keys
     "jsonrpc":"2.0",
     "result":{
         "alg":"01",
-        "avatar":"https://i.loli.net/2021/04/29/IigbpOWP8fw9qDn.png",
-        "block_number":7948294,
-        "cota_cell_id":"0000000000000b6b",
-        "credential_id":"459d12c09a65e58e22a9d8d6fa843c3d",
-        "description":"Web3 Developer",
+        "avatar":"",
+        "block_number":9211040,
+        "cota_cell_id":"",
+        "credential_id":"24faf3bc1a0facb9598aa43aaa2cbeee339b0da1",
+        "description":"",
+        "device_name":"Safari on macOS",
+        "device_type":"pc",
         "extension":"",
-        "front_end":"https:://app.joy.id",
-        "name":"Dylan",
-        "pub_key":"650e48cf029c8a04788c02d7d88bad7b62918714137d0cd486b5b3aff53d0c2baecabd8d23107933f85fdf13cd814a0ba3d1848329b0504d7134a88962e9bde3",
+        "front_end":"joyid-dev.vercel.app",
+        "name":"INSTest3",
+        "pub_key":"dad887ba4f3fa0998b847c46e296cbf5b9e69e34ce9a06d1a21b625decd7b6aef97890ab6f5e059c4c2ae78fc0a538dadda94744648501a7d2bad9f7d1ab0d7c",
         "sub_keys":[
             {
                 "alg":"01",
-                "credential_id":"459d12c09a65e58e22a9d8d6fa843c3d",
-                "front_end":"",
-                "pub_key":"650e48cf029c8a04788c02d7d88bad7b62918714137d0cd486b5b3aff53d0c2baecabd8d23107933f85fdf13cd814a0ba3d1848329b0504d7134a88962e9bde3"
-            },
-            {
-                "alg":"01",
-                "credential_id":"369d12c09a65e58e22a9d8d6fa843c3d",
-                "front_end":"",
-                "pub_key":"290e48cf029c8a04788c02d7d88bad7b62918714137d0cd486b5b3aff53d0c2baecabd8d23107933f85fdf13cd814a0ba3d1848329b0504d7134a88962e9bde3"
-            },
+                "credential_id":"4c41b0768d3122741980d75067f3964c711cf3536b66298fe5a7afafcaa219e6",
+                "device_name":"Edge on iMac",
+                "device_type":"pc",
+                "front_end":"joyid-dev.vercel.app",
+                "pub_key":"1b03ac825d7b609be556384a03a06c71ee5d8e32e980ecb8b325e3d1137ece8491fd285408bb0c6f946cfeecf3c649210d1b105a2c0d2205cda7de051315f80e"
+            }
         ]
     },
     "id":2
@@ -1247,7 +1302,7 @@ echo '{
 }' \
 | tr -d '\n' \
 | curl -H 'content-type: application/json' -d @- \
-http://127.0.0.1:3030
+http://localhost:3030
 ```
 
 ```json
@@ -1315,7 +1370,7 @@ echo '{
 }' \
 | tr -d '\n' \
 | curl -H 'content-type: application/json' -d @- \
-http://127.0.0.1:3030
+http://localhost:3030
 ```
 
 #### Response
@@ -1363,7 +1418,7 @@ echo '{
 }' \
 | tr -d '\n' \
 | curl -H 'content-type: application/json' -d @- \
-http://127.0.0.1:3030
+http://localhost:3030
 ```
 
 ### Response
@@ -1432,7 +1487,7 @@ echo '{
 }' \
 | tr -d '\n' \
 | curl -H 'content-type: application/json' -d @- \
-http://127.0.0.1:3030
+http://localhost:3030
 ```
 
 ### Response
@@ -1495,7 +1550,7 @@ echo '{
 }' \
 | tr -d '\n' \
 | curl -H 'content-type: application/json' -d @- \
-http://127.0.0.1:3030
+http://localhost:3030
 ```
 
 #### Response

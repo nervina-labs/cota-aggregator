@@ -1,5 +1,5 @@
 use super::helper::{parse_json_err, Inserter};
-use crate::models::class::ClassInfoDb;
+use crate::models::class::ClassInfo;
 use crate::models::withdrawal::nft::WithdrawDb;
 use crate::utils::error::Error;
 use ckb_types::prelude::Entity;
@@ -9,7 +9,7 @@ use jsonrpc_http_server::jsonrpc_core::serde_json::Map;
 use jsonrpc_http_server::jsonrpc_core::Value;
 
 pub fn parse_mint_response(
-    withdrawals: Vec<(WithdrawDb, Option<ClassInfoDb>)>,
+    withdrawals: Vec<(WithdrawDb, Option<ClassInfo>)>,
     total: i64,
     page_size: i64,
     block_number: u64,
@@ -27,7 +27,7 @@ pub fn parse_mint_response(
 }
 
 fn parse_mint_value(
-    (withdrawal, class_info): (WithdrawDb, Option<ClassInfoDb>),
+    (withdrawal, class_info): (WithdrawDb, Option<ClassInfo>),
 ) -> Result<Value, Error> {
     let mut map = Map::new();
     map.insert_hex("cota_id", &withdrawal.cota_id);
@@ -37,7 +37,7 @@ fn parse_mint_value(
     map.insert_hex("characteristic", &withdrawal.characteristic);
     map.insert_hex("receiver_lock", &withdrawal.receiver_lock_script);
 
-    let class = class_info.map_or(ClassInfoDb::default(), |class| class);
+    let class = class_info.map_or(ClassInfo::default(), |class| class);
     let class_json = serde_json::to_string(&class).map_err(parse_json_err)?;
     let mut class_map: Map<String, Value> =
         serde_json::from_str(&class_json).map_err(parse_json_err)?;

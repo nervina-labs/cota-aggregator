@@ -63,6 +63,7 @@ diesel::table! {
     }
 }
 
+
 diesel::table! {
     extension_kv_pairs (id) {
         id -> Bigint,
@@ -75,6 +76,7 @@ diesel::table! {
         updated_at -> Datetime,
     }
 }
+
 
 diesel::table! {
     hold_cota_nft_kv_pairs (id) {
@@ -92,6 +94,7 @@ diesel::table! {
     }
 }
 
+
 diesel::table! {
     issuer_infos (id) {
         id -> Bigint,
@@ -107,6 +110,7 @@ diesel::table! {
     }
 }
 
+
 diesel::table! {
     joy_id_infos (id) {
         id -> Bigint,
@@ -121,6 +125,8 @@ diesel::table! {
         credential_id -> Varchar,
         alg -> Char,
         front_end -> Varchar,
+        device_name -> Varchar,
+        device_type -> Varchar,
         cota_cell_id -> Char,
         created_at -> Datetime,
         updated_at -> Datetime,
@@ -174,6 +180,7 @@ diesel::table! {
     }
 }
 
+
 diesel::table! {
     sub_key_infos (id) {
         id -> Bigint,
@@ -183,10 +190,13 @@ diesel::table! {
         credential_id -> Varchar,
         alg -> Char,
         front_end -> Varchar,
+        device_name -> Varchar,
+        device_type -> Varchar,
         created_at -> Datetime,
         updated_at -> Datetime,
     }
 }
+
 
 diesel::table! {
     sub_key_kv_pairs (id) {
@@ -197,6 +207,18 @@ diesel::table! {
         ext_data -> Unsigned<Integer>,
         alg_index -> Unsigned<Integer>,
         pubkey_hash -> Char,
+        created_at -> Datetime,
+        updated_at -> Datetime,
+    }
+}
+
+diesel::table! {
+    token_class_audios (id) {
+        id -> Bigint,
+        cota_id -> Char,
+        url -> Varchar,
+        name -> Varchar,
+        idx -> Unsigned<Integer>,
         created_at -> Datetime,
         updated_at -> Datetime,
     }
@@ -240,5 +262,6 @@ diesel::allow_tables_to_appear_in_same_query!(
     social_kv_pairs,
     sub_key_infos,
     sub_key_kv_pairs,
+    token_class_audios,
     withdraw_cota_nft_kv_pairs,
 );
