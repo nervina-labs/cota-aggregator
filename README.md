@@ -1216,8 +1216,8 @@ echo '{
     "jsonrpc":"2.0",
     "method":"get_joyid_info",
     "params":{
-        "lock_script":"0x4b000000100000003000000031000000d23761b364210735c19c60561d213fb3beae2fd6172743719eff6920e020baac011600000000012bddb76a4d23141063cc59c6560b2117e1fff38c",
-        "address": "ckt1qrfrwcdnvssswdwpn3s9v8fp87emat306ctjwsm3nmlkjg8qyza2cqgqqy4amdm2f533gyrre3vuv4styyt7rlln3sxvqp4s"
+        "lock_script":"0x4b000000100000003000000031000000d23761b364210735c19c60561d213fb3beae2fd6172743719eff6920e020baac01160000000001766925e09913c839daa5ba162878781bbd424163",
+        "address": "ckt1qrfrwcdnvssswdwpn3s9v8fp87emat306ctjwsm3nmlkjg8qyza2cqgqq9mxjf0qnyfusww65kapv2rc0qdm6sjpvvadd4hp"
     }
 }' \
 | tr -d '\n' \
@@ -1236,10 +1236,16 @@ extension - The joyid metadata extension
 pub_key - The joyid metadata public key
 credential_id - The joyid metadata WebAuthn credential_id
 alg - The joyid metadata WebAuthn algorithm
+front_end - The website url for submitting joyid info
+device_name - The device name for submitting joyid info
+device_type - The device type for submitting joyid info
 sub_keys - The joyid metadata sub public keys
     pub_key - The joyid metadata public key
     credential_id - The joyid metadata WebAuthn credential_id
     alg - The joyid metadata WebAuthn algorithm
+    front_end - The website url for submitting joyid subkey info
+    device_name - The device name for submitting joyid subkey info
+    device_type - The device type for submitting joyid subkey info
 ```
 
 ```json
@@ -1247,28 +1253,26 @@ sub_keys - The joyid metadata sub public keys
     "jsonrpc":"2.0",
     "result":{
         "alg":"01",
-        "avatar":"https://i.loli.net/2021/04/29/IigbpOWP8fw9qDn.png",
-        "block_number":7948294,
-        "cota_cell_id":"0000000000000b6b",
-        "credential_id":"459d12c09a65e58e22a9d8d6fa843c3d",
-        "description":"Web3 Developer",
+        "avatar":"",
+        "block_number":9211040,
+        "cota_cell_id":"",
+        "credential_id":"24faf3bc1a0facb9598aa43aaa2cbeee339b0da1",
+        "description":"",
+        "device_name":"Safari on macOS",
+        "device_type":"pc",
         "extension":"",
-        "front_end":"https:://app.joy.id",
-        "name":"Dylan",
-        "pub_key":"650e48cf029c8a04788c02d7d88bad7b62918714137d0cd486b5b3aff53d0c2baecabd8d23107933f85fdf13cd814a0ba3d1848329b0504d7134a88962e9bde3",
+        "front_end":"joyid-dev.vercel.app",
+        "name":"INSTest3",
+        "pub_key":"dad887ba4f3fa0998b847c46e296cbf5b9e69e34ce9a06d1a21b625decd7b6aef97890ab6f5e059c4c2ae78fc0a538dadda94744648501a7d2bad9f7d1ab0d7c",
         "sub_keys":[
             {
                 "alg":"01",
-                "credential_id":"459d12c09a65e58e22a9d8d6fa843c3d",
-                "front_end":"",
-                "pub_key":"650e48cf029c8a04788c02d7d88bad7b62918714137d0cd486b5b3aff53d0c2baecabd8d23107933f85fdf13cd814a0ba3d1848329b0504d7134a88962e9bde3"
-            },
-            {
-                "alg":"01",
-                "credential_id":"369d12c09a65e58e22a9d8d6fa843c3d",
-                "front_end":"",
-                "pub_key":"290e48cf029c8a04788c02d7d88bad7b62918714137d0cd486b5b3aff53d0c2baecabd8d23107933f85fdf13cd814a0ba3d1848329b0504d7134a88962e9bde3"
-            },
+                "credential_id":"4c41b0768d3122741980d75067f3964c711cf3536b66298fe5a7afafcaa219e6",
+                "device_name":"Edge on iMac",
+                "device_type":"pc",
+                "front_end":"joyid-dev.vercel.app",
+                "pub_key":"1b03ac825d7b609be556384a03a06c71ee5d8e32e980ecb8b325e3d1137ece8491fd285408bb0c6f946cfeecf3c649210d1b105a2c0d2205cda7de051315f80e"
+            }
         ]
     },
     "id":2
