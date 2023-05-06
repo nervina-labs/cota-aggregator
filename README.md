@@ -1000,8 +1000,9 @@ Get issuer's information
 ```
 lock_script - The issuer's lock script
 address - The issuer's ckb address
+lock_hash - The issuer's lock hash(`blake2b_hash(molecule_serialize(lock_script))`)
 ```
-> At least one of address and lock script must be non-null
+> At least one of address, lock script and lock hash must be non-null
 
 ```shell
 echo '{
@@ -1010,7 +1011,8 @@ echo '{
     "method":"get_issuer_info",
     "params":{
         "lock_script":"0x490000001000000030000000310000009bd7e06f3ecf4be0f2fcd2188b23f1b9fcc88e5d4b65a8637b17723bbda3cce80114000000f86332ab26fe5baa89f7a8f458cffd8de379f255",
-        "address": "ckt1qyq0scej4vn0uka238m63azcel7cmcme7f2sxj5ska"
+        "address": "ckt1qyq0scej4vn0uka238m63azcel7cmcme7f2sxj5ska",
+        "lock_hash": "0xc93128c8dec5bcffc6bfccc70559089050fe4232bb2cddf3aa57e1daf6a814dc"
     }
 }' \
 | tr -d '\n' \
