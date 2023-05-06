@@ -91,7 +91,7 @@ pub struct ClassAudio {
 }
 
 pub fn get_class_audios_by_cota_id(cota_id_hex: String) -> Result<Vec<ClassAudio>, Error> {
-    token_class_audios
+    let audios = token_class_audios
         .select((audio_cota_id, audio_name, url, idx))
         .filter(audio_cota_id.eq(cota_id_hex))
         .load::<ClassAudio>(&get_conn())
@@ -101,5 +101,15 @@ pub fn get_class_audios_by_cota_id(cota_id_hex: String) -> Result<Vec<ClassAudio
                 Err(Error::DatabaseQueryError(e.to_string()))
             },
             Ok,
-        )
+        )?;
+    let new_audios = audios
+        .into_iter()
+        .map(|audio_info| ClassAudio {
+            cota_id: format!("0x{}", audio_info.cota_id),
+            name:    audio_info.name,
+            url:     audio_info.url,
+            idx:     audio_info.idx,
+        })
+        .collect();
+    Ok(new_audios)
 }
