@@ -1,5 +1,5 @@
 use crate::models::claim::{get_claim_cota_by_lock_hash, is_exist_in_claim, ClaimDb};
-use crate::models::class::{get_class_info_by_cota_id, ClassInfoDb};
+use crate::models::class::{get_class_info_by_cota_id, ClassInfo};
 use crate::models::define::{get_define_cota_by_cota_id, get_define_cota_by_lock_hash, DefineDb};
 use crate::models::hold::{
     check_hold_cota_by_lock_hash, get_hold_cota_by_lock_hash, get_hold_cota_by_lock_hash_and_page,
@@ -44,11 +44,11 @@ pub fn get_hold_cota(
     page: i64,
     page_size: i64,
     cota_id_opt: Option<[u8; 20]>,
-) -> DBTotalResult<(HoldDb, Option<ClassInfoDb>)> {
+) -> DBTotalResult<(HoldDb, Option<ClassInfo>)> {
     let lock_hash = blake2b_256(lock_script);
     let (hold_nfts, total, block_height) =
         get_hold_cota_by_lock_hash_and_page(lock_hash, page, page_size, cota_id_opt)?;
-    let mut nfts: Vec<(HoldDb, Option<ClassInfoDb>)> = vec![];
+    let mut nfts: Vec<(HoldDb, Option<ClassInfo>)> = vec![];
     for hold in hold_nfts {
         let class_info = get_class_info_by_cota_id(hold.cota_id)?;
         nfts.push((hold, class_info))
@@ -61,7 +61,7 @@ pub fn get_withdrawal_cota(
     page: i64,
     page_size: i64,
     cota_id_opt: Option<[u8; 20]>,
-) -> DBTotalResult<(WithdrawNFTDb, Option<ClassInfoDb>)> {
+) -> DBTotalResult<(WithdrawNFTDb, Option<ClassInfo>)> {
     let lock_hash = blake2b_256(lock_script);
     let script_id_opt = get_script_id_by_lock_script(lock_script)?;
     let (mut withdrawal_nfts, _, block_height) = match script_id_opt {
@@ -81,7 +81,7 @@ pub fn get_withdrawal_cota(
         .collect();
     let total = withdrawal_nfts.len() as i64;
 
-    let mut nfts: Vec<(WithdrawNFTDb, Option<ClassInfoDb>)> = vec![];
+    let mut nfts: Vec<(WithdrawNFTDb, Option<ClassInfo>)> = vec![];
     let range = page * page_size..(page + 1) * page_size;
     for (index, withdrawal) in withdrawal_nfts.into_iter().enumerate() {
         if range.contains(&(index as i64)) {
@@ -97,13 +97,13 @@ pub fn get_mint_cota(
     lock_script: &[u8],
     page: i64,
     page_size: i64,
-) -> DBTotalResult<(WithdrawDb, Option<ClassInfoDb>)> {
+) -> DBTotalResult<(WithdrawDb, Option<ClassInfo>)> {
     let lock_hash = blake2b_256(lock_script);
     let defines = get_define_cota_by_lock_hash(lock_hash)?.0;
     let cota_ids: Vec<[u8; 20]> = defines.into_iter().map(|define| define.cota_id).collect();
     let (withdrawal_nfts, total, block_height) =
         get_withdrawal_cota_by_cota_ids(lock_hash, cota_ids, page, page_size)?;
-    let mut nfts: Vec<(WithdrawDb, Option<ClassInfoDb>)> = vec![];
+    let mut nfts: Vec<(WithdrawDb, Option<ClassInfo>)> = vec![];
     for withdrawal in withdrawal_nfts {
         let class_info = get_class_info_by_cota_id(withdrawal.cota_id)?;
         nfts.push((withdrawal, class_info))
@@ -132,7 +132,7 @@ pub fn get_sender_account_by_cota_nft(
 
 pub fn get_define_info_by_cota_id(
     cota_id: [u8; 20],
-) -> Result<(Option<DefineDb>, Option<ClassInfoDb>), Error> {
+) -> Result<(Option<DefineDb>, Option<ClassInfo>), Error> {
     let define_opt: Option<DefineDb> = get_define_cota_by_cota_id(cota_id)?;
     let class_info_opt = get_class_info_by_cota_id(cota_id)?;
     Ok((define_opt, class_info_opt))
