@@ -41,7 +41,8 @@ pub struct ClassAudio {
     pub name:    Option<String>,
     #[serde(skip_serializing_if = "Option::is_none")]
     pub url:     Option<String>,
-    pub idx:     u32,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub idx:     Option<u32>,
 }
 
 #[derive(Serialize, Deserialize, Debug, Clone, Eq, PartialEq)]
