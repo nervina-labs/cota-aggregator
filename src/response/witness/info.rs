@@ -22,6 +22,7 @@ pub struct ClassInfo {
     pub description:    Option<String>,
     #[serde(skip_serializing_if = "Option::is_none")]
     pub audio:          Option<String>,
+    pub audios:         Vec<ClassAudio>,
     #[serde(skip_serializing_if = "Option::is_none")]
     pub video:          Option<String>,
     #[serde(skip_serializing_if = "Option::is_none")]
@@ -30,6 +31,17 @@ pub struct ClassInfo {
     pub characteristic: Option<String>,
     #[serde(skip_serializing_if = "Option::is_none")]
     pub properties:     Option<String>,
+}
+
+#[derive(Serialize, Deserialize, Debug, Clone, Eq, PartialEq)]
+pub struct ClassAudio {
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub cota_id: Option<String>,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub name:    Option<String>,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub url:     Option<String>,
+    pub idx:     u32,
 }
 
 #[derive(Serialize, Deserialize, Debug, Clone, Eq, PartialEq)]
