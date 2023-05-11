@@ -36,7 +36,7 @@ pub async fn generate_transfer_smt(
         .iter()
         .map(|transfer| (transfer.cota_id, transfer.token_index))
         .collect();
-    let withdraw_lock_hash = blake2b_256(&transfer_req.withdrawal_lock_script);
+    let withdraw_lock_hash = transfer_req.withdrawal_lock_hash;
     let sender_withdrawals =
         get_withdrawal_cota_by_lock_hash(withdraw_lock_hash, &cota_id_index_pairs)?.0;
     if sender_withdrawals.is_empty() || sender_withdrawals.len() != transfers_len {
@@ -154,8 +154,7 @@ pub async fn generate_transfer_smt(
         .extend(transfer_merkel_proof_vec.iter().map(|v| Byte::from(*v)))
         .build();
 
-    let withdraw_info =
-        get_withdraw_info(withdrawal_block_number, transfer_req.withdrawal_lock_script).await?;
+    let withdraw_info = get_withdraw_info(withdrawal_block_number, withdraw_lock_hash).await?;
     let withdraw_proof = parse_witness_withdraw_proof(
         withdraw_info.witnesses,
         &cota_id_index_pairs,
