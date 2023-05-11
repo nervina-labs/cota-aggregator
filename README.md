@@ -222,12 +222,14 @@ Generate smt data(`smt_entry` for `witness_args.input_type` and `smt_root` for c
 ```
 lock_script - The sender's lock script
 withdrawal_lock_script - The withdrawal's lock script of the NFTs
+withdrawal_lock_hash - The withdrawal's lock hash of the NFTs
 transfer_out_point - The out_point([12..]) of sender's live cell
 transfers - The information of transfer
   cota_id - CoTA NFT Class Unique ID
   token_index - The index of the NFT Class (increment from zero)
   to_lock_script - The receiver's lock script
 ```
+> At least one of withdrawal lock script, and withdrawal lock hash must be non-null
 
 ```shell
 echo '{
@@ -237,6 +239,7 @@ echo '{
     "params":{
         "lock_script":"0x49000000100000003000000031000000124a60cd799e1fbca664196de46b3f7f0ecb7138133dcaea4893c51df5b02be60114000000fa15357eb4ad2989f910268db3b3a585a9b51cbe",
         "withdrawal_lock_script":"0x490000001000000030000000310000009bd7e06f3ecf4be0f2fcd2188b23f1b9fcc88e5d4b65a8637b17723bbda3cce80114000000af4baf7e15c13b9f95ee56166b9c840dd46973b1",
+        "withdrawal_lock_hash":"0xc84947784cce65bdd259948630a5e77ebcfce205fd53a55dc333afe98007bd19",
         "transfer_out_point":"0x777347181a25dc39c31ad290b9e2d52ded42295000000000",
         "transfers":[
             {
