@@ -178,11 +178,7 @@ pub async fn generate_transfer_update_smt(
         )
         .build();
 
-    let withdraw_info = get_withdraw_info(
-        withdrawal_block_number,
-        transfer_update_req.withdrawal_lock_script,
-    )
-    .await?;
+    let withdraw_info = get_withdraw_info(withdrawal_block_number, transfer_lock_hash).await?;
     let withdraw_proof = parse_witness_withdraw_proof(
         withdraw_info.witnesses,
         &cota_id_index_pairs,

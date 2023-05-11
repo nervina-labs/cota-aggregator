@@ -10,7 +10,7 @@ use cota_smt::common::{
     Byte32, Byte32VecBuilder, Bytes, BytesBuilder, MerkleProofBuilder, TransactionProof,
     TransactionProofBuilder, Uint32, Uint32VecBuilder,
 };
-use cota_smt::smt::H256;
+use cota_smt::smt::{blake2b_256, H256};
 use molecule::prelude::{Builder, Byte, Entity};
 use serde_json::from_str;
 use std::env;
@@ -27,7 +27,7 @@ pub struct WithdrawRawTx {
 
 pub async fn get_withdraw_info(
     block_number: u64,
-    withdrawal_lock_script: Vec<u8>,
+    withdrawal_lock_hash: [u8; 32],
 ) -> Result<WithdrawRawTx, Error> {
     let is_mainnet: bool = match env::var("IS_MAINNET") {
         Ok(mainnet) => from_str::<bool>(&mainnet).unwrap(),
@@ -54,7 +54,7 @@ pub async fn get_withdraw_info(
             .filter(|tx| {
                 let position = tx.inner.outputs.clone().into_iter().position(|output| {
                     let lock: Script = output.lock.clone().into();
-                    let lock_ret: bool = lock.as_slice() == &withdrawal_lock_script;
+                    let lock_ret: bool = blake2b_256(lock.as_slice()) == withdrawal_lock_hash;
                     let type_ret: bool = output.type_.clone().map_or(false, |type_: RPCScript| {
                         type_.code_hash.as_bytes() == &cota_code_hash
                     });

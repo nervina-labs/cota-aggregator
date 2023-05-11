@@ -31,9 +31,9 @@ pub async fn generate_claim_smt(
         .iter()
         .map(|claim| (claim.cota_id, claim.token_index))
         .collect();
-    let withdraw_lock_hash = blake2b_256(&claim_req.withdrawal_lock_script);
+    let withdrawal_lock_hash = blake2b_256(&claim_req.withdrawal_lock_script);
     let sender_withdrawals =
-        get_withdrawal_cota_by_lock_hash(withdraw_lock_hash, &cota_id_index_pairs)?.0;
+        get_withdrawal_cota_by_lock_hash(withdrawal_lock_hash, &cota_id_index_pairs)?.0;
     if sender_withdrawals.is_empty() || sender_withdrawals.len() != claims_len {
         return Err(Error::CotaIdAndTokenIndexHasNotWithdrawn);
     }
@@ -133,8 +133,7 @@ pub async fn generate_claim_smt(
         .extend(merkel_proof_vec.iter().map(|v| Byte::from(*v)))
         .build();
 
-    let withdraw_info =
-        get_withdraw_info(withdrawal_block_number, claim_req.withdrawal_lock_script).await?;
+    let withdraw_info = get_withdraw_info(withdrawal_block_number, withdrawal_lock_hash).await?;
     let withdraw_proof = parse_witness_withdraw_proof(
         withdraw_info.witnesses,
         &cota_id_index_pairs,
