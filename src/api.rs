@@ -18,7 +18,9 @@ use crate::models::common::{
 };
 use crate::models::issuer::get_issuer_info_by_lock_hash;
 use crate::models::joyid::get_joyid_info_by_lock_hash;
-use crate::models::withdrawal::nft::get_cota_info_by_cota_id_token_index;
+use crate::models::withdrawal::nft::{
+    get_cota_info_by_cota_id_token_index, get_receiver_lock_by_cota_id_and_token_index,
+};
 use crate::request::claim::{ClaimReq, ClaimUpdateReq, IsClaimedReq};
 use crate::request::define::{DefineInfoReq, DefineReq};
 use crate::request::extension::{ExtSocialReq, ExtSubkeysReq};
@@ -31,7 +33,7 @@ use crate::request::social::SocialUnlockReq;
 use crate::request::subkey::SubKeyUnlockReq;
 use crate::request::transfer::{TransferReq, TransferUpdateReq};
 use crate::request::update::UpdateReq;
-use crate::request::withdrawal::{SenderLockReq, WithdrawalReq};
+use crate::request::withdrawal::{OwnerLockReq, SenderLockReq, WithdrawalReq};
 use crate::request::witness::WitnessReq;
 use crate::response::claim::{parse_claimed_response, parse_claimed_smt, parse_claimed_update_smt};
 use crate::response::define::{parse_define_info, parse_define_smt};
@@ -47,7 +49,7 @@ use crate::response::transaction::{parse_cota_transactions, parse_history_transa
 use crate::response::transfer::{parse_transfer_smt, parse_transfer_update_smt};
 use crate::response::update::parse_update_smt;
 use crate::response::withdrawal::{
-    parse_sender_response, parse_withdrawal_response, parse_withdrawal_smt,
+    parse_owner_response, parse_sender_response, parse_withdrawal_response, parse_withdrawal_smt,
 };
 use crate::response::witness::cota::parse_cota_witness;
 use crate::utils::error;
@@ -233,6 +235,19 @@ pub async fn get_sender_account(params: Params) -> Result<Value, Error> {
         get_sender_account_by_cota_nft(&lock_script, cota_id, token_index).map_err(rpc_err)?;
     let block_number = tip_number()?;
     parse_sender_response(sender_account, block_number).map_err(rpc_err)
+}
+
+pub async fn get_owner_account(params: Params) -> Result<Value, Error> {
+    info!("Get owner account request: {:?}", params);
+    let map: Map<String, Value> = Params::parse(params)?;
+    let OwnerLockReq {
+        cota_id,
+        token_index,
+    } = OwnerLockReq::from_map(&map).map_err(rpc_err)?;
+    let owner_lock =
+        get_receiver_lock_by_cota_id_and_token_index(cota_id, token_index).map_err(rpc_err)?;
+    let block_number = tip_number()?;
+    parse_owner_response(owner_lock, block_number).map_err(rpc_err)
 }
 
 pub async fn get_define_info(params: Params) -> Result<Value, Error> {
