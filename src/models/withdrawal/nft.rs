@@ -256,6 +256,43 @@ pub fn get_sender_lock_by_script_id(
     }
 }
 
+pub fn get_receiver_lock_by_cota_id_and_token_index(
+    cota_id_: [u8; 20],
+    token_index_: [u8; 4],
+) -> Result<Vec<u8>, Error> {
+    let start_time = Local::now().timestamp_millis();
+    let cota_id_hex = hex::encode(cota_id_);
+    let token_index_u32 = u32::from_be_bytes(token_index_);
+    let cota_id_crc_u32 = generate_crc(cota_id_hex.as_bytes());
+    let receiver_lock_ids: Vec<i64> = withdraw_cota_nft_kv_pairs
+        .select(receiver_lock_script_id)
+        .filter(cota_id_crc.eq(cota_id_crc_u32))
+        .filter(token_index.eq(token_index_u32))
+        .filter(cota_id.eq(cota_id_hex))
+        .order(updated_at.desc())
+        .limit(1)
+        .load::<i64>(&get_conn())
+        .map_err(|e| {
+            error!("Query withdraw error: {}", e.to_string());
+            Error::DatabaseQueryError(e.to_string())
+        })?;
+    diff_time(
+        start_time,
+        "SQL get_receiver_lock_by_cota_id_and_token_index",
+    );
+    if let Some(receiver_lock_id) = receiver_lock_ids.first().cloned() {
+        let lock_opt = get_script_map_by_ids(vec![receiver_lock_id])?
+            .get(&receiver_lock_id)
+            .cloned();
+        match lock_opt {
+            Some(lock) => Ok(lock),
+            None => Ok(vec![]),
+        }
+    } else {
+        Ok(vec![])
+    }
+}
+
 fn parse_withdraw_db(withdrawals: Vec<WithdrawCotaNft>) -> DBResult<WithdrawDb> {
     let block_height = get_syncer_tip_block_number()?;
     if withdrawals.is_empty() {
