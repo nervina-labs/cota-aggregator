@@ -79,3 +79,14 @@ pub fn parse_sender_response(
     map.insert_u64("block_number", block_number);
     Ok(Value::Object(map))
 }
+
+pub fn parse_owner_response(owner_lock: Vec<u8>, block_number: u64) -> Result<Value, Error> {
+    let mut map = Map::new();
+    if owner_lock.is_empty() {
+        map.insert_null("owner_address");
+    } else {
+        map.insert_str("owner_address", address_from_script(&owner_lock)?);
+    }
+    map.insert_u64("block_number", block_number);
+    Ok(Value::Object(map))
+}

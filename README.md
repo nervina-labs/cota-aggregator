@@ -83,6 +83,7 @@ https://cota.nervina.dev/aggregator
 - [get_mint_cota_nft](#get_mint_cota_nft)
 - [is_claimed](#is_claimed)
 - [get_cota_nft_sender](#get_cota_nft_sender)
+- [get_cota_nft_owner](#get_cota_nft_owner)
 - [get_define_info](#get_define_info)
 - [get_issuer_info](#get_issuer_info)
 - [get_issuer_info_by_cota_id](#get_issuer_info_by_cota_id)
@@ -939,7 +940,7 @@ claimed - true for claimed and false fot unclaimed
 
 ### get_cota_nft_sender
 
-Get the sender lock hash of the CoTA NFT
+Get the sender lock hash and address of the CoTA NFT
 
 #### Parameters
 
@@ -980,6 +981,50 @@ sender_address - The sender ckb address of the NFT
     "block_number": 4397997,
     "sender_lock_hash": "0x8a8f45a094cbe050d1a612924901b11edc1bce28c0fd8d96cdc8779889f28aa8",
     "sender_address": "ckt1qzda0cr08m85hc8jlnfp3zer7xulejywt49kt2rr0vthywaa50xwsq0xzmg5vrtrge5t3tvpjuwr55l8qh63ucqhqne0u"
+  },
+  "id": 2
+}
+```
+
+### get_cota_nft_owner
+
+Get the owner address of the CoTA NFT
+
+#### Parameters
+
+```
+cota_id - CoTA NFT Class Unique ID
+token_index - The index of the NFT Class (increment from zero)
+```
+
+```shell
+echo '{
+    "id":2,
+    "jsonrpc":"2.0",
+    "method":"get_cota_nft_owner",
+    "params":{
+        "cota_id":"0x2dd97617e685c0cd44b87cba7e8756ea67a721cd",
+        "token_index":"0x00000000"
+    }
+}' \
+| tr -d '\n' \
+| curl -H 'content-type: application/json' -d @- \
+http://localhost:3030
+```
+
+#### Response
+
+```
+block_number - The latest block number of cota-syncer
+owner_address - The owner ckb address of the NFT
+```
+
+```json
+{
+  "jsonrpc": "2.0",
+  "result": {
+    "block_number": 4397997,
+    "owner_address": "ckt1qzda0cr08m85hc8jlnfp3zer7xulejywt49kt2rr0vthywaa50xwsq2mvqpq923wn8tpkxalc0d095xv0wzfsqqzkfvyx"
   },
   "id": 2
 }

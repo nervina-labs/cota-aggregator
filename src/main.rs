@@ -66,6 +66,7 @@ fn main() {
     io.add_method("get_mint_cota_nft", fetch_mint_rpc);
     io.add_method("is_claimed", is_claimed_rpc);
     io.add_method("get_cota_nft_sender", get_sender_account);
+    io.add_method("get_cota_nft_owner", get_owner_account);
     io.add_method("get_define_info", get_define_info);
     io.add_method("get_issuer_info", get_issuer_info);
     io.add_method("get_cota_nft_info", get_cota_nft_info);
