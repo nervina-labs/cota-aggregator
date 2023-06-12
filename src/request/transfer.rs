@@ -81,3 +81,63 @@ impl TransferUpdateReq {
         })
     }
 }
+
+#[derive(Clone, Eq, PartialEq, Debug)]
+pub struct BurstTransfer {
+    pub withdrawal_lock_hash: [u8; 32],
+    pub transfer_out_point:   [u8; 24],
+    pub cota_id:              [u8; 20],
+    pub token_index:          [u8; 4],
+    pub to_lock_script:       Vec<u8>,
+}
+
+impl ReqParser for BurstTransfer {
+    fn from_map(map: &Map<String, Value>) -> Result<Self, Error> {
+        Ok(BurstTransfer {
+            withdrawal_lock_hash: map.get_hex_bytes_filed::<32>("withdrawal_lock_hash")?,
+            transfer_out_point:   map.get_hex_bytes_filed::<24>("transfer_out_point")?,
+            cota_id:              map.get_hex_bytes_filed::<20>("cota_id")?,
+            token_index:          map.get_hex_bytes_filed::<4>("token_index")?,
+            to_lock_script:       map.get_hex_vec_filed("to_lock_script")?,
+        })
+    }
+}
+
+#[derive(Clone, Eq, PartialEq, Debug)]
+pub struct SubKeyUnlock {
+    pub alg_index:   u16,
+    pub pubkey_hash: [u8; 20],
+}
+
+impl SubKeyUnlock {
+    pub fn from_map(map: &Map<String, Value>) -> Result<Self, Error> {
+        Ok(SubKeyUnlock {
+            alg_index:   map.get_u16_filed("alg_index")?,
+            pubkey_hash: map.get_hex_bytes_filed::<20>("pubkey_hash")?,
+        })
+    }
+}
+
+#[derive(Clone, Eq, PartialEq, Debug)]
+pub struct BurstTransferReq {
+    pub lock_script: Vec<u8>,
+    pub transfers:   Vec<BurstTransfer>,
+    pub subkey:      Option<SubKeyUnlock>,
+}
+
+impl BurstTransferReq {
+    pub fn from_map(map: &Map<String, Value>) -> Result<Self, Error> {
+        let mut req = BurstTransferReq {
+            lock_script: map.get_hex_vec_filed("lock_script")?,
+            transfers:   parse_vec_map::<BurstTransfer>(map, "transfers")?,
+            subkey:      None,
+        };
+        if let Some(subkey) = map.get("subkey") {
+            if subkey.as_object().is_none() {
+                return Err(Error::RequestParamTypeError("subkey".to_owned()));
+            }
+            req.subkey = Some(SubKeyUnlock::from_map(subkey.as_object().unwrap())?)
+        }
+        Ok(req)
+    }
+}
