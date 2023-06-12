@@ -100,21 +100,24 @@ dependencies = [
 
 [[package]]
 name = "bindgen"
-version = "0.59.2"
+version = "0.63.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "2bd2a9a458e8f4304c52c43ebb0cfbd520289f8379a52e329a38afda99bf8eb8"
+checksum = "36d860121800b2a9a94f9b5604b332d5cffb234ce17609ea479d723dbc9d3885"
 dependencies = [
  "bitflags",
  "cexpr",
  "clang-sys",
  "lazy_static",
  "lazycell",
+ "log",
  "peeking_take_while",
  "proc-macro2",
  "quote",
  "regex",
  "rustc-hash",
  "shlex",
+ "syn",
+ "which",
 ]
 
 [[package]]
@@ -327,9 +330,9 @@ dependencies = [
 
 [[package]]
 name = "ckb-librocksdb-sys"
-version = "7.3.3"
+version = "8.1.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "d106bb32241da368e67ce9a36545e1cc3c31b7faa9321817199b69bf1e085b4a"
+checksum = "5d9bc1ea9ab886ecbf48bc4ade6d383ba56cf3da198b6a51620736daf74b683c"
 dependencies = [
  "bindgen",
  "cc",
@@ -396,9 +399,9 @@ dependencies = [
 
 [[package]]
 name = "ckb-rocksdb"
-version = "0.18.3"
+version = "0.20.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "87b89828fd7e60e4d857f6f1a2f40343114eece1ca20859d4ca8371d4e00ce28"
+checksum = "c2331a8580072e2991e77277d2c3e999c8df0d00b16188a77e561e45a4597769"
 dependencies = [
  "ckb-librocksdb-sys",
  "libc",
@@ -660,6 +663,12 @@ name = "dotenv"
 version = "0.15.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "77c90badedccf4105eca100756a0b1289e191f6fcbdadd3cee1d2f614f97da8f"
+
+[[package]]
+name = "either"
+version = "1.8.1"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "7fcaabb2fef8c910e7f4c7ce9f67a1283a1715879a7c230ca9d6d1ae31f16d91"
 
 [[package]]
 name = "encoding_rs"
@@ -2568,6 +2577,17 @@ checksum = "c060b319f29dd25724f09a2ba1418f142f539b2be99fbf4d2d5a8f7330afb8eb"
 dependencies = [
  "js-sys",
  "wasm-bindgen",
+]
+
+[[package]]
+name = "which"
+version = "4.4.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "2441c784c52b289a054b7201fc93253e288f094e2f4be9058343127c4226a269"
+dependencies = [
+ "either",
+ "libc",
+ "once_cell",
 ]
 
 [[package]]
