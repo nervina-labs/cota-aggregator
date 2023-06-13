@@ -25,7 +25,7 @@ pub struct WithdrawCotaNft {
     pub block_number:            u64,
 }
 
-#[derive(Debug, Clone, Eq, PartialEq)]
+#[derive(Debug, Clone, Eq, PartialEq, Default)]
 pub struct WithdrawDb {
     pub cota_id:              [u8; 20],
     pub token_index:          [u8; 4],

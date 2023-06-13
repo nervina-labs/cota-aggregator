@@ -83,7 +83,7 @@ impl TransferUpdateReq {
 }
 
 #[derive(Clone, Eq, PartialEq, Debug)]
-pub struct BurstTransfer {
+pub struct SequentTransfer {
     pub withdrawal_lock_hash: [u8; 32],
     pub transfer_out_point:   [u8; 24],
     pub cota_id:              [u8; 20],
@@ -91,9 +91,9 @@ pub struct BurstTransfer {
     pub to_lock_script:       Vec<u8>,
 }
 
-impl ReqParser for BurstTransfer {
+impl ReqParser for SequentTransfer {
     fn from_map(map: &Map<String, Value>) -> Result<Self, Error> {
-        Ok(BurstTransfer {
+        Ok(SequentTransfer {
             withdrawal_lock_hash: map.get_hex_bytes_filed::<32>("withdrawal_lock_hash")?,
             transfer_out_point:   map.get_hex_bytes_filed::<24>("transfer_out_point")?,
             cota_id:              map.get_hex_bytes_filed::<20>("cota_id")?,
@@ -119,17 +119,17 @@ impl SubKeyUnlock {
 }
 
 #[derive(Clone, Eq, PartialEq, Debug)]
-pub struct BurstTransferReq {
+pub struct SequentTransferReq {
     pub lock_script: Vec<u8>,
-    pub transfers:   Vec<BurstTransfer>,
+    pub transfers:   Vec<SequentTransfer>,
     pub subkey:      Option<SubKeyUnlock>,
 }
 
-impl BurstTransferReq {
+impl SequentTransferReq {
     pub fn from_map(map: &Map<String, Value>) -> Result<Self, Error> {
-        let mut req = BurstTransferReq {
+        let mut req = SequentTransferReq {
             lock_script: map.get_hex_vec_filed("lock_script")?,
-            transfers:   parse_vec_map::<BurstTransfer>(map, "transfers")?,
+            transfers:   parse_vec_map::<SequentTransfer>(map, "transfers")?,
             subkey:      None,
         };
         if let Some(subkey) = map.get("subkey") {
