@@ -126,7 +126,7 @@ pub async fn transfer_update_rpc(params: Params) -> Result<Value, Error> {
     Ok(parse_transfer_update_smt(transfer_smt, tip_number()?))
 }
 
-pub async fn sequent_transfer_rpc(params: Params) -> Result<Value, Error> {
+pub async fn sequential_transfer_rpc(params: Params) -> Result<Value, Error> {
     info!("Sequential Transfer request: {:?}", params);
     let map: Map<String, Value> = Params::parse(params)?;
     let req = SequentTransferReq::from_map(&map).map_err(rpc_err)?;
