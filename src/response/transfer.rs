@@ -1,3 +1,4 @@
+use crate::entries::sequent_transfer::SequentTransferResult;
 use crate::response::helper::Inserter;
 use ckb_types::prelude::Entity;
 use cota_smt::smt::H256;
@@ -33,5 +34,23 @@ pub fn parse_transfer_update_smt(
     map.insert_str("transfer_update_smt_entry", transfer_update_entry);
     map.insert_str("withdraw_block_hash", withdraw_block_hash);
     map.insert_u64("block_number", block_number);
+    Value::Object(map)
+}
+
+pub fn parse_sequent_transfer_smt(
+    (root_hash, transfer_update_entries, subkey_unlock_entries, block_hash): SequentTransferResult,
+    block_number: u64,
+) -> Value {
+    let transfer_update_entry = hex::encode(transfer_update_entries.as_slice());
+    let transfer_root_hash = hex::encode(root_hash.as_slice());
+    let withdraw_block_hash = hex::encode(block_hash.as_slice());
+    let mut map = Map::new();
+    map.insert_str("smt_root_hash", transfer_root_hash);
+    map.insert_str("transfer_update_smt_entry", transfer_update_entry);
+    map.insert_str("withdraw_block_hash", withdraw_block_hash);
+    map.insert_u64("block_number", block_number);
+    if let Some(subkey_unlock) = subkey_unlock_entries {
+        map.insert_str("subkey_unlock_entry", hex::encode(subkey_unlock.as_slice()));
+    }
     Value::Object(map)
 }

@@ -1,3 +1,4 @@
+use super::helper::generate_subkey_key;
 use crate::ckb::indexer::get_cota_smt_root;
 use crate::ckb::rpc::get_withdraw_info;
 use crate::entries::helper::{
@@ -20,19 +21,17 @@ use cota_smt::smt::{blake2b_256, H256};
 use cota_smt::transfer::{TransferCotaNFTV2Entries, TransferCotaNFTV2EntriesBuilder};
 use joyid_smt::joyid::{SubKeyUnlockEntries, SubKeyUnlockEntriesBuilder};
 use molecule::hex_string;
-use super::helper::generate_subkey_key;
+
+pub type SequentTransferResult = (
+    H256,
+    TransferCotaNFTV2Entries,
+    Option<SubKeyUnlockEntries>,
+    H256,
+);
 
 pub async fn generate_sequent_transfer_smt(
     transfer_req: SequentTransferReq,
-) -> Result<
-    (
-        H256,
-        TransferCotaNFTV2Entries,
-        Option<SubKeyUnlockEntries>,
-        H256,
-    ),
-    Error,
-> {
+) -> Result<SequentTransferResult, Error> {
     let transfers = transfer_req.transfers;
     let current_transfer = transfers.last().unwrap();
     let transfer_lock_script = transfer_req.lock_script;
