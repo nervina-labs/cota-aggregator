@@ -34,8 +34,8 @@ pub async fn generate_sequential_transfer_smt(
 ) -> Result<SequentialTransferResult, Error> {
     let transfers = transfer_req.transfers;
     let transfer_lock_script = transfer_req.lock_script;
-    let subkey_opt = transfer_req.subkey;
     let transfer_lock_hash = blake2b_256(&transfer_lock_script);
+    let subkey_opt = transfer_req.subkey;
     let transfers_len = transfers.len();
     if transfers_len == 0 {
         return Err(Error::RequestParamNotFound("transfers".to_string()));
@@ -86,7 +86,7 @@ pub async fn generate_sequential_transfer_smt(
     let mut claimed_values: Vec<Byte32> = Vec::new();
     let mut withdrawal_keys: Vec<WithdrawalCotaNFTKeyV1> = Vec::new();
     let mut withdrawal_values: Vec<WithdrawalCotaNFTValueV1> = Vec::new();
-    let mut transfer_new_leaves: Vec<(H256, H256)> = Vec::with_capacity(transfers_len * 2);
+    let mut transfer_pervious_leaves: Vec<(H256, H256)> = Vec::with_capacity(transfers_len * 2 - 2);
     let mut transfer_update_leaves: Vec<(H256, H256)> = Vec::with_capacity(2);
     let mut previous_leaves: Vec<(H256, H256)> = Vec::with_capacity(transfers_len * 2);
     for (index, (withdrawal_db, transfer)) in sender_withdrawals
@@ -111,35 +111,43 @@ pub async fn generate_sequential_transfer_smt(
         let (withdrawal_value, value) =
             generate_withdrawal_value_v1(configure, state, characteristic, &to_lock_script);
         previous_leaves.push((key, H256::zero()));
-        transfer_new_leaves.push((key, value));
 
         if index == transfers_len - 1 {
             withdrawal_keys.push(withdrawal_key);
             withdrawal_values.push(withdrawal_value);
             transfer_update_leaves.push((key, value));
+        } else {
+            transfer_pervious_leaves.push((key, value));
         }
 
         let (claimed_key, key) = generate_claim_key(cota_id, token_index, out_point);
         let (claimed_value, value) = generate_claim_value(version);
         previous_leaves.push((key, H256::zero()));
-        transfer_new_leaves.push((key, value));
 
         if index == transfers_len - 1 {
             claimed_keys.push(claimed_key);
             claimed_values.push(claimed_value);
             transfer_update_leaves.push((key, value));
+        } else {
+            transfer_pervious_leaves.push((key, value));
         }
     }
 
     let transfer_smt_root = get_cota_smt_root(&transfer_lock_script).await?;
-
     let transaction = &StoreTransaction::new(ROCKS_DB.transaction());
     let mut transfer_smt = init_smt(transaction, transfer_lock_hash)?;
+
+    let mut subkey_unlock_entries = None;
     // Add lock to transfer smt
     with_lock(transfer_lock_hash, || {
         generate_history_smt(&mut transfer_smt, transfer_lock_hash, transfer_smt_root)?;
         transfer_smt
-            .update_all(transfer_new_leaves.clone())
+            .update_all(transfer_pervious_leaves.clone())
+            .map_err(|e| Error::SMTError(e.to_string()))?;
+        subkey_unlock_entries =
+            generate_subkey_smt(transfer_lock_hash, &subkey_opt, &transfer_smt)?;
+        transfer_smt
+            .update_all(transfer_update_leaves.clone())
             .map_err(|e| Error::SMTError(e.to_string()))?;
         transfer_smt.save_root_and_leaves(previous_leaves.clone())?;
         transfer_smt.commit()
@@ -200,8 +208,6 @@ pub async fn generate_sequential_transfer_smt(
         .tx_proof(withdraw_info.tx_proof)
         .build();
 
-    let subkey_unlock_entries = generate_subkey_smt(transfer_lock_hash, subkey_opt, &transfer_smt)?;
-
     Ok((
         *transfer_smt.root(),
         transfer_entries,
@@ -212,12 +218,12 @@ pub async fn generate_sequential_transfer_smt(
 
 fn generate_subkey_smt(
     transfer_lock_hash: [u8; 32],
-    subkey_opt: Option<SubKeyUnlock>,
+    subkey_opt: &Option<SubKeyUnlock>,
     smt: &CotaSMT,
 ) -> Result<Option<SubKeyUnlockEntries>, Error> {
-    if let Some(subkey) = subkey_opt {
+    if let Some(subkey_) = subkey_opt {
         let subkey =
-            get_subkey_by_pubkey_hash(transfer_lock_hash, subkey.pubkey_hash, subkey.alg_index)?
+            get_subkey_by_pubkey_hash(transfer_lock_hash, subkey_.pubkey_hash, subkey_.alg_index)?
                 .ok_or(Error::SubkeyLeafNotFound)?;
         let (_, key) = generate_subkey_key(subkey.ext_data);
         let ext_data = joyid_smt::common::Uint32::from_slice(&subkey.ext_data.to_be_bytes())
