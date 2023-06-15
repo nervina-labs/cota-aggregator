@@ -57,7 +57,10 @@ fn main() {
     io.add_method("generate_withdrawal_cota_smt", withdrawal_rpc);
     io.add_method("generate_claim_update_cota_smt", claim_update_rpc);
     io.add_method("generate_transfer_update_cota_smt", transfer_update_rpc);
-    io.add_method("generate_sequential_transfer_cota_smt", sequential_transfer_rpc);
+    io.add_method(
+        "generate_sequential_transfer_cota_smt",
+        sequential_transfer_rpc,
+    );
     io.add_method("generate_extension_subkey_smt", extension_subkey_rpc);
     io.add_method("generate_subkey_unlock_smt", subkey_unlock_rpc);
     io.add_method("generate_extension_social_smt", extension_social_rpc);

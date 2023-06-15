@@ -1,4 +1,4 @@
-use crate::entries::sequent_transfer::SequentTransferResult;
+use crate::entries::sequential_transfer::SequentialTransferResult;
 use crate::response::helper::Inserter;
 use ckb_types::prelude::Entity;
 use cota_smt::smt::H256;
@@ -37,8 +37,8 @@ pub fn parse_transfer_update_smt(
     Value::Object(map)
 }
 
-pub fn parse_sequent_transfer_smt(
-    (root_hash, transfer_update_entries, subkey_unlock_entries, block_hash): SequentTransferResult,
+pub fn parse_sequential_transfer_smt(
+    (root_hash, transfer_update_entries, subkey_unlock_entries, block_hash): SequentialTransferResult,
     block_number: u64,
 ) -> Value {
     let transfer_update_entry = hex::encode(transfer_update_entries.as_slice());

@@ -83,7 +83,7 @@ impl TransferUpdateReq {
 }
 
 #[derive(Clone, Eq, PartialEq, Debug)]
-pub struct SequentTransfer {
+pub struct SequentialTransfer {
     pub withdrawal_lock_hash: [u8; 32],
     pub transfer_out_point:   [u8; 24],
     pub cota_id:              [u8; 20],
@@ -91,9 +91,9 @@ pub struct SequentTransfer {
     pub to_lock_script:       Vec<u8>,
 }
 
-impl ReqParser for SequentTransfer {
+impl ReqParser for SequentialTransfer {
     fn from_map(map: &Map<String, Value>) -> Result<Self, Error> {
-        Ok(SequentTransfer {
+        Ok(SequentialTransfer {
             withdrawal_lock_hash: map.get_hex_bytes_filed::<32>("withdrawal_lock_hash")?,
             transfer_out_point:   map.get_hex_bytes_filed::<24>("transfer_out_point")?,
             cota_id:              map.get_hex_bytes_filed::<20>("cota_id")?,
@@ -119,17 +119,17 @@ impl SubKeyUnlock {
 }
 
 #[derive(Clone, Eq, PartialEq, Debug)]
-pub struct SequentTransferReq {
+pub struct SequentialTransferReq {
     pub lock_script: Vec<u8>,
-    pub transfers:   Vec<SequentTransfer>,
+    pub transfers:   Vec<SequentialTransfer>,
     pub subkey:      Option<SubKeyUnlock>,
 }
 
-impl SequentTransferReq {
+impl SequentialTransferReq {
     pub fn from_map(map: &Map<String, Value>) -> Result<Self, Error> {
-        let mut req = SequentTransferReq {
+        let mut req = SequentialTransferReq {
             lock_script: map.get_hex_vec_filed("lock_script")?,
-            transfers:   parse_vec_map::<SequentTransfer>(map, "transfers")?,
+            transfers:   parse_vec_map::<SequentialTransfer>(map, "transfers")?,
             subkey:      None,
         };
         if let Some(subkey) = map.get("subkey") {

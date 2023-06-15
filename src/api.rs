@@ -5,7 +5,7 @@ use crate::entries::claim_update::generate_claim_update_smt;
 use crate::entries::define::generate_define_smt;
 use crate::entries::extension::{generate_ext_social_smt, generate_ext_subkey_smt};
 use crate::entries::mint::generate_mint_smt;
-use crate::entries::sequent_transfer::generate_sequent_transfer_smt;
+use crate::entries::sequential_transfer::generate_sequential_transfer_smt;
 use crate::entries::social::generate_social_unlock_smt;
 use crate::entries::subkey::generate_subkey_unlock_smt;
 use crate::entries::transfer::generate_transfer_smt;
@@ -32,7 +32,7 @@ use crate::request::fetch::{
 use crate::request::mint::MintReq;
 use crate::request::social::SocialUnlockReq;
 use crate::request::subkey::SubKeyUnlockReq;
-use crate::request::transfer::{SequentTransferReq, TransferReq, TransferUpdateReq};
+use crate::request::transfer::{SequentialTransferReq, TransferReq, TransferUpdateReq};
 use crate::request::update::UpdateReq;
 use crate::request::withdrawal::{OwnerLockReq, SenderLockReq, WithdrawalReq};
 use crate::request::witness::WitnessReq;
@@ -48,7 +48,7 @@ use crate::response::social::parse_social_unlock;
 use crate::response::subkey::parse_subkey_unlock;
 use crate::response::transaction::{parse_cota_transactions, parse_history_transactions};
 use crate::response::transfer::{
-    parse_sequent_transfer_smt, parse_transfer_smt, parse_transfer_update_smt,
+    parse_sequential_transfer_smt, parse_transfer_smt, parse_transfer_update_smt,
 };
 use crate::response::update::parse_update_smt;
 use crate::response::withdrawal::{
@@ -129,9 +129,11 @@ pub async fn transfer_update_rpc(params: Params) -> Result<Value, Error> {
 pub async fn sequential_transfer_rpc(params: Params) -> Result<Value, Error> {
     info!("Sequential Transfer request: {:?}", params);
     let map: Map<String, Value> = Params::parse(params)?;
-    let req = SequentTransferReq::from_map(&map).map_err(rpc_err)?;
-    let transfer_smt = generate_sequent_transfer_smt(req).await.map_err(rpc_err)?;
-    Ok(parse_sequent_transfer_smt(transfer_smt, tip_number()?))
+    let req = SequentialTransferReq::from_map(&map).map_err(rpc_err)?;
+    let transfer_smt = generate_sequential_transfer_smt(req)
+        .await
+        .map_err(rpc_err)?;
+    Ok(parse_sequential_transfer_smt(transfer_smt, tip_number()?))
 }
 
 pub async fn subkey_unlock_rpc(params: Params) -> Result<Value, Error> {

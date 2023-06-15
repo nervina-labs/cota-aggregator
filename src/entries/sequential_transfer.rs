@@ -10,7 +10,7 @@ use crate::entries::witness::parse_witness_withdraw_proof;
 use crate::models::claim::is_exist_in_claim;
 use crate::models::extension::subkey::get_subkey_by_pubkey_hash;
 use crate::models::withdrawal::nft::{get_withdrawal_cota_by_lock_hash, WithdrawDb};
-use crate::request::transfer::{SequentTransfer, SequentTransferReq, SubKeyUnlock};
+use crate::request::transfer::{SequentialTransfer, SequentialTransferReq, SubKeyUnlock};
 use crate::smt::transaction::store_transaction::StoreTransaction;
 use crate::smt::{CotaSMT, RootSaver};
 use crate::utils::error::Error;
@@ -22,18 +22,17 @@ use cota_smt::transfer::{TransferCotaNFTV2Entries, TransferCotaNFTV2EntriesBuild
 use joyid_smt::joyid::{SubKeyUnlockEntries, SubKeyUnlockEntriesBuilder};
 use molecule::hex_string;
 
-pub type SequentTransferResult = (
+pub type SequentialTransferResult = (
     H256,
     TransferCotaNFTV2Entries,
     Option<SubKeyUnlockEntries>,
     H256,
 );
 
-pub async fn generate_sequent_transfer_smt(
-    transfer_req: SequentTransferReq,
-) -> Result<SequentTransferResult, Error> {
+pub async fn generate_sequential_transfer_smt(
+    transfer_req: SequentialTransferReq,
+) -> Result<SequentialTransferResult, Error> {
     let transfers = transfer_req.transfers;
-    let current_transfer = transfers.last().unwrap();
     let transfer_lock_script = transfer_req.lock_script;
     let subkey_opt = transfer_req.subkey;
     let transfer_lock_hash = blake2b_256(&transfer_lock_script);
@@ -41,6 +40,8 @@ pub async fn generate_sequent_transfer_smt(
     if transfers_len == 0 {
         return Err(Error::RequestParamNotFound("transfers".to_string()));
     }
+
+    let current_transfer = transfers.last().unwrap();
     let mut sender_withdrawals = Vec::with_capacity(transfers_len);
     let mut current_withdrawal = WithdrawDb::default();
     for (index, transfer) in transfers.clone().into_iter().enumerate() {
@@ -103,27 +104,29 @@ pub async fn generate_sequent_transfer_smt(
             version,
             ..
         } = withdrawal_db;
-        let SequentTransfer { to_lock_script, .. } = transfer;
+        let SequentialTransfer { to_lock_script, .. } = transfer;
 
         let (withdrawal_key, key) =
             generate_withdrawal_key_v1(cota_id, token_index, transfer.transfer_out_point);
         let (withdrawal_value, value) =
             generate_withdrawal_value_v1(configure, state, characteristic, &to_lock_script);
-        withdrawal_keys.push(withdrawal_key);
-        withdrawal_values.push(withdrawal_value);
         previous_leaves.push((key, H256::zero()));
         transfer_new_leaves.push((key, value));
+
         if index == transfers_len - 1 {
+            withdrawal_keys.push(withdrawal_key);
+            withdrawal_values.push(withdrawal_value);
             transfer_update_leaves.push((key, value));
         }
 
         let (claimed_key, key) = generate_claim_key(cota_id, token_index, out_point);
         let (claimed_value, value) = generate_claim_value(version);
-        claimed_keys.push(claimed_key);
-        claimed_values.push(claimed_value);
         previous_leaves.push((key, H256::zero()));
         transfer_new_leaves.push((key, value));
+
         if index == transfers_len - 1 {
+            claimed_keys.push(claimed_key);
+            claimed_values.push(claimed_value);
             transfer_update_leaves.push((key, value));
         }
     }
