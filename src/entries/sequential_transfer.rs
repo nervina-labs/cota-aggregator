@@ -169,6 +169,7 @@ pub async fn generate_sequential_transfer_smt(
     let withdraw_info = get_withdraw_info(
         current_withdrawal.block_number,
         current_transfer.withdrawal_lock_hash,
+        current_withdrawal.tx_hash,
     )
     .await?;
     let withdraw_proof = parse_witness_withdraw_proof(
