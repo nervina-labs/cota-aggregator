@@ -12,7 +12,7 @@ use crate::entries::transfer::generate_transfer_smt;
 use crate::entries::transfer_update::generate_transfer_update_smt;
 use crate::entries::update::generate_update_smt;
 use crate::entries::withdrawal::generate_withdrawal_smt;
-use crate::models::block::get_syncer_tip_block_number;
+use crate::models::block::{get_syncer_tip_block_number, get_syncer_tip_block_numbers};
 use crate::models::common::{
     check_cota_claimed, get_define_info_by_cota_id, get_hold_cota, get_issuer_by_cota_id,
     get_mint_cota, get_owned_cota_count, get_sender_account_by_cota_nft, get_withdrawal_cota,
@@ -351,7 +351,7 @@ pub async fn get_joyid_info(params: Params) -> Result<Value, Error> {
 
 pub async fn get_aggregator_info(_params: Params) -> Result<Value, Error> {
     info!("Get aggregator info request");
-    generate_aggregator_info(tip_number()?)
+    generate_aggregator_info(get_syncer_tip_block_numbers().map_err(rpc_err)?)
         .await
         .map_err(rpc_err)
 }
