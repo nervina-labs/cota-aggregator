@@ -1606,7 +1606,8 @@ http://localhost:3030
 ```shell
 indexer_block_number - The latest block number of ckb-indexer
 node_block_number - The latest block number of ckb-node
-syncer_block_number - The latest block number of cota-syncer
+syncer_block_number - The latest block number for cota entries task of cota-syncer
+syncer_metadata_number - The latest block number for metadata task of cota-syncer
 version - The current version of cota-aggregator
 is_mainnet - The environment variable to indicate ckb network
 ```
@@ -1615,10 +1616,11 @@ is_mainnet - The environment variable to indicate ckb network
 {
   "jsonrpc": "2.0",
   "result": {
-    "indexer_block_number": 7561075,
-    "node_block_number": 7561075,
-    "syncer_block_number": 7561075,
-    "version": "v0.6.5",
+    "indexer_block_number": 9660893,
+    "node_block_number": 9660893,
+    "syncer_block_number": 9660893,
+    "syncer_metadata_number": 9660893,
+    "version": "v0.12.0",
     "is_mainnet": true
   },
   "id": 2
