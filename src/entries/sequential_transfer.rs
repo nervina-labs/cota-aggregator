@@ -26,6 +26,7 @@ pub type SequentialTransferResult = (
     H256,
     TransferCotaNFTV2Entries,
     Option<SubKeyUnlockEntries>,
+    Option<SubKeyUnlockEntries>,
     H256,
 );
 
@@ -137,18 +138,20 @@ pub async fn generate_sequential_transfer_smt(
     let transaction = &StoreTransaction::new(ROCKS_DB.transaction());
     let mut transfer_smt = init_smt(transaction, transfer_lock_hash)?;
 
-    let mut subkey_unlock_entries = None;
+    let mut current_subkey_entries = None;
+    let mut next_subkey_entries = None;
     // Add lock to transfer smt
     with_lock(transfer_lock_hash, || {
         generate_history_smt(&mut transfer_smt, transfer_lock_hash, transfer_smt_root)?;
         transfer_smt
             .update_all(transfer_pervious_leaves.clone())
             .map_err(|e| Error::SMTError(e.to_string()))?;
-        subkey_unlock_entries =
+        current_subkey_entries =
             generate_subkey_smt(transfer_lock_hash, &subkey_opt, &transfer_smt)?;
         transfer_smt
             .update_all(transfer_update_leaves.clone())
             .map_err(|e| Error::SMTError(e.to_string()))?;
+        next_subkey_entries = generate_subkey_smt(transfer_lock_hash, &subkey_opt, &transfer_smt)?;
         transfer_smt.save_root_and_leaves(previous_leaves.clone())?;
         transfer_smt.commit()
     })?;
@@ -212,7 +215,8 @@ pub async fn generate_sequential_transfer_smt(
     Ok((
         *transfer_smt.root(),
         transfer_entries,
-        subkey_unlock_entries,
+        current_subkey_entries,
+        next_subkey_entries,
         withdraw_info.block_hash,
     ))
 }

@@ -38,7 +38,7 @@ pub fn parse_transfer_update_smt(
 }
 
 pub fn parse_sequential_transfer_smt(
-    (root_hash, transfer_entries, subkey_unlock_entries, block_hash): SequentialTransferResult,
+    (root_hash, transfer_entries, current_subkey_entries, next_subkey_entries, block_hash): SequentialTransferResult,
     block_number: u64,
 ) -> Value {
     let transfer_entry = hex::encode(transfer_entries.as_slice());
@@ -49,8 +49,14 @@ pub fn parse_sequential_transfer_smt(
     map.insert_str("transfer_smt_entry", transfer_entry);
     map.insert_str("withdraw_block_hash", withdraw_block_hash);
     map.insert_u64("block_number", block_number);
-    if let Some(subkey_unlock) = subkey_unlock_entries {
+    if let Some(subkey_unlock) = current_subkey_entries {
         map.insert_str("subkey_unlock_entry", hex::encode(subkey_unlock.as_slice()));
+    }
+    if let Some(subkey_unlock) = next_subkey_entries {
+        map.insert_str(
+            "next_subkey_unlock_entry",
+            hex::encode(subkey_unlock.as_slice()),
+        );
     }
     Value::Object(map)
 }
