@@ -28,6 +28,7 @@ pub struct WithdrawRawTx {
 pub async fn get_withdraw_info(
     block_number: u64,
     withdrawal_lock_hash: [u8; 32],
+    withdrawal_tx_hash: [u8; 32],
 ) -> Result<WithdrawRawTx, Error> {
     let is_mainnet: bool = match env::var("IS_MAINNET") {
         Ok(mainnet) => from_str::<bool>(&mainnet).unwrap(),
@@ -64,7 +65,7 @@ pub async fn get_withdraw_info(
                     output_index =
                         Uint32::from_slice(&(position.unwrap() as u32).to_be_bytes()).unwrap();
                 }
-                position.is_some()
+                tx.hash.as_bytes() == &withdrawal_tx_hash
             })
             .collect();
         if txs.is_empty() {

@@ -23,9 +23,10 @@ pub struct WithdrawCotaNft {
     pub receiver_lock_script_id: i64,
     pub version:                 u8,
     pub block_number:            u64,
+    pub tx_hash:                 String,
 }
 
-#[derive(Debug, Clone, Eq, PartialEq)]
+#[derive(Debug, Clone, Eq, PartialEq, Default)]
 pub struct WithdrawDb {
     pub cota_id:              [u8; 20],
     pub token_index:          [u8; 4],
@@ -36,6 +37,7 @@ pub struct WithdrawDb {
     pub receiver_lock_script: Vec<u8>,
     pub version:              u8,
     pub block_number:         u64,
+    pub tx_hash:              [u8; 32],
 }
 
 pub fn get_withdrawal_cota_by_lock_hash(
@@ -319,6 +321,7 @@ fn parse_withdraw_db(withdrawals: Vec<WithdrawCotaNft>) -> DBResult<WithdrawDb> 
             out_point:            parse_bytes_n::<24>(withdrawal.out_point).unwrap(),
             version:              withdrawal.version,
             block_number:         withdrawal.block_number,
+            tx_hash:              parse_bytes_n::<32>(withdrawal.tx_hash).unwrap(),
         })
     }
     Ok((withdraw_db_vec, block_height))
@@ -352,6 +355,7 @@ fn get_selection() -> (
     receiver_lock_script_id,
     version,
     block_number,
+    tx_hash,
 ) {
     (
         cota_id,
@@ -363,5 +367,6 @@ fn get_selection() -> (
         receiver_lock_script_id,
         version,
         block_number,
+        tx_hash,
     )
 }

@@ -1,6 +1,7 @@
 /target
 .idea
 .env
+.vscode
 /store.db
 /test_db_*
 /tests/node_modules

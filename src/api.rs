@@ -5,13 +5,14 @@ use crate::entries::claim_update::generate_claim_update_smt;
 use crate::entries::define::generate_define_smt;
 use crate::entries::extension::{generate_ext_social_smt, generate_ext_subkey_smt};
 use crate::entries::mint::generate_mint_smt;
+use crate::entries::sequential_transfer::generate_sequential_transfer_smt;
 use crate::entries::social::generate_social_unlock_smt;
 use crate::entries::subkey::generate_subkey_unlock_smt;
 use crate::entries::transfer::generate_transfer_smt;
 use crate::entries::transfer_update::generate_transfer_update_smt;
 use crate::entries::update::generate_update_smt;
 use crate::entries::withdrawal::generate_withdrawal_smt;
-use crate::models::block::get_syncer_tip_block_number;
+use crate::models::block::{get_syncer_tip_block_number, get_syncer_tip_block_numbers};
 use crate::models::common::{
     check_cota_claimed, get_define_info_by_cota_id, get_hold_cota, get_issuer_by_cota_id,
     get_mint_cota, get_owned_cota_count, get_sender_account_by_cota_nft, get_withdrawal_cota,
@@ -31,7 +32,7 @@ use crate::request::fetch::{
 use crate::request::mint::MintReq;
 use crate::request::social::SocialUnlockReq;
 use crate::request::subkey::SubKeyUnlockReq;
-use crate::request::transfer::{TransferReq, TransferUpdateReq};
+use crate::request::transfer::{SequentialTransferReq, TransferReq, TransferUpdateReq};
 use crate::request::update::UpdateReq;
 use crate::request::withdrawal::{OwnerLockReq, SenderLockReq, WithdrawalReq};
 use crate::request::witness::WitnessReq;
@@ -46,7 +47,9 @@ use crate::response::mint::{parse_mint_response, parse_mint_smt};
 use crate::response::social::parse_social_unlock;
 use crate::response::subkey::parse_subkey_unlock;
 use crate::response::transaction::{parse_cota_transactions, parse_history_transactions};
-use crate::response::transfer::{parse_transfer_smt, parse_transfer_update_smt};
+use crate::response::transfer::{
+    parse_sequential_transfer_smt, parse_transfer_smt, parse_transfer_update_smt,
+};
 use crate::response::update::parse_update_smt;
 use crate::response::withdrawal::{
     parse_owner_response, parse_sender_response, parse_withdrawal_response, parse_withdrawal_smt,
@@ -62,42 +65,40 @@ use log::info;
 pub async fn define_rpc(params: Params) -> Result<Value, Error> {
     info!("Define request: {:?}", params);
     let map: Map<String, Value> = Params::parse(params)?;
-    let define_req = DefineReq::from_map(&map).map_err(rpc_err)?;
-    let define_smt = generate_define_smt(define_req).await.map_err(rpc_err)?;
+    let req = DefineReq::from_map(&map).map_err(rpc_err)?;
+    let define_smt = generate_define_smt(req).await.map_err(rpc_err)?;
     Ok(parse_define_smt(define_smt, tip_number()?))
 }
 
 pub async fn mint_rpc(params: Params) -> Result<Value, Error> {
     info!("Mint request: {:?}", params);
     let map: Map<String, Value> = Params::parse(params)?;
-    let mint_req = MintReq::from_map(&map).map_err(rpc_err)?;
-    let mint_smt = generate_mint_smt(mint_req).await.map_err(rpc_err)?;
+    let req = MintReq::from_map(&map).map_err(rpc_err)?;
+    let mint_smt = generate_mint_smt(req).await.map_err(rpc_err)?;
     Ok(parse_mint_smt(mint_smt, tip_number()?))
 }
 
 pub async fn withdrawal_rpc(params: Params) -> Result<Value, Error> {
     info!("Withdrawal request: {:?}", params);
     let map: Map<String, Value> = Params::parse(params)?;
-    let withdrawal_req = WithdrawalReq::from_map(&map).map_err(rpc_err)?;
-    let withdrawal_smt = generate_withdrawal_smt(withdrawal_req)
-        .await
-        .map_err(rpc_err)?;
+    let req = WithdrawalReq::from_map(&map).map_err(rpc_err)?;
+    let withdrawal_smt = generate_withdrawal_smt(req).await.map_err(rpc_err)?;
     Ok(parse_withdrawal_smt(withdrawal_smt, tip_number()?))
 }
 
 pub async fn claim_rpc(params: Params) -> Result<Value, Error> {
     info!("Claim request: {:?}", params);
     let map: Map<String, Value> = Params::parse(params)?;
-    let claim_req = ClaimReq::from_map(&map).map_err(rpc_err)?;
-    let claim_smt = generate_claim_smt(claim_req).await.map_err(rpc_err)?;
+    let req = ClaimReq::from_map(&map).map_err(rpc_err)?;
+    let claim_smt = generate_claim_smt(req).await.map_err(rpc_err)?;
     Ok(parse_claimed_smt(claim_smt, tip_number()?))
 }
 
 pub async fn update_rpc(params: Params) -> Result<Value, Error> {
     info!("Update request: {:?}", params);
     let map: Map<String, Value> = Params::parse(params)?;
-    let update_req = UpdateReq::from_map(&map).map_err(rpc_err)?;
-    let update_smt = generate_update_smt(update_req).await.map_err(rpc_err)?;
+    let req = UpdateReq::from_map(&map).map_err(rpc_err)?;
+    let update_smt = generate_update_smt(req).await.map_err(rpc_err)?;
     Ok(parse_update_smt(update_smt, tip_number()?))
 }
 
@@ -112,59 +113,58 @@ pub async fn transfer_rpc(params: Params) -> Result<Value, Error> {
 pub async fn claim_update_rpc(params: Params) -> Result<Value, Error> {
     info!("Claim & Update request: {:?}", params);
     let map: Map<String, Value> = Params::parse(params)?;
-    let claim_update_req = ClaimUpdateReq::from_map(&map).map_err(rpc_err)?;
-    let claim_update_smt = generate_claim_update_smt(claim_update_req)
-        .await
-        .map_err(rpc_err)?;
-    Ok(parse_claimed_update_smt(claim_update_smt, tip_number()?))
+    let req = ClaimUpdateReq::from_map(&map).map_err(rpc_err)?;
+    let claim_smt = generate_claim_update_smt(req).await.map_err(rpc_err)?;
+    Ok(parse_claimed_update_smt(claim_smt, tip_number()?))
 }
 
 pub async fn transfer_update_rpc(params: Params) -> Result<Value, Error> {
     info!("Transfer & Update request: {:?}", params);
     let map: Map<String, Value> = Params::parse(params)?;
-    let transfer_update_req = TransferUpdateReq::from_map(&map).map_err(rpc_err)?;
-    let transfer_update_smt = generate_transfer_update_smt(transfer_update_req)
+    let req = TransferUpdateReq::from_map(&map).map_err(rpc_err)?;
+    let transfer_smt = generate_transfer_update_smt(req).await.map_err(rpc_err)?;
+    Ok(parse_transfer_update_smt(transfer_smt, tip_number()?))
+}
+
+pub async fn sequential_transfer_rpc(params: Params) -> Result<Value, Error> {
+    info!("Sequential Transfer request: {:?}", params);
+    let map: Map<String, Value> = Params::parse(params)?;
+    let req = SequentialTransferReq::from_map(&map).map_err(rpc_err)?;
+    let transfer_smt = generate_sequential_transfer_smt(req)
         .await
         .map_err(rpc_err)?;
-    Ok(parse_transfer_update_smt(
-        transfer_update_smt,
-        tip_number()?,
-    ))
+    Ok(parse_sequential_transfer_smt(transfer_smt, tip_number()?))
 }
 
 pub async fn subkey_unlock_rpc(params: Params) -> Result<Value, Error> {
     info!("Subkey unlock request: {:?}", params);
     let map: Map<String, Value> = Params::parse(params)?;
-    let subkey_req = SubKeyUnlockReq::from_map(&map).map_err(rpc_err)?;
-    let subkey_smt = generate_subkey_unlock_smt(subkey_req)
-        .await
-        .map_err(rpc_err)?;
+    let req = SubKeyUnlockReq::from_map(&map).map_err(rpc_err)?;
+    let subkey_smt = generate_subkey_unlock_smt(req).await.map_err(rpc_err)?;
     Ok(parse_subkey_unlock(subkey_smt, tip_number()?))
 }
 
 pub async fn extension_subkey_rpc(params: Params) -> Result<Value, Error> {
     info!("Extension subkey request: {:?}", params);
     let map: Map<String, Value> = Params::parse(params)?;
-    let subkey_req = ExtSubkeysReq::from_map(&map).map_err(rpc_err)?;
-    let ext_subkey = generate_ext_subkey_smt(subkey_req).await.map_err(rpc_err)?;
+    let req = ExtSubkeysReq::from_map(&map).map_err(rpc_err)?;
+    let ext_subkey = generate_ext_subkey_smt(req).await.map_err(rpc_err)?;
     Ok(parse_extension_smt(ext_subkey, tip_number()?))
 }
 
 pub async fn extension_social_rpc(params: Params) -> Result<Value, Error> {
     info!("Extension social request: {:?}", params);
     let map: Map<String, Value> = Params::parse(params)?;
-    let social_req = ExtSocialReq::from_map(&map).map_err(rpc_err)?;
-    let ext_social = generate_ext_social_smt(social_req).await.map_err(rpc_err)?;
+    let req = ExtSocialReq::from_map(&map).map_err(rpc_err)?;
+    let ext_social = generate_ext_social_smt(req).await.map_err(rpc_err)?;
     Ok(parse_extension_smt(ext_social, tip_number()?))
 }
 
 pub async fn social_unlock_rpc(params: Params) -> Result<Value, Error> {
     info!("Social unlock request: {:?}", params);
     let map: Map<String, Value> = Params::parse(params)?;
-    let social_req = SocialUnlockReq::from_map(&map).map_err(rpc_err)?;
-    let social_smt = generate_social_unlock_smt(social_req)
-        .await
-        .map_err(rpc_err)?;
+    let req = SocialUnlockReq::from_map(&map).map_err(rpc_err)?;
+    let social_smt = generate_social_unlock_smt(req).await.map_err(rpc_err)?;
     Ok(parse_social_unlock(social_smt, tip_number()?))
 }
 
@@ -351,7 +351,7 @@ pub async fn get_joyid_info(params: Params) -> Result<Value, Error> {
 
 pub async fn get_aggregator_info(_params: Params) -> Result<Value, Error> {
     info!("Get aggregator info request");
-    generate_aggregator_info(tip_number()?)
+    generate_aggregator_info(get_syncer_tip_block_numbers().map_err(rpc_err)?)
         .await
         .map_err(rpc_err)
 }
