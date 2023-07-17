@@ -63,7 +63,6 @@ diesel::table! {
     }
 }
 
-
 diesel::table! {
     extension_kv_pairs (id) {
         id -> Bigint,
@@ -76,7 +75,6 @@ diesel::table! {
         updated_at -> Datetime,
     }
 }
-
 
 diesel::table! {
     hold_cota_nft_kv_pairs (id) {
@@ -94,7 +92,6 @@ diesel::table! {
     }
 }
 
-
 diesel::table! {
     issuer_infos (id) {
         id -> Bigint,
@@ -109,7 +106,6 @@ diesel::table! {
         updated_at -> Datetime,
     }
 }
-
 
 diesel::table! {
     joy_id_infos (id) {
@@ -180,7 +176,6 @@ diesel::table! {
     }
 }
 
-
 diesel::table! {
     sub_key_infos (id) {
         id -> Bigint,
@@ -196,7 +191,6 @@ diesel::table! {
         updated_at -> Datetime,
     }
 }
-
 
 diesel::table! {
     sub_key_kv_pairs (id) {

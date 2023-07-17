@@ -10,6 +10,7 @@ pub(crate) mod define;
 pub(crate) mod extension;
 pub mod helper;
 pub(crate) mod mint;
+pub(crate) mod sequential_transfer;
 pub mod smt;
 pub(crate) mod social;
 pub(crate) mod subkey;

@@ -308,6 +308,7 @@ fn parse_withdraw_v1(
             all_leaves.push((H256::from(key), H256::from(value), false));
         }
     }
+
     if count != pairs.len() {
         return Err(Error::WitnessParseError(
             "Match cota_id and token_index error".to_string(),

@@ -74,6 +74,7 @@ https://cota.nervina.dev/aggregator
 - [generate_define_cota_smt](#generate_define_cota_smt)
 - [generate_mint_cota_smt](#generate_mint_cota_smt)
 - [generate_transfer_cota_smt](#generate_transfer_cota_smt)
+- [generate_sequential_transfer_cota_smt](#generate_sequential_transfer_cota_smt)
 - [generate_extension_subkey_smt](#generate_extension_subkey_smt)
 - [generate_subkey_unlock_smt](#generate_subkey_unlock_smt)
 - [generate_extension_social_smt](#generate_extension_social_smt)
@@ -273,6 +274,85 @@ transfer_smt_entry - The SMT transfer information (origin SMT leaves, SMT proof 
     "smt_root_hash": "035dfe06d8aaf28daec16f394b226f1357bfa857b436b506274a32b024b15507",
     "withdraw_block_hash": "0x1e5ee51aee1bcb6ee45400147fb57162fb47941641e66e44b8186752a04cacfe",
     "transfer_smt_entry": "4b03000020000000560000007a000000980000002b01000036010000d10200000100000081034f3b21fc113bfc423f1185ba6c37f16d02c6c71e00000000fb22817c592d8e96982e708d4a6c2135627ee8950000000001000000ffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff0100000081024f3b21fc113bfc423f1185ba6c37f16d02c6c71e0000000093000000080000008b000000100000002600000073000000c00000000000000000000000000000000000000000004900000049000000100000003000000031000000577a5e5930e2ecdd6200765f3442e6119dc99e87df474f22f13cab819c80b24201140000009cc2405a07d067c98bf6824134b2759b44079629777347181a25dc39c31ad290b9e2d52ded42295000000000070000004c4fff4c4fff48970100004c4f095109d2beef40bb50b06b1701f6bbae63be2b4123a9a57171b35f794926ef26c9735381000000000000000000000000000000000000000000000000000000000000004fa051a00000e96fe831821c10fe6cfec6e6d334688a5e7e11c6d263e3d900b0702b8664000054c0f76c724f432ff9b0b1f282ed81a17f342301000000000000000000004f0451018e9e5d7cfc6fe1c855d97930ea5737f4aae49897a79765515ff02ed27a53c88900000000000000000000000000000000000000000000000000000000000000004f185118fdc39dedf04b0a51bc3f190a0bab16aa78e36a171a944a799520a4151ed9495900000000000000000000000000000000000000000000000000000000000000005034c98329580d675bc226969e982888bf506dc2fce273b3a9df7d7adb5fc0541d5098969dc267aa28b349b9beacae7edc7ee10faf8d9f68ca13385c1a331be900e451021ae9d0fc52005e139df54ad1b4581f0537028a339558d7d6c639975f3f5b4a8600000000000000000000000000000000000000000000000000000000000000004f34760000005472616e7366657220746865204e4654204f3b21fc113bfc423f1185ba6c37f16d02c6c71e0000000020746f2049000000100000003000000031000000577a5e5930e2ecdd6200765f3442e6119dc99e87df474f22f13cab819c80b24201140000009cc2405a07d067c98bf6824134b2759b44079629"
+  },
+  "id": 2
+}
+```
+
+### generate_sequential_transfer_cota_smt
+
+Generate smt data(`smt_entry` for `witness_args.input_type` and `smt_root` for cell data) for CoTA sequential transfer transaction
+
+#### Parameters
+
+```
+lock_script - The sender's lock script
+transfers - The information of transfer
+  withdrawal_lock_hash - The withdrawal's lock hash of the NFTs
+  transfer_out_point - The out_point([12..]) of sender's live cell
+  cota_id - CoTA NFT Class Unique ID
+  token_index - The index of the NFT Class (increment from zero)
+  to_lock_script - The receiver's lock script
+subkey(optional) - If JoyID subkey unlock is required, the subkey information will be needed.
+  alg_index - The algorithm index: secp256r1 => 0x0001, secp256k1-eth => 0x0002
+  pubkey_hash - The blake2b_hash[0..20] of secp256r1 uncompressed pubkey and keccak256_hash[12..32] of secp256k1 uncompressed pubkey
+```
+
+```shell
+echo '{
+    "id":2,
+    "jsonrpc":"2.0",
+    "method":"generate_sequential_transfer_cota_smt",
+    "params":{
+      "lock_script":"0x49000000100000003000000031000000124a60cd799e1fbca664196de46b3f7f0ecb7138133dcaea4893c51df5b02be60114000000fa15357eb4ad2989f910268db3b3a585a9b51cbe",
+      "transfers":[
+          {
+              "withdrawal_lock_hash":"0xc84947784cce65bdd259948630a5e77ebcfce205fd53a55dc333afe98007bd19",
+              "transfer_out_point":"0x777347181a25dc39c31ad290b9e2d52ded42295000000000",
+              "cota_id":"0x4f3b21fc113bfc423f1185ba6c37f16d02c6c71e",
+              "token_index":"0x00000000",
+              "to_lock_script":"0x49000000100000003000000031000000577a5e5930e2ecdd6200765f3442e6119dc99e87df474f22f13cab819c80b24201140000009cc2405a07d067c98bf6824134b2759b44079629"
+          },
+          {
+              "withdrawal_lock_hash":"0xc84947784cce65bdd259948630a5e77ebcfce205fd53a55dc333afe98007bd19",
+              "transfer_out_point":"0x777347181a25dc39c31ad290b9e2d52ded42295000000000",
+              "cota_id":"0x4f3b21fc113bfc423f1185ba6c37f16d02c6c71e",
+              "token_index":"0x00000001",
+              "to_lock_script":"0x49000000100000003000000031000000577a5e5930e2ecdd6200765f3442e6119dc99e87df474f22f13cab819c80b24201140000009cc2405a07d067c98bf6824134b2759b44079629"
+          }
+      ],
+      "subkey": {
+          "pubkey_hash":"0x03d6da431853478e5eb67adf726d49cd46919128",
+          "alg_index":2
+      }
+  }
+}' \
+| tr -d '\n' \
+| curl -H 'content-type: application/json' -d @- \
+http://localhost:3030
+```
+
+#### Response
+
+```
+block_number - The latest block number of cota-syncer
+smt_root_hash - The latest SMT root hash after transferring
+withdraw_block_hash - The block hash containing the withdraw transaction
+transfer_smt_entry - The SMT transfer information (origin SMT leaves, SMT proof and other information)
+subkey_unlock_entry(optional) - The subkey unlock SMT information before transferring(origin SMT leaves, SMT proof and other information)
+next_subkey_unlock_entry(optional) - The subkey unlock SMT information after transferring (origin SMT leaves, SMT proof and other information)
+```
+
+```json
+{
+  "jsonrpc": "2.0",
+  "result": {
+    "block_number": 5648377,
+    "smt_root_hash": "035dfe06d8aaf28daec16f394b226f1357bfa857b436b506274a32b024b15507",
+    "withdraw_block_hash": "0x1e5ee51aee1bcb6ee45400147fb57162fb47941641e66e44b8186752a04cacfe",
+    "transfer_smt_entry": "4b03000020000000560000007a000000980000002b01000036010000d10200000100000081034f3b21fc113bfc423f1185ba6c37f16d02c6c71e00000000fb22817c592d8e96982e708d4a6c2135627ee8950000000001000000ffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff0100000081024f3b21fc113bfc423f1185ba6c37f16d02c6c71e0000000093000000080000008b000000100000002600000073000000c00000000000000000000000000000000000000000004900000049000000100000003000000031000000577a5e5930e2ecdd6200765f3442e6119dc99e87df474f22f13cab819c80b24201140000009cc2405a07d067c98bf6824134b2759b44079629777347181a25dc39c31ad290b9e2d52ded42295000000000070000004c4fff4c4fff48970100004c4f095109d2beef40bb50b06b1701f6bbae63be2b4123a9a57171b35f794926ef26c9735381000000000000000000000000000000000000000000000000000000000000004fa051a00000e96fe831821c10fe6cfec6e6d334688a5e7e11c6d263e3d900b0702b8664000054c0f76c724f432ff9b0b1f282ed81a17f342301000000000000000000004f0451018e9e5d7cfc6fe1c855d97930ea5737f4aae49897a79765515ff02ed27a53c88900000000000000000000000000000000000000000000000000000000000000004f185118fdc39dedf04b0a51bc3f190a0bab16aa78e36a171a944a799520a4151ed9495900000000000000000000000000000000000000000000000000000000000000005034c98329580d675bc226969e982888bf506dc2fce273b3a9df7d7adb5fc0541d5098969dc267aa28b349b9beacae7edc7ee10faf8d9f68ca13385c1a331be900e451021ae9d0fc52005e139df54ad1b4581f0537028a339558d7d6c639975f3f5b4a8600000000000000000000000000000000000000000000000000000000000000004f34760000005472616e7366657220746865204e4654204f3b21fc113bfc423f1185ba6c37f16d02c6c71e0000000020746f2049000000100000003000000031000000577a5e5930e2ecdd6200765f3442e6119dc99e87df474f22f13cab819c80b24201140000009cc2405a07d067c98bf6824134b2759b44079629",
+    "subkey_unlock_entry": "a3000000100000001400000016000000000000030002890000004c4f5851588473b84c21c9a8c296fea1c37adac79cec5c8c955c816d0a2a30618c32e13edbff007375626b65790000000000000000000000000000000000000000000000005159f65192a5a69f2b97b4ff2aaf2947136d09f647a4165b28a2d9e685c23b6e28c2ff007375626b65790000000100000000000000000000000000000000000000004fa6",
+    "next_subkey_unlock_entry": "a3000000100000001400000016000000000000030002890000004c4f5851588473b84c21c9a8c296fea1c37adac79cec5c8c955c816d0a2a30618c32e13edbff007375626b65790000000000000000000000000000000000000000000000005159f65192a5a69f2b97b4ff2aaf2947136d09f647a4165b28a2d9e685c23b6e28c2ff007375626b65790000000100000000000000000000000000000000000000004fa6"
   },
   "id": 2
 }
@@ -1606,7 +1686,8 @@ http://localhost:3030
 ```shell
 indexer_block_number - The latest block number of ckb-indexer
 node_block_number - The latest block number of ckb-node
-syncer_block_number - The latest block number of cota-syncer
+syncer_block_number - The latest block number for cota entries task of cota-syncer
+syncer_metadata_number - The latest block number for metadata task of cota-syncer
 version - The current version of cota-aggregator
 is_mainnet - The environment variable to indicate ckb network
 ```
@@ -1615,10 +1696,11 @@ is_mainnet - The environment variable to indicate ckb network
 {
   "jsonrpc": "2.0",
   "result": {
-    "indexer_block_number": 7561075,
-    "node_block_number": 7561075,
-    "syncer_block_number": 7561075,
-    "version": "v0.6.5",
+    "indexer_block_number": 9660893,
+    "node_block_number": 9660893,
+    "syncer_block_number": 9660893,
+    "syncer_metadata_number": 9660893,
+    "version": "v0.12.0",
     "is_mainnet": true
   },
   "id": 2

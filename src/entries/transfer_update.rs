@@ -35,9 +35,9 @@ pub async fn generate_transfer_update_smt(
         .iter()
         .map(|transfer| (transfer.cota_id, transfer.token_index))
         .collect();
-    let withdraw_lock_hash = blake2b_256(&transfer_update_req.withdrawal_lock_script);
+    let withdrawal_lock_hash = blake2b_256(&transfer_update_req.withdrawal_lock_script);
     let sender_withdrawals =
-        get_withdrawal_cota_by_lock_hash(withdraw_lock_hash, &cota_id_index_pairs)?.0;
+        get_withdrawal_cota_by_lock_hash(withdrawal_lock_hash, &cota_id_index_pairs)?.0;
     if sender_withdrawals.is_empty() || sender_withdrawals.len() != transfers_len {
         return Err(Error::CotaIdAndTokenIndexHasNotWithdrawn);
     }
@@ -60,6 +60,7 @@ pub async fn generate_transfer_update_smt(
         return Err(Error::CotaIdAndTokenIndexHasNotWithdrawn);
     }
     let withdrawal_block_number = sender_withdrawals.first().unwrap().block_number;
+    let withdrawal_tx_hash = sender_withdrawals.first().unwrap().tx_hash;
     if sender_withdrawals[1..]
         .iter()
         .any(|withdrawal| withdrawal.block_number != withdrawal_block_number)
@@ -178,7 +179,12 @@ pub async fn generate_transfer_update_smt(
         )
         .build();
 
-    let withdraw_info = get_withdraw_info(withdrawal_block_number, transfer_lock_hash).await?;
+    let withdraw_info = get_withdraw_info(
+        withdrawal_block_number,
+        withdrawal_lock_hash,
+        withdrawal_tx_hash,
+    )
+    .await?;
     let withdraw_proof = parse_witness_withdraw_proof(
         withdraw_info.witnesses,
         &cota_id_index_pairs,

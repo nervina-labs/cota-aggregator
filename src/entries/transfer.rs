@@ -20,7 +20,7 @@ use cota_smt::common::*;
 use cota_smt::molecule::prelude::*;
 use cota_smt::smt::{blake2b_256, H256};
 use cota_smt::transfer::{TransferCotaNFTV2Entries, TransferCotaNFTV2EntriesBuilder};
-use log::{debug, error};
+use log::error;
 use molecule::hex_string;
 
 pub async fn generate_transfer_smt(
@@ -36,9 +36,9 @@ pub async fn generate_transfer_smt(
         .iter()
         .map(|transfer| (transfer.cota_id, transfer.token_index))
         .collect();
-    let withdraw_lock_hash = transfer_req.withdrawal_lock_hash;
+    let withdrawal_lock_hash = transfer_req.withdrawal_lock_hash;
     let sender_withdrawals =
-        get_withdrawal_cota_by_lock_hash(withdraw_lock_hash, &cota_id_index_pairs)?.0;
+        get_withdrawal_cota_by_lock_hash(withdrawal_lock_hash, &cota_id_index_pairs)?.0;
     if sender_withdrawals.is_empty() || sender_withdrawals.len() != transfers_len {
         return Err(Error::CotaIdAndTokenIndexHasNotWithdrawn);
     }
@@ -61,6 +61,7 @@ pub async fn generate_transfer_smt(
         return Err(Error::CotaIdAndTokenIndexHasNotWithdrawn);
     }
     let withdrawal_block_number = sender_withdrawals.first().unwrap().block_number;
+    let withdrawal_tx_hash = sender_withdrawals.first().unwrap().tx_hash;
     if sender_withdrawals[1..]
         .iter()
         .any(|withdrawal| withdrawal.block_number != withdrawal_block_number)
@@ -149,12 +150,16 @@ pub async fn generate_transfer_smt(
     diff_time(start_time, "Generate transfer smt proof");
 
     let transfer_merkel_proof_vec: Vec<u8> = transfer_merkle_proof_compiled.into();
-    debug!("transfer proof size: {}", transfer_merkel_proof_vec.len());
     let transfer_merkel_proof_bytes = BytesBuilder::default()
         .extend(transfer_merkel_proof_vec.iter().map(|v| Byte::from(*v)))
         .build();
 
-    let withdraw_info = get_withdraw_info(withdrawal_block_number, withdraw_lock_hash).await?;
+    let withdraw_info = get_withdraw_info(
+        withdrawal_block_number,
+        withdrawal_lock_hash,
+        withdrawal_tx_hash,
+    )
+    .await?;
     let withdraw_proof = parse_witness_withdraw_proof(
         withdraw_info.witnesses,
         &cota_id_index_pairs,

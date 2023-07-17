@@ -20,10 +20,10 @@ jobs:
         include:
           - build: linux
             os: ubuntu-20.04
-            rust: 1.59.0
+            rust: 1.72.0
           - build: macos
             os: macos-12
-            rust: 1.59.0
+            rust: 1.72.0
 
     steps:
       - uses: actions/checkout@v3
