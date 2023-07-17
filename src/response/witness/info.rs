@@ -22,7 +22,8 @@ pub struct ClassInfo {
     pub description:    Option<String>,
     #[serde(skip_serializing_if = "Option::is_none")]
     pub audio:          Option<String>,
-    pub audios:         Vec<ClassAudio>,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub audios:         Option<Vec<ClassAudio>>,
     #[serde(skip_serializing_if = "Option::is_none")]
     pub video:          Option<String>,
     #[serde(skip_serializing_if = "Option::is_none")]
