@@ -136,10 +136,8 @@ fn entries_error(_e: VerificationError) -> Error {
 }
 
 fn parse_metadata(output_type: BytesOpt, mut cota_map: CotaMap) -> Result<CotaMap, Error> {
-    match output_type.to_opt() {
-        Some(output_type_) => {
-            let metadata =
-                from_slice::<Metadata<IssuerInfo>>(&output_type_.raw_data()).map_err(json_error)?;
+    if let Some(output_type_) = output_type.to_opt() {
+        if let Ok(metadata) = from_slice::<Metadata<IssuerInfo>>(&output_type_.raw_data()) {
             if metadata.metadata.type_ == "issuer" {
                 cota_map.insert("info".to_owned(), json!(metadata.metadata.data));
                 return Ok(cota_map);
@@ -150,24 +148,15 @@ fn parse_metadata(output_type: BytesOpt, mut cota_map: CotaMap) -> Result<CotaMa
                 cota_map.insert("info".to_owned(), json!(class.metadata.data));
                 return Ok(cota_map);
             }
-            if cota_map.is_empty() {
-                return Err(Error::WitnessParseError(
-                    "Invalid CoTA entries or metadata".to_string(),
-                ));
-            } else {
-                cota_map.insert_null("info");
-            }
         }
-        None => {
-            if cota_map.is_empty() {
-                return Err(Error::WitnessParseError(
-                    "Invalid CoTA entries or metadata".to_string(),
-                ));
-            } else {
-                cota_map.insert_null("info");
-            }
-        }
-    };
+    }
+    if cota_map.is_empty() {
+        return Err(Error::WitnessParseError(
+            "Invalid CoTA entries or metadata".to_string(),
+        ));
+    } else {
+        cota_map.insert_null("info");
+    }
     Ok(cota_map)
 }
 
