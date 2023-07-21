@@ -127,11 +127,11 @@ impl Error {
     }
 }
 
-impl Into<RpcError> for Error {
-    fn into(self) -> RpcError {
+impl From<Error> for RpcError {
+    fn from(val: Error) -> Self {
         RpcError {
             code:    ErrorCode::InvalidParams,
-            message: self.to_msg(),
+            message: val.to_msg(),
             data:    None,
         }
     }
