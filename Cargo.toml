@@ -1,19 +1,19 @@
 [package]
 name = "cota-aggregator"
-version = "0.12.1"
+version = "0.13.0"
 edition = "2021"
 
 [dependencies]
 jsonrpc-http-server = "18.0.0"
 jsonrpc-core = "18.0.0"
 log = {version = "0.4", features = ["release_max_level_debug", "max_level_debug"]}
-env_logger = "0.9"
+env_logger = "0.10"
 hex = "0.4"
 failure = "0.1.8"
 crc = "3.0.1"
 diesel = { version = "1.4.8", features = ["mysql", "r2d2", "numeric"] }
 dotenv = "0.15.0"
-chrono = "0.4.26"
+chrono = "0.4.28"
 molecule = "0.7.2"
 lazy_static = "1.4"
 rocksdb = { package = "ckb-rocksdb", version = "=0.20.0", features = ["snappy"] }
@@ -21,12 +21,12 @@ sparse-merkle-tree = "0.6.1"
 ckb-types = "=0.108.0"
 ckb-jsonrpc-types = "=0.108.0"
 reqwest = { version = "0.11.18", features = ["json"] }
-tokio = { version = "1.28.2", features = ["rt", "net"] }
+tokio = { version = "1.32.0", features = ["rt", "net"] }
 serde = { version = "1.0", features = [ "derive" ] }
 serde_json = "1.0"
 rand = "0.8"
 parking_lot = "0.12.1"
-sentry = "0.31.3"
+sentry = "0.31.6"
 cota-smt = {package = "cota-smt", git = "https://github.com/nervina-labs/cota-smt", tag = "0.8.0"}
 joyid-smt = {package = "joyid-smt", git = "https://github.com/nervina-labs/joyid-smt", tag = "v0.8.0"}
 ckb-sdk = "2.5.0"
