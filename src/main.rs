@@ -62,6 +62,7 @@ fn main() {
         sequential_transfer_rpc,
     );
     io.add_method("generate_extension_subkey_smt", extension_subkey_rpc);
+    io.add_method("generate_adding_subkey_smt", add_subkey_rpc);
     io.add_method("generate_subkey_unlock_smt", subkey_unlock_rpc);
     io.add_method("generate_extension_social_smt", extension_social_rpc);
     io.add_method("generate_social_unlock_smt", social_unlock_rpc);

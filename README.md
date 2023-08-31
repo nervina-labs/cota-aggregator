@@ -76,6 +76,7 @@ https://cota.nervina.dev/aggregator
 - [generate_transfer_cota_smt](#generate_transfer_cota_smt)
 - [generate_sequential_transfer_cota_smt](#generate_sequential_transfer_cota_smt)
 - [generate_extension_subkey_smt](#generate_extension_subkey_smt)
+- [generate_adding_subkey_smt](#generate_adding_subkey_smt)
 - [generate_subkey_unlock_smt](#generate_subkey_unlock_smt)
 - [generate_extension_social_smt](#generate_extension_social_smt)
 - [generate_social_unlock_smt](#generate_social_unlock_smt)
@@ -412,6 +413,65 @@ extension_smt_entry - The SMT extension information (origin SMT leaves, SMT proo
     "smt_root_hash": "cf71d48840033f455bd05a20c971bdbdeac827ef282d43c968083aa1c1b6f139"
   },
   "id": 1672972637363
+}
+```
+
+### generate_adding_subkey_smt
+
+Generate smt data(`smt_entry` for `witness_args.input_type` and `smt_root` for cell data) for adding subkey extension transaction
+
+**This rpc is only for adding subkey firstly after cota cell is registered.**
+
+#### Parameters
+
+```
+lock_script - The sender's lock script
+ext_action - The extension action: must be add(0xF0)
+subkeys - The information of subkeys
+    ext_data - The subkey unique id
+    alg_index - The algorithm index: secp256r1 => 0x0001, secp256k1-eth => 0x0002
+    pubkey_hash - The blake2b_hash[0..20] of secp256r1 uncompressed pubkey and keccak256_hash[12..32] of secp256k1 uncompressed pubkey
+```
+
+```shell
+echo '{
+    "id":1672972637363,
+    "jsonrpc":"2.0",
+    "method":"generate_adding_subkey_smt",
+    "params":{
+        "lock_script":"0x4b000000100000003000000031000000d23761b364210735c19c60561d213fb3beae2fd6172743719eff6920e020baac01160000000001493d2207138e17fcd392d1f4565052ab0a8c16d3",
+        "ext_action":240,
+        "subkeys":[
+            {
+                "ext_data":1,
+                "alg_index":1,
+                "pubkey_hash":"0x8c886cc799ff56cc8518ec5212116ffab98d33dd"
+            }
+        ]
+    }
+}' \
+| tr -d '\n' \
+| curl -H 'content-type: application/json' -d @- \
+http://localhost:3030
+```
+
+#### Response
+
+```
+block_number - The latest block number of cota-syncer
+smt_root_hash - The latest SMT root hash after adding or updating subkey extension
+extension_smt_entry - The SMT extension information (origin SMT leaves, SMT proof and other information)
+```
+
+```json
+{
+  "jsonrpc": "2.0",
+  "result": {
+    "block_number": 7905660,
+    "extension_smt_entry": "d500000010000000770000007d0000006700000014000000380000005c0000006000000001000000ff007375626b65790000000200000000000000000000000000000000000000000100000000018c886cc799ff56cc8518ec5212116ffab98d33dd000000000000000000ff00000000030000004c4f007375626b657954000000540000000c0000003000000001000000ff007375626b65790000000200000000000000000000000000000000000000000100000000018c886cc799ff56cc8518ec5212116ffab98d33dd000000000000000000ff",
+    "smt_root_hash": "d998d4a2bf50d0e9cdc42cbd689ff5d4f3afdcfedd4f0484bd8b3685c5ec6f95"
+  },
+  "id": :1693472264216
 }
 ```
 

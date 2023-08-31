@@ -3,7 +3,9 @@ use crate::business::transaction::{get_cota_txs_by_block_number, get_history_tra
 use crate::entries::claim::generate_claim_smt;
 use crate::entries::claim_update::generate_claim_update_smt;
 use crate::entries::define::generate_define_smt;
-use crate::entries::extension::{generate_ext_social_smt, generate_ext_subkey_smt};
+use crate::entries::extension::{
+    generate_adding_subkey_smt, generate_ext_social_smt, generate_ext_subkey_smt,
+};
 use crate::entries::mint::generate_mint_smt;
 use crate::entries::sequential_transfer::generate_sequential_transfer_smt;
 use crate::entries::social::generate_social_unlock_smt;
@@ -149,6 +151,14 @@ pub async fn extension_subkey_rpc(params: Params) -> Result<Value, Error> {
     let map: Map<String, Value> = Params::parse(params)?;
     let req = ExtSubkeysReq::from_map(&map).map_err(rpc_err)?;
     let ext_subkey = generate_ext_subkey_smt(req).await.map_err(rpc_err)?;
+    Ok(parse_extension_smt(ext_subkey, tip_number()?))
+}
+
+pub async fn add_subkey_rpc(params: Params) -> Result<Value, Error> {
+    info!("Add subkey request: {:?}", params);
+    let map: Map<String, Value> = Params::parse(params)?;
+    let req = ExtSubkeysReq::from_map(&map).map_err(rpc_err)?;
+    let ext_subkey = generate_adding_subkey_smt(req).await.map_err(rpc_err)?;
     Ok(parse_extension_smt(ext_subkey, tip_number()?))
 }
 
