@@ -33,7 +33,7 @@ pub struct ExtSubkeysReq {
 
 impl ExtSubkeysReq {
     pub fn from_map(map: &Map<String, Value>) -> Result<Self, Error> {
-        let ext_action = map.get_u8_filed("ext_action")?;
+        let ext_action = map.get_u8_filed("ext_action").unwrap_or(0xF0);
         if ext_action != EXT_ACTION_ADD && ext_action != EXT_ACTION_UPDATE {
             return Err(Error::CKBRPCError("Extension action error".to_string()));
         }
