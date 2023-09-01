@@ -426,7 +426,6 @@ Generate smt data(`smt_entry` for `witness_args.input_type` and `smt_root` for c
 
 ```
 lock_script - The sender's lock script
-ext_action - The extension action: must be add(0xF0)
 subkeys - The information of subkeys
     ext_data - The subkey unique id
     alg_index - The algorithm index: secp256r1 => 0x0001, secp256k1-eth => 0x0002
@@ -440,7 +439,6 @@ echo '{
     "method":"generate_adding_subkey_smt",
     "params":{
         "lock_script":"0x4b000000100000003000000031000000d23761b364210735c19c60561d213fb3beae2fd6172743719eff6920e020baac01160000000001493d2207138e17fcd392d1f4565052ab0a8c16d3",
-        "ext_action":240,
         "subkeys":[
             {
                 "ext_data":1,
