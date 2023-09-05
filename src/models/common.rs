@@ -68,17 +68,14 @@ pub fn get_withdrawal_cota(
         Some(script_id) => get_withdrawal_cota_by_script_id(script_id, cota_id_opt),
         None => Ok((vec![], 0, 0)),
     }?;
-    withdrawal_nfts = withdrawal_nfts
-        .into_iter()
-        .filter(|withdrawal| {
-            !is_exist_in_claim(
-                lock_hash,
-                withdrawal.cota_id,
-                withdrawal.token_index,
-                withdrawal.out_point,
-            )
-        })
-        .collect();
+    withdrawal_nfts.retain(|withdrawal| {
+        !is_exist_in_claim(
+            lock_hash,
+            withdrawal.cota_id,
+            withdrawal.token_index,
+            withdrawal.out_point,
+        )
+    });
     let total = withdrawal_nfts.len() as i64;
 
     let mut nfts: Vec<(WithdrawNFTDb, Option<ClassInfo>)> = vec![];

@@ -44,7 +44,7 @@ impl<'a> SMTStore<'a> {
     pub fn save_root(&self, root: &H256) -> Result<(), Error> {
         self.store
             .insert_raw(self.root_col, &self.lock_hash, root.as_slice())
-            .map_err(|err| Error::SMTError(format!("insert error {:?}", err)))?;
+            .map_err(|err| Error::SMTInvalid(format!("insert error {:?}", err)))?;
 
         Ok(())
     }
@@ -79,7 +79,7 @@ impl<'a> SMTStore<'a> {
         let smt_leaves: SMTLeafVec = SMTLeafVecBuilder::default().set(smt_leaf_vec).build();
         self.store
             .insert_raw(self.leaves_col, &self.lock_hash, smt_leaves.as_slice())
-            .map_err(|err| Error::SMTError(format!("insert error {:?}", err)))?;
+            .map_err(|err| Error::SMTInvalid(format!("insert error {:?}", err)))?;
         Ok(())
     }
 
@@ -87,7 +87,7 @@ impl<'a> SMTStore<'a> {
         match self.store.get(self.leaves_col, &self.lock_hash) {
             Some(slice) => {
                 let smt_leaves = SMTLeafVec::from_slice(&slice)
-                    .map_err(|_e| Error::SMTError("SMT Leaves parse error".to_owned()))?;
+                    .map_err(|_e| Error::SMTInvalid("SMT Leaves parse error".to_owned()))?;
                 let leaves = smt_leaves
                     .into_iter()
                     .map(|smt_leaf| {
@@ -176,7 +176,7 @@ impl<'a> StoreWriteOps<H256> for SMTStore<'a> {
 
     fn remove_leaf(&mut self, leaf_key: &H256) -> Result<(), SMTError> {
         self.store
-            .delete(self.leaf_col, &leaf_key_to_vec(self.lock_hash, &leaf_key))
+            .delete(self.leaf_col, &leaf_key_to_vec(self.lock_hash, leaf_key))
             .map_err(|err| SMTError::Store(format!("delete error {:?}", err)))?;
 
         Ok(())

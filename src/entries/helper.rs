@@ -243,12 +243,9 @@ fn generate_social_leaf_value(
     recovery_mode: &u8,
     must: &u8,
     total: &u8,
-    signers: &Vec<Vec<u8>>,
+    signers: &[Vec<u8>],
 ) -> (SocialValue, H256) {
-    let friends: Vec<common::Bytes> = signers
-        .into_iter()
-        .map(|signer| vec_to_bytes(&signer))
-        .collect();
+    let friends: Vec<common::Bytes> = signers.iter().map(|signer| vec_to_bytes(signer)).collect();
     let signers = LockScriptVecBuilder::default().set(friends).build();
     let social_value = SocialValueBuilder::default()
         .recovery_mode(Byte::from_slice(&[*recovery_mode]).unwrap())
@@ -271,7 +268,7 @@ pub fn with_lock<F>(lock_hash: [u8; 32], mut operator: F) -> Result<(), Error>
 where
     F: FnMut() -> Result<(), Error>,
 {
-    let &(ref lock, ref cond) = &*Arc::clone(&SMT_LOCK);
+    let (lock, cond) = &*Arc::clone(&SMT_LOCK);
     {
         let mut set = lock.lock();
         while !set.insert(lock_hash) {

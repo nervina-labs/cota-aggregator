@@ -23,7 +23,7 @@ pub async fn get_cota_smt_root(lock_script: &[u8]) -> Result<Option<[u8; 32]>, E
             ret.copy_from_slice(&cell_data[1..]);
             Ok(Some(ret))
         }
-        _ => Err(Error::CKBIndexerError(
+        _ => Err(Error::CKBIndexerInvalid(
             "CoTA cell data length error".to_owned(),
         )),
     }
@@ -61,10 +61,10 @@ async fn build_rpc<T: DeserializeOwned>(method: &str, params: Option<Value>) -> 
     match output {
         jsonrpc_core::response::Output::Success(success) => {
             serde_json::from_value::<T>(success.result)
-                .map_err(|_e| Error::CKBIndexerError("Parse response error".to_owned()))
+                .map_err(|_e| Error::CKBIndexerInvalid("Parse response error".to_owned()))
         }
         jsonrpc_core::response::Output::Failure(failure) => {
-            Err(Error::CKBIndexerError(failure.error.message))
+            Err(Error::CKBIndexerInvalid(failure.error.message))
         }
     }
 }

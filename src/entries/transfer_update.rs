@@ -43,7 +43,7 @@ pub async fn generate_transfer_update_smt(
     }
     let is_receiver = sender_withdrawals
         .iter()
-        .any(|withdrawal| &withdrawal.receiver_lock_script == &transfer_lock_script);
+        .any(|withdrawal| withdrawal.receiver_lock_script == transfer_lock_script);
     if !is_receiver {
         return Err(Error::CotaIdAndTokenIndexHasNotWithdrawn);
     }
@@ -151,7 +151,7 @@ pub async fn generate_transfer_update_smt(
         )?;
         transfer_update_smt
             .update_all(transfer_update_leaves.clone())
-            .map_err(|e| Error::SMTError(e.to_string()))?;
+            .map_err(|e| Error::SMTInvalid(e.to_string()))?;
         transfer_update_smt.save_root_and_leaves(previous_leaves.clone())?;
         transfer_update_smt.commit()
     })?;
@@ -161,13 +161,13 @@ pub async fn generate_transfer_update_smt(
         .merkle_proof(leaf_keys.clone())
         .map_err(|e| {
             error!("Transfer update SMT proof error: {:?}", e.to_string());
-            Error::SMTProofError("Transfer".to_string())
+            Error::SMTProofInvalid("Transfer".to_string())
         })?;
     let transfer_update_merkle_proof_compiled = transfer_update_merkle_proof
         .compile(leaf_keys)
         .map_err(|e| {
             error!("Transfer SMT proof error: {:?}", e.to_string());
-            Error::SMTProofError("Transfer update".to_string())
+            Error::SMTProofInvalid("Transfer update".to_string())
         })?;
 
     let transfer_update_merkel_proof_vec: Vec<u8> = transfer_update_merkle_proof_compiled.into();

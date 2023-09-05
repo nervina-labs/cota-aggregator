@@ -39,7 +39,7 @@ pub fn get_subkey_by_pubkey_hash(
         .map_or_else(
             |e| {
                 error!("Query subkey error: {}", e.to_string());
-                Err(Error::DatabaseQueryError(e.to_string()))
+                Err(Error::DatabaseQueryInvalid(e.to_string()))
             },
             |subkeys_| Ok(parse_subkey(subkeys_)),
         )?;

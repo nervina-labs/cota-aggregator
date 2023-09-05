@@ -114,7 +114,7 @@ pub async fn generate_claim_smt(
         generate_history_smt(&mut claim_smt, claim_lock_hash, claim_smt_root)?;
         claim_smt
             .update_all(claim_update_leaves.clone())
-            .map_err(|e| Error::SMTError(e.to_string()))?;
+            .map_err(|e| Error::SMTInvalid(e.to_string()))?;
         claim_smt.save_root_and_leaves(previous_leaves.clone())?;
         claim_smt.commit()
     })?;
@@ -122,11 +122,11 @@ pub async fn generate_claim_smt(
     let leaf_keys: Vec<H256> = claim_update_leaves.iter().map(|leave| leave.0).collect();
     let claim_merkle_proof = claim_smt.merkle_proof(leaf_keys.clone()).map_err(|e| {
         error!("Claim SMT proof error: {:?}", e.to_string());
-        Error::SMTProofError("Claim".to_string())
+        Error::SMTProofInvalid("Claim".to_string())
     })?;
     let claim_merkle_proof_compiled = claim_merkle_proof.compile(leaf_keys).map_err(|e| {
         error!("Claim SMT proof error: {:?}", e.to_string());
-        Error::SMTProofError("Claim".to_string())
+        Error::SMTProofInvalid("Claim".to_string())
     })?;
 
     let merkel_proof_vec: Vec<u8> = claim_merkle_proof_compiled.into();

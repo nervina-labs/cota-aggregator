@@ -16,14 +16,14 @@ pub enum Error {
         display = "Request parameter {} length, got {}, expected: {}",
         msg, got, expected
     )]
-    RequestParamHexLenError {
+    RequestParamHexLenInvalid {
         msg:      String,
         got:      usize,
         expected: usize,
     },
 
     #[fail(display = "Request parameter '{}' type error", _0)]
-    RequestParamTypeError(String),
+    RequestParamTypeInvalid(String),
 
     #[fail(display = "The collection of cota_id '{}' has not defined", _0)]
     CotaIdHasNotDefined(String),
@@ -44,31 +44,31 @@ pub enum Error {
     SocialLeafNotFound,
 
     #[fail(display = "The social friends information '{}' error", _0)]
-    SocialFriendInfoError(String),
+    SocialFriendInfoInvalid(String),
 
     #[fail(display = "CKB Script error")]
-    CKBScriptError,
+    CKBScriptInvalid,
 
     #[fail(display = "Database '{}' query error", _0)]
-    DatabaseQueryError(String),
+    DatabaseQueryInvalid(String),
 
     #[fail(display = "'{}' SMT proof error", _0)]
-    SMTProofError(String),
+    SMTProofInvalid(String),
 
     #[fail(display = "'{}' SMT error", _0)]
-    SMTError(String),
+    SMTInvalid(String),
 
     #[fail(display = "'{}' RocksDB error", _0)]
-    RocksDBError(String),
+    RocksDBInvalid(String),
 
     #[fail(display = "CKB Indexer error: {}", _0)]
-    CKBIndexerError(String),
+    CKBIndexerInvalid(String),
 
     #[fail(display = "CKB RPC error: {}", _0)]
-    CKBRPCError(String),
+    CKBRPCInvalid(String),
 
     #[fail(display = "Witness Parse error: {}", _0)]
-    WitnessParseError(String),
+    WitnessParseInvalid(String),
 
     #[fail(display = "Other error: {}", _0)]
     Other(String),
@@ -94,11 +94,11 @@ impl Error {
                 "Request parameter '{}' must be hex string starting with 0x",
                 msg
             ),
-            Self::RequestParamHexLenError { msg, got, expected } => format!(
+            Self::RequestParamHexLenInvalid { msg, got, expected } => format!(
                 "Request parameter '{}' length, got {}, expected: {}",
                 msg, got, expected
             ),
-            Self::RequestParamTypeError(msg) => format!("Request parameter '{}' type error", msg),
+            Self::RequestParamTypeInvalid(msg) => format!("Request parameter '{}' type error", msg),
             Self::CotaIdHasNotDefined(msg) => format!("The cota_id '{}' has not defined", msg),
             Self::CotaIdAndTokenIndexHasNotWithdrawn => {
                 "The cota_id and token_index has not withdrawn".into()
@@ -111,17 +111,17 @@ impl Error {
             }
             Self::SubkeyLeafNotFound => "The subkey not found".into(),
             Self::SocialLeafNotFound => "The social recovery config not found".into(),
-            Self::SocialFriendInfoError(msg) => {
+            Self::SocialFriendInfoInvalid(msg) => {
                 format!("The social friends information error: {}", msg)
             }
-            Self::CKBScriptError => "CKB Script error".into(),
-            Self::DatabaseQueryError(msg) => format!("Database query error: {}", msg),
-            Self::SMTProofError(msg) => format!("'{}' SMT proof error", msg),
-            Self::CKBIndexerError(msg) => format!("CKB Indexer error: {}", msg),
-            Self::CKBRPCError(msg) => format!("CKB RPC error: {}", msg),
-            Self::SMTError(msg) => format!("SMT error: {}", msg),
-            Self::RocksDBError(msg) => format!("RocksDB error: {}", msg),
-            Self::WitnessParseError(msg) => format!("Witness parse error: {}", msg),
+            Self::CKBScriptInvalid => "CKB Script error".into(),
+            Self::DatabaseQueryInvalid(msg) => format!("Database query error: {}", msg),
+            Self::SMTProofInvalid(msg) => format!("'{}' SMT proof error", msg),
+            Self::CKBIndexerInvalid(msg) => format!("CKB Indexer error: {}", msg),
+            Self::CKBRPCInvalid(msg) => format!("CKB RPC error: {}", msg),
+            Self::SMTInvalid(msg) => format!("SMT error: {}", msg),
+            Self::RocksDBInvalid(msg) => format!("RocksDB error: {}", msg),
+            Self::WitnessParseInvalid(msg) => format!("Witness parse error: {}", msg),
             Self::Other(msg) => format!("Internal error: {:}", msg),
         }
     }

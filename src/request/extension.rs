@@ -35,7 +35,7 @@ impl ExtSubkeysReq {
     pub fn from_map(map: &Map<String, Value>) -> Result<Self, Error> {
         let ext_action = map.get_u8_filed("ext_action").unwrap_or(0xF0);
         if ext_action != EXT_ACTION_ADD && ext_action != EXT_ACTION_UPDATE {
-            return Err(Error::CKBRPCError("Extension action error".to_string()));
+            return Err(Error::CKBRPCInvalid("Extension action error".to_string()));
         }
         Ok(ExtSubkeysReq {
             lock_script: map.get_hex_vec_filed("lock_script")?,
@@ -59,14 +59,14 @@ impl ExtSocialReq {
     pub fn from_map(map: &Map<String, Value>) -> Result<Self, Error> {
         let ext_action = map.get_u8_filed("ext_action")?;
         if ext_action != EXT_ACTION_ADD && ext_action != EXT_ACTION_UPDATE {
-            return Err(Error::CKBRPCError("Extension action error".to_string()));
+            return Err(Error::CKBRPCInvalid("Extension action error".to_string()));
         }
         let must = map.get_u8_filed("must")?;
         let total = map.get_u8_filed("total")?;
         let signers = parse_vec_bytes(map, "signers")?;
         let signers_len = signers.len() as u8;
         if signers_len != total || must > total {
-            return Err(Error::CKBRPCError(
+            return Err(Error::CKBRPCInvalid(
                 "Signers length, must and total error".to_string(),
             ));
         }

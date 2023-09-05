@@ -47,7 +47,7 @@ pub fn get_define_cota_by_lock_hash(lock_hash_: [u8; 32]) -> DBResult<DefineDb> 
             .map_or_else(
                 |e| {
                     error!("Query define error: {}", e.to_string());
-                    Err(Error::DatabaseQueryError(e.to_string()))
+                    Err(Error::DatabaseQueryInvalid(e.to_string()))
                 },
                 |defines| Ok(parse_define_cota_nft(defines)),
             )?;
@@ -80,12 +80,12 @@ pub fn get_define_cota_by_lock_hash_and_cota_id(
         .map_or_else(
             |e| {
                 error!("Query define error: {}", e.to_string());
-                Err(Error::DatabaseQueryError(e.to_string()))
+                Err(Error::DatabaseQueryInvalid(e.to_string()))
             },
             |defines| Ok(parse_define_cota_nft(defines)),
         )?;
     diff_time(start_time, "SQL get_define_cota_by_lock_hash_and_cota_id");
-    Ok(defines.get(0).map(|v| *v))
+    Ok(defines.get(0).copied())
 }
 
 pub fn get_define_cota_by_cota_id(cota_id_: [u8; 20]) -> Result<Option<DefineDb>, Error> {
@@ -99,7 +99,7 @@ pub fn get_define_cota_by_cota_id(cota_id_: [u8; 20]) -> Result<Option<DefineDb>
         .map_or_else(
             |e| {
                 error!("Query define error: {}", e.to_string());
-                Err(Error::DatabaseQueryError(e.to_string()))
+                Err(Error::DatabaseQueryInvalid(e.to_string()))
             },
             |defines| Ok(parse_define_cota_nft(defines)),
         )?;
@@ -117,7 +117,7 @@ pub fn get_lock_hash_by_cota_id(cota_id_: [u8; 20]) -> Result<[u8; 32], Error> {
         .map_or_else(
             |e| {
                 error!("Query lock hash by cota id error: {}", e.to_string());
-                Err(Error::DatabaseQueryError(e.to_string()))
+                Err(Error::DatabaseQueryInvalid(e.to_string()))
             },
             |lock_hash_| Ok(parse_bytes_n::<32>(lock_hash_).unwrap()),
         )

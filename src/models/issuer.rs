@@ -26,7 +26,7 @@ pub fn get_issuer_info_by_lock_hash(lock_hash_: [u8; 32]) -> Result<Option<Issue
         .map_or_else(
             |e| {
                 error!("Query issuer info error: {}", e.to_string());
-                Err(Error::DatabaseQueryError(e.to_string()))
+                Err(Error::DatabaseQueryInvalid(e.to_string()))
             },
             Ok,
         )?;

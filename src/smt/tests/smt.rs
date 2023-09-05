@@ -13,7 +13,7 @@ use rand::{thread_rng, Rng};
 
 fn generate_smt(history_leaf_count: u32, update_leaf_count: u32) {
     let mut rng = thread_rng();
-    let lock_hash: [u8; 32] = rng.gen::<[u8; 32]>().into();
+    let lock_hash: [u8; 32] = rng.gen::<[u8; 32]>();
     let mut leaves = vec![];
     for _ in 0..history_leaf_count {
         let key: H256 = rng.gen::<[u8; 32]>().into();

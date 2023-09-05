@@ -43,7 +43,7 @@ pub fn parse_witness_withdraw_proof(
                 continue;
             }
             let input_type = input_type_opt.to_opt().unwrap().raw_data();
-            match u8::from(input_type[0]) {
+            match input_type[0] {
                 MINT => {
                     if let Ok(entries_v0) = MintCotaNFTEntries::from_slice(&input_type[1..]) {
                         let withdrawal_keys = entries_v0.withdrawal_keys();
@@ -81,7 +81,7 @@ pub fn parse_witness_withdraw_proof(
                             entries_v1.proof().raw_data().to_vec(),
                         );
                     }
-                    return Err(Error::WitnessParseError(
+                    return Err(Error::WitnessParseInvalid(
                         "Mint witness parse error".to_string(),
                     ));
                 }
@@ -107,7 +107,7 @@ pub fn parse_witness_withdraw_proof(
                             entries_v1.proof().raw_data().to_vec(),
                         );
                     }
-                    return Err(Error::WitnessParseError(
+                    return Err(Error::WitnessParseInvalid(
                         "Withdraw witness parse error".to_string(),
                     ));
                 }
@@ -142,7 +142,7 @@ pub fn parse_witness_withdraw_proof(
                             entries_v2.proof().raw_data().to_vec(),
                         );
                     }
-                    return Err(Error::WitnessParseError(
+                    return Err(Error::WitnessParseInvalid(
                         "Transfer witness parse error".to_string(),
                     ));
                 }
@@ -183,7 +183,7 @@ pub fn parse_witness_withdraw_proof(
                             entries_v2.proof().raw_data().to_vec(),
                         );
                     }
-                    return Err(Error::WitnessParseError(
+                    return Err(Error::WitnessParseInvalid(
                         "Transfer-update witness parse error".to_string(),
                     ));
                 }
@@ -193,14 +193,14 @@ pub fn parse_witness_withdraw_proof(
             continue;
         }
     }
-    Err(Error::WitnessParseError(
+    Err(Error::WitnessParseInvalid(
         "Match cota_id and token_index error".to_string(),
     ))
 }
 
 fn match_cota_id_index(id: &CotaNFTId, pairs: Pairs) -> bool {
-    pairs.to_vec().into_iter().any(|(cota_id, token_index)| {
-        &cota_id == id.cota_id().as_slice() && &token_index == id.index().as_slice()
+    pairs.into_iter().any(|(cota_id, token_index)| {
+        cota_id == id.cota_id().as_slice() && token_index == id.index().as_slice()
     })
 }
 
@@ -277,7 +277,7 @@ fn parse_withdraw_v0(
         }
     }
     if count != pairs.len() {
-        return Err(Error::WitnessParseError(
+        return Err(Error::WitnessParseInvalid(
             "Match cota_id and token_index error".to_string(),
         ));
     }
@@ -310,7 +310,7 @@ fn parse_withdraw_v1(
     }
 
     if count != pairs.len() {
-        return Err(Error::WitnessParseError(
+        return Err(Error::WitnessParseInvalid(
             "Match cota_id and token_index error".to_string(),
         ));
     }
@@ -321,7 +321,7 @@ fn parse_sub_proof(proof: Vec<u8>, all_leaves: Leaves) -> Result<Bytes, Error> {
     let merkel_proof = CompiledMerkleProof(proof);
     let compiled_proof = merkel_proof
         .extract_proof::<Blake2bHasher>(all_leaves)
-        .map_err(|e| Error::SMTProofError(e.to_string()))?;
+        .map_err(|e| Error::SMTProofInvalid(e.to_string()))?;
     let sub_merkel_proof: Vec<u8> = compiled_proof.into();
     let sub_proof = BytesBuilder::default()
         .extend(sub_merkel_proof.iter().map(|v| Byte::from(*v)))

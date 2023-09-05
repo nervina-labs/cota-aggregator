@@ -43,7 +43,7 @@ pub fn get_script_map_by_ids(script_ids: Vec<i64>) -> Result<HashMap<i64, Vec<u8
             .map_or_else(
                 |e| {
                     error!("Query script error: {}", e.to_string());
-                    Err(Error::DatabaseQueryError(e.to_string()))
+                    Err(Error::DatabaseQueryInvalid(e.to_string()))
                 },
                 |scripts_| Ok(parse_script(scripts_)),
             )?;
@@ -65,7 +65,7 @@ pub fn get_script_id_by_lock_script(lock_script: &[u8]) -> Result<Option<i64>, E
     let lock_code_hash = hex::encode(lock.code_hash().as_slice());
     let lock_code_hash_crc = generate_crc(lock_code_hash.as_bytes());
 
-    let lock_args = hex::encode(lock.args().raw_data().to_vec());
+    let lock_args = hex::encode(&lock.args().raw_data());
     let lock_args_crc = generate_crc(lock_args.as_bytes());
 
     let script_ids: Vec<i64> = scripts
@@ -79,10 +79,10 @@ pub fn get_script_id_by_lock_script(lock_script: &[u8]) -> Result<Option<i64>, E
         .load::<i64>(&get_conn())
         .map_err(|e| {
             error!("Query script error: {}", e.to_string());
-            Error::DatabaseQueryError(e.to_string())
+            Error::DatabaseQueryInvalid(e.to_string())
         })?;
     diff_time(start_time, "SQL get_script_id_by_lock_script");
-    Ok(script_ids.get(0).cloned())
+    Ok(script_ids.first().cloned())
 }
 
 fn parse_script(scripts_: Vec<Script>) -> Vec<ScriptDb> {

@@ -36,8 +36,8 @@ pub fn parse_define(obj: DefineCotaNFTEntries) -> Map<String, Value> {
             .map(parse_define_cota_nft_value)
             .collect(),
     );
-    map.insert_str("proof", slice_to_hex(&obj.proof().raw_data().to_vec()));
-    map.insert_str("action", slice_to_hex(&obj.action().raw_data().to_vec()));
+    map.insert_str("proof", slice_to_hex(&obj.proof().raw_data()));
+    map.insert_str("action", slice_to_hex(&obj.action().raw_data()));
     map
 }
 
@@ -79,8 +79,8 @@ pub fn parse_mint(obj: MintCotaNFTEntries) -> Map<String, Value> {
             .map(parse_withdrawal_cota_nft_value)
             .collect(),
     );
-    map.insert_str("proof", slice_to_hex(&obj.proof().raw_data().to_vec()));
-    map.insert_str("action", slice_to_hex(&obj.action().raw_data().to_vec()));
+    map.insert_str("proof", slice_to_hex(&obj.proof().raw_data()));
+    map.insert_str("action", slice_to_hex(&obj.action().raw_data()));
     map
 }
 
@@ -122,8 +122,8 @@ pub fn parse_mint_v1(obj: MintCotaNFTV1Entries) -> Map<String, Value> {
             .map(parse_withdrawal_cota_nft_value_v1)
             .collect(),
     );
-    map.insert_str("proof", slice_to_hex(&obj.proof().raw_data().to_vec()));
-    map.insert_str("action", slice_to_hex(&obj.action().raw_data().to_vec()));
+    map.insert_str("proof", slice_to_hex(&obj.proof().raw_data()));
+    map.insert_str("action", slice_to_hex(&obj.action().raw_data()));
     map
 }
 
@@ -155,8 +155,8 @@ pub fn parse_withdrawal(obj: WithdrawalCotaNFTEntries) -> Map<String, Value> {
             .map(parse_withdrawal_cota_nft_value)
             .collect(),
     );
-    map.insert_str("proof", slice_to_hex(&obj.proof().raw_data().to_vec()));
-    map.insert_str("action", slice_to_hex(&obj.action().raw_data().to_vec()));
+    map.insert_str("proof", slice_to_hex(&obj.proof().raw_data()));
+    map.insert_str("action", slice_to_hex(&obj.action().raw_data()));
     map
 }
 
@@ -188,8 +188,8 @@ pub fn parse_withdrawal_v1(obj: WithdrawalCotaNFTV1Entries) -> Map<String, Value
             .map(parse_withdrawal_cota_nft_value_v1)
             .collect(),
     );
-    map.insert_str("proof", slice_to_hex(&obj.proof().raw_data().to_vec()));
-    map.insert_str("action", slice_to_hex(&obj.action().raw_data().to_vec()));
+    map.insert_str("proof", slice_to_hex(&obj.proof().raw_data()));
+    map.insert_str("action", slice_to_hex(&obj.action().raw_data()));
     map
 }
 
@@ -221,8 +221,8 @@ pub fn parse_claim(obj: ClaimCotaNFTEntries) -> Map<String, Value> {
             .map(|value| Value::String(slice_to_hex(value.as_slice())))
             .collect(),
     );
-    map.insert_str("proof", slice_to_hex(&obj.proof().raw_data().to_vec()));
-    map.insert_str("action", slice_to_hex(&obj.action().raw_data().to_vec()));
+    map.insert_str("proof", slice_to_hex(&obj.proof().raw_data()));
+    map.insert_str("action", slice_to_hex(&obj.action().raw_data()));
     map
 }
 
@@ -254,8 +254,8 @@ pub fn parse_claim_v2(obj: ClaimCotaNFTV2Entries) -> Map<String, Value> {
             .map(|value| Value::String(slice_to_hex(value.as_slice())))
             .collect(),
     );
-    map.insert_str("proof", slice_to_hex(&obj.proof().raw_data().to_vec()));
-    map.insert_str("action", slice_to_hex(&obj.action().raw_data().to_vec()));
+    map.insert_str("proof", slice_to_hex(&obj.proof().raw_data()));
+    map.insert_str("action", slice_to_hex(&obj.action().raw_data()));
     map
 }
 
@@ -290,12 +290,12 @@ pub fn parse_transfer(obj: TransferCotaNFTEntries) -> Map<String, Value> {
             .map(parse_withdrawal_cota_nft_value)
             .collect(),
     );
-    map.insert_str("proof", slice_to_hex(&obj.proof().raw_data().to_vec()));
+    map.insert_str("proof", slice_to_hex(&obj.proof().raw_data()));
     map.insert_str(
         "withdrawal_proof",
-        slice_to_hex(&obj.withdrawal_proof().raw_data().to_vec()),
+        slice_to_hex(&obj.withdrawal_proof().raw_data()),
     );
-    map.insert_str("action", slice_to_hex(&obj.action().raw_data().to_vec()));
+    map.insert_str("action", slice_to_hex(&obj.action().raw_data()));
     map
 }
 
@@ -330,12 +330,12 @@ pub fn parse_transfer_v1(obj: TransferCotaNFTV1Entries) -> Map<String, Value> {
             .map(parse_withdrawal_cota_nft_value_v1)
             .collect(),
     );
-    map.insert_str("proof", slice_to_hex(&obj.proof().raw_data().to_vec()));
+    map.insert_str("proof", slice_to_hex(&obj.proof().raw_data()));
     map.insert_str(
         "withdrawal_proof",
-        slice_to_hex(&obj.withdrawal_proof().raw_data().to_vec()),
+        slice_to_hex(&obj.withdrawal_proof().raw_data()),
     );
-    map.insert_str("action", slice_to_hex(&obj.action().raw_data().to_vec()));
+    map.insert_str("action", slice_to_hex(&obj.action().raw_data()));
     map
 }
 
@@ -370,12 +370,12 @@ pub fn parse_transfer_v2(obj: TransferCotaNFTV2Entries) -> Map<String, Value> {
             .map(parse_withdrawal_cota_nft_value_v1)
             .collect(),
     );
-    map.insert_str("proof", slice_to_hex(&obj.proof().raw_data().to_vec()));
+    map.insert_str("proof", slice_to_hex(&obj.proof().raw_data()));
     map.insert_str(
         "withdrawal_proof",
-        slice_to_hex(&obj.withdrawal_proof().raw_data().to_vec()),
+        slice_to_hex(&obj.withdrawal_proof().raw_data()),
     );
-    map.insert_str("action", slice_to_hex(&obj.action().raw_data().to_vec()));
+    map.insert_str("action", slice_to_hex(&obj.action().raw_data()));
     map
 }
 
@@ -400,8 +400,8 @@ pub fn parse_update(obj: UpdateCotaNFTEntries) -> Map<String, Value> {
             .map(parse_cota_nft_info)
             .collect(),
     );
-    map.insert_str("proof", slice_to_hex(&obj.proof().raw_data().to_vec()));
-    map.insert_str("action", slice_to_hex(&obj.action().raw_data().to_vec()));
+    map.insert_str("proof", slice_to_hex(&obj.proof().raw_data()));
+    map.insert_str("action", slice_to_hex(&obj.action().raw_data()));
     map
 }
 
@@ -433,12 +433,12 @@ pub fn parse_claim_update(obj: ClaimUpdateCotaNFTEntries) -> Map<String, Value> 
             .map(parse_claim_cota_nft_info)
             .collect(),
     );
-    map.insert_str("proof", slice_to_hex(&obj.proof().raw_data().to_vec()));
+    map.insert_str("proof", slice_to_hex(&obj.proof().raw_data()));
     map.insert_str(
         "withdrawal_proof",
-        slice_to_hex(&obj.withdrawal_proof().raw_data().to_vec()),
+        slice_to_hex(&obj.withdrawal_proof().raw_data()),
     );
-    map.insert_str("action", slice_to_hex(&obj.action().raw_data().to_vec()));
+    map.insert_str("action", slice_to_hex(&obj.action().raw_data()));
     map
 }
 
@@ -470,12 +470,12 @@ pub fn parse_claim_update_v2(obj: ClaimUpdateCotaNFTV2Entries) -> Map<String, Va
             .map(parse_claim_cota_nft_info)
             .collect(),
     );
-    map.insert_str("proof", slice_to_hex(&obj.proof().raw_data().to_vec()));
+    map.insert_str("proof", slice_to_hex(&obj.proof().raw_data()));
     map.insert_str(
         "withdrawal_proof",
-        slice_to_hex(&obj.withdrawal_proof().raw_data().to_vec()),
+        slice_to_hex(&obj.withdrawal_proof().raw_data()),
     );
-    map.insert_str("action", slice_to_hex(&obj.action().raw_data().to_vec()));
+    map.insert_str("action", slice_to_hex(&obj.action().raw_data()));
     map
 }
 
@@ -510,12 +510,12 @@ pub fn parse_transfer_update(obj: TransferUpdateCotaNFTEntries) -> Map<String, V
             .map(parse_withdrawal_cota_nft_value)
             .collect(),
     );
-    map.insert_str("proof", slice_to_hex(&obj.proof().raw_data().to_vec()));
+    map.insert_str("proof", slice_to_hex(&obj.proof().raw_data()));
     map.insert_str(
         "withdrawal_proof",
-        slice_to_hex(&obj.withdrawal_proof().raw_data().to_vec()),
+        slice_to_hex(&obj.withdrawal_proof().raw_data()),
     );
-    map.insert_str("action", slice_to_hex(&obj.action().raw_data().to_vec()));
+    map.insert_str("action", slice_to_hex(&obj.action().raw_data()));
     map
 }
 
@@ -550,12 +550,12 @@ pub fn parse_transfer_update_v1(obj: TransferUpdateCotaNFTV1Entries) -> Map<Stri
             .map(parse_withdrawal_cota_nft_value_v1)
             .collect(),
     );
-    map.insert_str("proof", slice_to_hex(&obj.proof().raw_data().to_vec()));
+    map.insert_str("proof", slice_to_hex(&obj.proof().raw_data()));
     map.insert_str(
         "withdrawal_proof",
-        slice_to_hex(&obj.withdrawal_proof().raw_data().to_vec()),
+        slice_to_hex(&obj.withdrawal_proof().raw_data()),
     );
-    map.insert_str("action", slice_to_hex(&obj.action().raw_data().to_vec()));
+    map.insert_str("action", slice_to_hex(&obj.action().raw_data()));
     map
 }
 
@@ -590,12 +590,12 @@ pub fn parse_transfer_update_v2(obj: TransferUpdateCotaNFTV2Entries) -> Map<Stri
             .map(parse_withdrawal_cota_nft_value_v1)
             .collect(),
     );
-    map.insert_str("proof", slice_to_hex(&obj.proof().raw_data().to_vec()));
+    map.insert_str("proof", slice_to_hex(&obj.proof().raw_data()));
     map.insert_str(
         "withdrawal_proof",
-        slice_to_hex(&obj.withdrawal_proof().raw_data().to_vec()),
+        slice_to_hex(&obj.withdrawal_proof().raw_data()),
     );
-    map.insert_str("action", slice_to_hex(&obj.action().raw_data().to_vec()));
+    map.insert_str("action", slice_to_hex(&obj.action().raw_data()));
     map
 }
 
@@ -636,7 +636,7 @@ fn parse_define_cota_nft_value(obj: DefineCotaNFTValue) -> Map<String, Value> {
 fn parse_withdrawal_cota_nft_value(obj: WithdrawalCotaNFTValue) -> Map<String, Value> {
     let mut map = Map::new();
     map.insert_obj("nft_info", parse_cota_nft_info(obj.nft_info()));
-    map.insert_str("to_lock", slice_to_hex(&obj.to_lock().raw_data().to_vec()));
+    map.insert_str("to_lock", slice_to_hex(&obj.to_lock().raw_data()));
     map.insert_str("out_point", slice_to_hex(obj.out_point().as_slice()));
     map
 }
@@ -665,7 +665,7 @@ fn parse_withdrawal_cota_nft_key_v1(obj: WithdrawalCotaNFTKeyV1) -> Map<String, 
 fn parse_withdrawal_cota_nft_value_v1(obj: WithdrawalCotaNFTValueV1) -> Map<String, Value> {
     let mut map = Map::new();
     map.insert_obj("nft_info", parse_cota_nft_info(obj.nft_info()));
-    map.insert_obj("to_lock", parse_script(&obj.to_lock().raw_data().to_vec()));
+    map.insert_obj("to_lock", parse_script(&obj.to_lock().raw_data()));
     map
 }
 
@@ -674,7 +674,7 @@ fn parse_script(slice: &[u8]) -> Map<String, Value> {
     let script = Script::from_slice(slice).expect("Parse script error");
     map.insert_str("code_hash", slice_to_hex(script.code_hash().as_slice()));
     map.insert_str("hash_type", slice_to_hex(script.hash_type().as_slice()));
-    map.insert_str("args", slice_to_hex(&script.args().raw_data().to_vec()));
+    map.insert_str("args", slice_to_hex(&script.args().raw_data()));
     map
 }
 

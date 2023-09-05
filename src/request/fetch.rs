@@ -17,7 +17,7 @@ impl FetchReq {
     pub fn from_map(map: &Map<String, Value>) -> Result<Self, Error> {
         let lock_script = map.get_hex_vec_filed("lock_script")?;
         if Script::from_slice(&lock_script).is_err() {
-            return Err(Error::RequestParamTypeError("Script".to_string()));
+            return Err(Error::RequestParamTypeInvalid("Script".to_string()));
         }
         let cota_id = match map.get("cota_id") {
             Some(_) => Some(map.get_hex_bytes_filed::<20>("cota_id")?),
@@ -45,7 +45,7 @@ impl FetchIssuerReq {
             Some(_) => {
                 let lock = map.get_hex_vec_filed("lock_script")?;
                 if Script::from_slice(&lock).is_err() {
-                    return Err(Error::RequestParamTypeError("Script".to_string()));
+                    return Err(Error::RequestParamTypeInvalid("Script".to_string()));
                 }
                 Some(lock)
             }
@@ -63,7 +63,7 @@ impl FetchIssuerReq {
         };
 
         if lock_script.is_none() && address.is_none() && lock_hash.is_none() {
-            return Err(Error::RequestParamTypeError(
+            return Err(Error::RequestParamTypeInvalid(
                 "lock script, lock hash or address".to_string(),
             ));
         }
@@ -85,7 +85,7 @@ impl FetchCountReq {
     pub fn from_map(map: &Map<String, Value>) -> Result<Self, Error> {
         let lock_script = map.get_hex_vec_filed("lock_script")?;
         if Script::from_slice(&lock_script).is_err() {
-            return Err(Error::RequestParamTypeError("Script".to_string()));
+            return Err(Error::RequestParamTypeInvalid("Script".to_string()));
         }
 
         Ok(FetchCountReq {
@@ -152,7 +152,7 @@ impl FetchJoyIDReq {
             Some(_) => {
                 let lock = map.get_hex_vec_filed("lock_script")?;
                 if Script::from_slice(&lock).is_err() {
-                    return Err(Error::RequestParamTypeError("Script".to_string()));
+                    return Err(Error::RequestParamTypeInvalid("Script".to_string()));
                 }
                 Some(lock)
             }
@@ -164,7 +164,7 @@ impl FetchJoyIDReq {
             None => None,
         };
         if lock_script.is_none() && address.is_none() {
-            return Err(Error::RequestParamTypeError(
+            return Err(Error::RequestParamTypeInvalid(
                 "lock script and address".to_string(),
             ));
         }

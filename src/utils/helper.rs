@@ -23,7 +23,7 @@ pub fn parse_bytes_n<const N: usize>(value: String) -> Result<[u8; N], Error> {
     let vec =
         hex::decode(value.clone()).map_err(|_| Error::RequestParamHexInvalid(value.clone()))?;
     if vec.len() != N {
-        return Err(Error::RequestParamHexLenError {
+        return Err(Error::RequestParamHexLenInvalid {
             msg:      value,
             got:      vec.len(),
             expected: N,

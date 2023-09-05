@@ -22,21 +22,18 @@ use cota_smt::smt::H256;
 use log::debug;
 use std::collections::HashMap;
 
-pub fn init_smt<'a>(
-    transaction: &'a StoreTransaction,
-    lock_hash: [u8; 32],
-) -> Result<CotaSMT<'a>, Error> {
+pub fn init_smt(transaction: &StoreTransaction, lock_hash: [u8; 32]) -> Result<CotaSMT, Error> {
     let smt_store = SMTStore::new(
         lock_hash,
         COLUMN_SMT_LEAF,
         COLUMN_SMT_BRANCH,
         COLUMN_SMT_ROOT,
         COLUMN_SMT_TEMP_LEAVES,
-        &transaction,
+        transaction,
     );
     let root = smt_store
         .get_root()
-        .map_err(|_e| Error::SMTError("Get smt root".to_string()))?
+        .map_err(|_e| Error::SMTInvalid("Get smt root".to_string()))?
         .unwrap_or_default();
     debug!(
         "rocksdb smt root: {:?} of {:?}",
@@ -46,8 +43,8 @@ pub fn init_smt<'a>(
     Ok(CotaSMT::new(root, smt_store))
 }
 
-pub fn generate_history_smt<'a>(
-    smt: &mut CotaSMT<'a>,
+pub fn generate_history_smt(
+    smt: &mut CotaSMT,
     lock_hash: [u8; 32],
     smt_root_opt: Option<[u8; 32]>,
 ) -> Result<(), Error> {
@@ -76,7 +73,7 @@ pub fn generate_history_smt<'a>(
     generate_mysql_smt(smt, lock_hash)
 }
 
-pub fn generate_mysql_smt<'a>(smt: &mut CotaSMT<'a>, lock_hash: [u8; 32]) -> Result<(), Error> {
+pub fn generate_mysql_smt(smt: &mut CotaSMT, lock_hash: [u8; 32]) -> Result<(), Error> {
     let start_time = Local::now().timestamp_millis();
     let (defines, holds, withdrawals, claims, extension_leaves) =
         get_all_cota_by_lock_hash(lock_hash)?;
@@ -175,7 +172,6 @@ pub fn generate_mysql_smt<'a>(smt: &mut CotaSMT<'a>, lock_hash: [u8; 32]) -> Res
         let value = H256::from(extension_leaf.value);
         leaves.push((key, value));
     }
-    debug!("history leaves count: {}", leaves.len());
     if !leaves.is_empty() {
         smt.update_all(leaves).expect("SMT update leave error");
     }
@@ -184,7 +180,7 @@ pub fn generate_mysql_smt<'a>(smt: &mut CotaSMT<'a>, lock_hash: [u8; 32]) -> Res
     Ok(())
 }
 
-fn reset_smt_temp_leaves<'a>(smt: &mut CotaSMT<'a>) -> Result<(), Error> {
+fn reset_smt_temp_leaves(smt: &mut CotaSMT) -> Result<(), Error> {
     let leaves_opt = smt.store().get_leaves()?;
     if let Some(leaves) = leaves_opt {
         smt.update_all(leaves)

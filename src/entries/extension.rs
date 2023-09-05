@@ -52,7 +52,7 @@ pub async fn generate_ext_subkey_smt(
             if let Some(leaf) = leaf_opt {
                 previous_leaves.push((key, H256::from(leaf.value)));
             } else {
-                return Err(Error::CKBRPCError(
+                return Err(Error::CKBRPCInvalid(
                     "Extension old subkey value does not exist".to_string(),
                 ));
             }
@@ -67,7 +67,7 @@ pub async fn generate_ext_subkey_smt(
     with_lock(lock_hash, || {
         generate_history_smt(&mut smt, lock_hash, smt_root)?;
         smt.update_all(update_leaves.clone())
-            .map_err(|e| Error::SMTError(e.to_string()))?;
+            .map_err(|e| Error::SMTInvalid(e.to_string()))?;
         smt.save_root_and_leaves(previous_leaves.clone())?;
         smt.commit()
     })?;
@@ -75,12 +75,12 @@ pub async fn generate_ext_subkey_smt(
     let leaf_keys: Vec<H256> = update_leaves.iter().map(|leave| leave.0).collect();
     let extension_merkle_proof = smt.merkle_proof(leaf_keys.clone()).map_err(|e| {
         error!("Extension subkey SMT proof error: {:?}", e.to_string());
-        Error::SMTProofError("Extension subkey".to_string())
+        Error::SMTProofInvalid("Extension subkey".to_string())
     })?;
     let extension_merkle_proof_compiled =
         extension_merkle_proof.compile(leaf_keys).map_err(|e| {
             error!("Extension subkey SMT proof error: {:?}", e.to_string());
-            Error::SMTProofError("Extension subkey".to_string())
+            Error::SMTProofInvalid("Extension subkey".to_string())
         })?;
 
     let merkel_proof_vec: Vec<u8> = extension_merkle_proof_compiled.into();
@@ -146,7 +146,7 @@ pub async fn generate_ext_social_smt(
         if let Some(leaf) = leaf_opt {
             previous_leaves.push((key, H256::from(leaf.value)));
         } else {
-            return Err(Error::CKBRPCError(
+            return Err(Error::CKBRPCInvalid(
                 "Extension old social value does not exist".to_string(),
             ));
         }
@@ -160,7 +160,7 @@ pub async fn generate_ext_social_smt(
     with_lock(lock_hash, || {
         generate_history_smt(&mut smt, lock_hash, smt_root)?;
         smt.update_all(update_leaves.clone())
-            .map_err(|e| Error::SMTError(e.to_string()))?;
+            .map_err(|e| Error::SMTInvalid(e.to_string()))?;
         smt.save_root_and_leaves(previous_leaves.clone())?;
         smt.commit()
     })?;
@@ -168,12 +168,12 @@ pub async fn generate_ext_social_smt(
     let leaf_keys: Vec<H256> = update_leaves.iter().map(|leave| leave.0).collect();
     let extension_merkle_proof = smt.merkle_proof(leaf_keys.clone()).map_err(|e| {
         error!("Extension social SMT proof error: {:?}", e.to_string());
-        Error::SMTProofError("Extension social".to_string())
+        Error::SMTProofInvalid("Extension social".to_string())
     })?;
     let extension_merkle_proof_compiled =
         extension_merkle_proof.compile(leaf_keys).map_err(|e| {
             error!("Extension social SMT proof error: {:?}", e.to_string());
-            Error::SMTProofError("Extension social".to_string())
+            Error::SMTProofInvalid("Extension social".to_string())
         })?;
 
     let merkel_proof_vec: Vec<u8> = extension_merkle_proof_compiled.into();
@@ -245,17 +245,17 @@ pub async fn generate_adding_subkey_smt(
     let transaction = &StoreTransaction::new(ROCKS_DB.transaction());
     let mut smt = init_smt(transaction, lock_hash)?;
     smt.update_all(update_leaves.clone())
-        .map_err(|e| Error::SMTError(e.to_string()))?;
+        .map_err(|e| Error::SMTInvalid(e.to_string()))?;
 
     let leaf_keys: Vec<H256> = update_leaves.iter().map(|leave| leave.0).collect();
     let extension_merkle_proof = smt.merkle_proof(leaf_keys.clone()).map_err(|e| {
         error!("Extension subkey SMT proof error: {:?}", e.to_string());
-        Error::SMTProofError("Extension subkey".to_string())
+        Error::SMTProofInvalid("Extension subkey".to_string())
     })?;
     let extension_merkle_proof_compiled =
         extension_merkle_proof.compile(leaf_keys).map_err(|e| {
             error!("Extension subkey SMT proof error: {:?}", e.to_string());
-            Error::SMTProofError("Extension subkey".to_string())
+            Error::SMTProofInvalid("Extension subkey".to_string())
         })?;
 
     let merkel_proof_vec: Vec<u8> = extension_merkle_proof_compiled.into();

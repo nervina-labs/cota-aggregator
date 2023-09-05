@@ -52,7 +52,7 @@ pub fn get_hold_cota_by_lock_hash(
                     .map_or_else(
                         |e| {
                             error!("Query hold error: {}", e.to_string());
-                            Err(Error::DatabaseQueryError(e.to_string()))
+                            Err(Error::DatabaseQueryInvalid(e.to_string()))
                         },
                         |holds| Ok(parse_hold_cota_nfts(holds)),
                     )?;
@@ -80,7 +80,7 @@ pub fn get_hold_cota_by_lock_hash(
                     .map_or_else(
                         |e| {
                             error!("Query hold error: {}", e.to_string());
-                            Err(Error::DatabaseQueryError(e.to_string()))
+                            Err(Error::DatabaseQueryInvalid(e.to_string()))
                         },
                         |holds| Ok(parse_hold_cota_nfts(holds)),
                     )?;
@@ -105,13 +105,13 @@ pub fn get_hold_cota_count_by_lock_hash(
     let cota_id_str = hex::encode(cota_id_);
     let hold_count: i64 = hold_cota_nft_kv_pairs
         .filter(lock_hash_crc.eq(lock_hash_crc_))
-        .filter(lock_hash.eq(lock_hash_hex.clone()))
+        .filter(lock_hash.eq(lock_hash_hex))
         .filter(cota_id.eq(cota_id_str))
         .count()
         .get_result::<i64>(&get_conn())
         .map_err(|e| {
             error!("Query hold error: {}", e.to_string());
-            Error::DatabaseQueryError(e.to_string())
+            Error::DatabaseQueryInvalid(e.to_string())
         })?;
     diff_time(start_time, "SQL get_hold_cota_count_by_lock_hash");
     Ok(hold_count)
@@ -129,12 +129,12 @@ pub fn check_hold_cota_by_lock_hash(
         .filter(cota_id.eq(cota_id_str))
         .filter(token_index.eq(token_index_u32))
         .filter(lock_hash_crc.eq(lock_hash_crc_))
-        .filter(lock_hash.eq(lock_hash_hex.clone()))
+        .filter(lock_hash.eq(lock_hash_hex))
         .count()
         .get_result::<i64>(&get_conn())
         .map_err(|e| {
             error!("Check hold cota count error: {:?}", e.to_string());
-            Error::DatabaseQueryError("Hold".to_string())
+            Error::DatabaseQueryInvalid("Hold".to_string())
         })?;
     let is_exist = count > 0;
     let block_height = get_syncer_tip_block_number()?;
@@ -155,19 +155,19 @@ pub fn get_hold_cota_by_lock_hash_and_page(
         Some(cota_id_) => hold_cota_nft_kv_pairs
             .filter(lock_hash_crc.eq(lock_hash_crc_))
             .filter(lock_hash.eq(lock_hash_hex.clone()))
-            .filter(cota_id.eq(hex::encode(&cota_id_)))
+            .filter(cota_id.eq(hex::encode(cota_id_)))
             .count()
             .get_result::<i64>(conn),
         None => hold_cota_nft_kv_pairs
             .filter(lock_hash_crc.eq(lock_hash_crc_))
             .filter(lock_hash.eq(lock_hash_hex.clone()))
-            .filter(cota_id.ne(hex::encode(&[0u8; 20])))
+            .filter(cota_id.ne(hex::encode([0u8; 20])))
             .count()
             .get_result::<i64>(conn),
     };
     let total: i64 = total_result.map_err(|e| {
         error!("Query hold error: {}", e.to_string());
-        Error::DatabaseQueryError(e.to_string())
+        Error::DatabaseQueryInvalid(e.to_string())
     })?;
     let block_height: u64 = get_syncer_tip_block_number()?;
 
@@ -175,8 +175,8 @@ pub fn get_hold_cota_by_lock_hash_and_page(
         Some(cota_id_) => hold_cota_nft_kv_pairs
             .select(get_selection())
             .filter(lock_hash_crc.eq(lock_hash_crc_))
-            .filter(lock_hash.eq(lock_hash_hex.clone()))
-            .filter(cota_id.eq(hex::encode(&cota_id_)))
+            .filter(lock_hash.eq(lock_hash_hex))
+            .filter(cota_id.eq(hex::encode(cota_id_)))
             .order(updated_at.desc())
             .limit(page_size)
             .offset(page_size * page)
@@ -184,8 +184,8 @@ pub fn get_hold_cota_by_lock_hash_and_page(
         None => hold_cota_nft_kv_pairs
             .select(get_selection())
             .filter(lock_hash_crc.eq(lock_hash_crc_))
-            .filter(lock_hash.eq(lock_hash_hex.clone()))
-            .filter(cota_id.ne(hex::encode(&[0u8; 20])))
+            .filter(lock_hash.eq(lock_hash_hex))
+            .filter(cota_id.ne(hex::encode([0u8; 20])))
             .order(updated_at.desc())
             .limit(page_size)
             .offset(page_size * page)
@@ -194,7 +194,7 @@ pub fn get_hold_cota_by_lock_hash_and_page(
     let holds: Vec<HoldDb> = holds_result.map_or_else(
         |e| {
             error!("Query hold error: {}", e.to_string());
-            Err(Error::DatabaseQueryError(e.to_string()))
+            Err(Error::DatabaseQueryInvalid(e.to_string()))
         },
         |holds| Ok(parse_hold_cota_nfts(holds)),
     )?;

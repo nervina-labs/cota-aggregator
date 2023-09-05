@@ -39,7 +39,7 @@ pub fn parse_define_info(
     let define = define_info.map_or(DefineInfo::default(), |define| DefineInfo {
         total:     define.total,
         issued:    define.issued,
-        configure: format!("0x{}", hex::encode(&[define.configure])),
+        configure: format!("0x{}", hex::encode([define.configure])),
     });
     let define_json = serde_json::to_string(&define).map_err(parse_json_err)?;
     let mut map: Map<String, Value> = serde_json::from_str(&define_json).map_err(parse_json_err)?;

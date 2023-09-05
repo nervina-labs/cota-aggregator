@@ -46,11 +46,11 @@ pub async fn generate_social_unlock_smt(
 
     let social_merkle_proof = smt.merkle_proof(vec![key]).map_err(|e| {
         error!("Social unlock SMT proof error: {:?}", e.to_string());
-        Error::SMTProofError("Social unlock".to_string())
+        Error::SMTProofInvalid("Social unlock".to_string())
     })?;
     let social_merkle_proof_compiled = social_merkle_proof.compile(vec![key]).map_err(|e| {
         error!("Social unlock SMT proof error: {:?}", e.to_string());
-        Error::SMTProofError("Social unlock".to_string())
+        Error::SMTProofInvalid("Social unlock".to_string())
     })?;
 
     let merkel_proof_vec: Vec<u8> = social_merkle_proof_compiled.into();
@@ -71,7 +71,7 @@ fn generate_social_friends(friends: Vec<SocialFriend>) -> Result<FriendPubkeyVec
     let mut friend_pubkeys = Vec::with_capacity(friends.len());
     for friend in friends {
         if friend.unlock_mode != 1 && friend.unlock_mode != 2 {
-            return Err(Error::SocialFriendInfoError("Unlock mode".to_owned()));
+            return Err(Error::SocialFriendInfoInvalid("Unlock mode".to_owned()));
         }
         if friend.unlock_mode == 1 {
             let mut friend_pubkey = FriendPubkeyBuilder::default()
@@ -116,12 +116,12 @@ fn generate_social_friends(friends: Vec<SocialFriend>) -> Result<FriendPubkeyVec
 
             let subkey_merkle_proof = smt.merkle_proof(vec![key]).map_err(|e| {
                 error!("Friend subkey SMT proof error: {:?}", e.to_string());
-                Error::SMTProofError("Friend subkey".to_string())
+                Error::SMTProofInvalid("Friend subkey".to_string())
             })?;
             let subkey_merkle_proof_compiled =
                 subkey_merkle_proof.compile(vec![key]).map_err(|e| {
                     error!("Friend subkey SMT proof error: {:?}", e.to_string());
-                    Error::SMTProofError("Friend subkey".to_string())
+                    Error::SMTProofInvalid("Friend subkey".to_string())
                 })?;
 
             let merkel_proof_vec: Vec<u8> = subkey_merkle_proof_compiled.into();

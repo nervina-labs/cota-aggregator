@@ -111,7 +111,7 @@ pub async fn generate_mint_smt(mint_req: MintReq) -> Result<(H256, MintCotaNFTV1
     with_lock(lock_hash, || {
         generate_history_smt(&mut smt, lock_hash, smt_root)?;
         smt.update_all(update_leaves.clone())
-            .map_err(|e| Error::SMTError(e.to_string()))?;
+            .map_err(|e| Error::SMTInvalid(e.to_string()))?;
         smt.save_root_and_leaves(previous_leaves.clone())?;
         smt.commit()
     })?;
@@ -120,11 +120,11 @@ pub async fn generate_mint_smt(mint_req: MintReq) -> Result<(H256, MintCotaNFTV1
     let leaf_keys: Vec<H256> = update_leaves.iter().map(|leave| leave.0).collect();
     let mint_merkle_proof = smt.merkle_proof(leaf_keys.clone()).map_err(|e| {
         error!("Mint SMT proof error: {:?}", e.to_string());
-        Error::SMTProofError("Mint".to_string())
+        Error::SMTProofInvalid("Mint".to_string())
     })?;
     let mint_merkle_proof_compiled = mint_merkle_proof.compile(leaf_keys).map_err(|e| {
         error!("Mint SMT proof error: {:?}", e.to_string());
-        Error::SMTProofError("Mint".to_string())
+        Error::SMTProofInvalid("Mint".to_string())
     })?;
     diff_time(start_time, "Generate mint smt proof");
 
