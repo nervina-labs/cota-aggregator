@@ -80,7 +80,7 @@ pub fn get_joyid_info_by_lock_hash(lock_hash_: [u8; 32]) -> Result<Option<JoyIDI
         .map_or_else(
             |e| {
                 error!("Query joyid info error: {}", e.to_string());
-                Err(Error::DatabaseQueryError(e.to_string()))
+                Err(Error::DatabaseQueryInvalid(e.to_string()))
             },
             Ok,
         )?;
@@ -98,7 +98,7 @@ pub fn get_joyid_info_by_lock_hash(lock_hash_: [u8; 32]) -> Result<Option<JoyIDI
         .map_or_else(
             |e| {
                 error!("Query sub keys info error: {}", e.to_string());
-                Err(Error::DatabaseQueryError(e.to_string()))
+                Err(Error::DatabaseQueryInvalid(e.to_string()))
             },
             Ok,
         )?;

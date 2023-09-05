@@ -23,13 +23,13 @@ impl TransferReq {
             Some(_) => {
                 let lock = map.get_hex_vec_filed("withdrawal_lock_script")?;
                 if Script::from_slice(&lock).is_err() {
-                    return Err(Error::RequestParamTypeError("Script".to_string()));
+                    return Err(Error::RequestParamTypeInvalid("Script".to_string()));
                 }
                 blake2b_256(&lock)
             }
             None => map
                 .get_hex_bytes_filed::<32>("withdrawal_lock_hash")
-                .map_err(|_| Error::RequestParamTypeError("Withdrawal lock hash".to_string()))?,
+                .map_err(|_| Error::RequestParamTypeInvalid("Withdrawal lock hash".to_string()))?,
         };
 
         Ok(TransferReq {
@@ -134,7 +134,7 @@ impl SequentialTransferReq {
         };
         if let Some(subkey) = map.get("subkey") {
             if subkey.as_object().is_none() {
-                return Err(Error::RequestParamTypeError("subkey".to_owned()));
+                return Err(Error::RequestParamTypeInvalid("subkey".to_owned()));
             }
             req.subkey = Some(SubKeyUnlock::from_map(subkey.as_object().unwrap())?)
         }

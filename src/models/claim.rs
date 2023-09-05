@@ -41,7 +41,7 @@ pub fn get_claim_cota_by_lock_hash(lock_hash_: [u8; 32]) -> DBResult<ClaimDb> {
             .map_or_else(
                 |e| {
                     error!("Query claim error: {}", e.to_string());
-                    Err(Error::DatabaseQueryError(e.to_string()))
+                    Err(Error::DatabaseQueryInvalid(e.to_string()))
                 },
                 |claims| Ok(parse_claimed_cota_nft(claims)),
             )?;
@@ -71,7 +71,7 @@ pub fn is_exist_in_claim(
     let out_point_crc_u32 = generate_crc(out_point_hex.as_bytes());
     claimed_cota_nft_kv_pairs
         .filter(lock_hash_crc.eq(lock_hash_crc_))
-        .filter(lock_hash.eq(lock_hash_hex.clone()))
+        .filter(lock_hash.eq(lock_hash_hex))
         .filter(cota_id_crc.eq(cota_id_crc_u32))
         .filter(cota_id.eq(cota_id_hex))
         .filter(token_index.eq(token_index_u32))

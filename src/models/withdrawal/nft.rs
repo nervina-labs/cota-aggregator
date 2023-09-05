@@ -61,7 +61,7 @@ pub fn get_withdrawal_cota_by_lock_hash(
                     .load::<WithdrawCotaNft>(conn)
                     .map_err(|e| {
                         error!("Query withdraw error: {}", e.to_string());
-                        Error::DatabaseQueryError(e.to_string())
+                        Error::DatabaseQueryInvalid(e.to_string())
                     })?;
                 let length = withdrawals_page.len();
                 withdraw_nfts.extend(withdrawals_page);
@@ -87,7 +87,7 @@ pub fn get_withdrawal_cota_by_lock_hash(
                     .load::<WithdrawCotaNft>(conn)
                     .map_err(|e| {
                         error!("Query withdraw error: {}", e.to_string());
-                        Error::DatabaseQueryError(e.to_string())
+                        Error::DatabaseQueryInvalid(e.to_string())
                     })?;
                 if !withdrawals.is_empty() {
                     let withdrawal = withdrawals.get(0).unwrap().clone();
@@ -109,10 +109,7 @@ pub fn get_withdrawal_cota_by_cota_ids(
     let start_time = Local::now().timestamp_millis();
     let conn = &get_conn();
     let (lock_hash_hex, lock_hash_crc_) = parse_lock_hash(lock_hash_);
-    let cota_ids_: Vec<String> = cota_ids
-        .into_iter()
-        .map(|cota_id_| hex::encode(&cota_id_))
-        .collect();
+    let cota_ids_: Vec<String> = cota_ids.into_iter().map(hex::encode).collect();
 
     let total: i64 = withdraw_cota_nft_kv_pairs
         .filter(lock_hash_crc.eq(lock_hash_crc_))
@@ -122,7 +119,7 @@ pub fn get_withdrawal_cota_by_cota_ids(
         .get_result::<i64>(conn)
         .map_err(|e| {
             error!("Query withdraw error: {}", e.to_string());
-            Error::DatabaseQueryError(e.to_string())
+            Error::DatabaseQueryInvalid(e.to_string())
         })?;
     let withdraw_cota_nfts: Vec<WithdrawCotaNft> = withdraw_cota_nft_kv_pairs
         .select(get_selection())
@@ -135,7 +132,7 @@ pub fn get_withdrawal_cota_by_cota_ids(
         .load::<WithdrawCotaNft>(conn)
         .map_err(|e| {
             error!("Query withdraw error: {}", e.to_string());
-            Error::DatabaseQueryError(e.to_string())
+            Error::DatabaseQueryInvalid(e.to_string())
         })?;
     let (withdrawals, block_height) = parse_withdraw_db(withdraw_cota_nfts)?;
     diff_time(start_time, "SQL get_withdrawal_cota_by_cota_ids");
@@ -161,7 +158,7 @@ pub fn get_withdrawal_cota_by_script_id(
     let total_result = match cota_id_opt {
         Some(cota_id_) => withdraw_cota_nft_kv_pairs
             .filter(receiver_lock_script_id.eq(script_id))
-            .filter(cota_id.eq(hex::encode(&cota_id_)))
+            .filter(cota_id.eq(hex::encode(cota_id_)))
             .count()
             .get_result::<i64>(conn),
         None => withdraw_cota_nft_kv_pairs
@@ -171,14 +168,14 @@ pub fn get_withdrawal_cota_by_script_id(
     };
     let total: i64 = total_result.map_err(|e| {
         error!("Query withdraw error: {}", e.to_string());
-        Error::DatabaseQueryError(e.to_string())
+        Error::DatabaseQueryInvalid(e.to_string())
     })?;
 
     let withdraw_cota_nfts_result = match cota_id_opt {
         Some(cota_id_) => withdraw_cota_nft_kv_pairs
             .select(get_selection())
             .filter(receiver_lock_script_id.eq(script_id))
-            .filter(cota_id.eq(hex::encode(&cota_id_)))
+            .filter(cota_id.eq(hex::encode(cota_id_)))
             .order(updated_at.desc())
             .load::<WithdrawCotaNft>(conn),
         None => withdraw_cota_nft_kv_pairs
@@ -190,7 +187,7 @@ pub fn get_withdrawal_cota_by_script_id(
 
     let withdraw_cota_nfts: Vec<WithdrawCotaNft> = withdraw_cota_nfts_result.map_err(|e| {
         error!("Query withdraw error: {}", e.to_string());
-        Error::DatabaseQueryError(e.to_string())
+        Error::DatabaseQueryInvalid(e.to_string())
     })?;
     let withdrawals = parse_withdraw_cota_nft(withdraw_cota_nfts);
     let block_height = get_syncer_tip_block_number()?;
@@ -207,13 +204,13 @@ pub fn get_cota_info_by_cota_id_token_index(
     let token_index_u32 = u32::from_be_bytes(token_index_);
     let withdraw_cota_nfts: Vec<WithdrawCotaNft> = withdraw_cota_nft_kv_pairs
         .select(get_selection())
-        .filter(cota_id.eq(hex::encode(&cota_id_)))
+        .filter(cota_id.eq(hex::encode(cota_id_)))
         .filter(token_index.eq(token_index_u32))
         .limit(1)
         .load::<WithdrawCotaNft>(conn)
         .map_err(|e| {
             error!("Query withdraw error: {}", e.to_string());
-            Error::DatabaseQueryError(e.to_string())
+            Error::DatabaseQueryInvalid(e.to_string())
         })?;
     let withdrawals = parse_withdraw_cota_nft(withdraw_cota_nfts);
     diff_time(start_time, "SQL get_cota_info_by_cota_id_token_index");
@@ -245,7 +242,7 @@ pub fn get_sender_lock_by_script_id(
         .load::<SenderLockDb>(&get_conn())
         .map_err(|e| {
             error!("Query withdraw error: {}", e.to_string());
-            Error::DatabaseQueryError(e.to_string())
+            Error::DatabaseQueryInvalid(e.to_string())
         })?;
     diff_time(start_time, "SQL get_sender_lock_by_script_id");
     if let Some(sender_lock) = sender_locks.first().cloned() {
@@ -276,7 +273,7 @@ pub fn get_receiver_lock_by_cota_id_and_token_index(
         .load::<i64>(&get_conn())
         .map_err(|e| {
             error!("Query withdraw error: {}", e.to_string());
-            Error::DatabaseQueryError(e.to_string())
+            Error::DatabaseQueryInvalid(e.to_string())
         })?;
     diff_time(
         start_time,
@@ -309,7 +306,7 @@ fn parse_withdraw_db(withdrawals: Vec<WithdrawCotaNft>) -> DBResult<WithdrawDb> 
     for withdrawal in withdrawals {
         let lock_script = script_map
             .get(&withdrawal.receiver_lock_script_id)
-            .ok_or(Error::DatabaseQueryError("scripts".to_owned()))?
+            .ok_or(Error::DatabaseQueryInvalid("scripts".to_owned()))?
             .clone();
         withdraw_db_vec.push(WithdrawDb {
             cota_id:              parse_bytes_n::<20>(withdrawal.cota_id).unwrap(),

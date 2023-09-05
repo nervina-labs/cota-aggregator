@@ -12,7 +12,7 @@ pub fn address_from_script(slice: &[u8]) -> Result<String, Error> {
         Err(_e) => false,
     };
     let payload =
-        AddressPayload::from(Script::from_slice(slice).map_err(|_| Error::CKBScriptError)?);
+        AddressPayload::from(Script::from_slice(slice).map_err(|_| Error::CKBScriptInvalid)?);
     let network = if is_mainnet {
         NetworkType::Mainnet
     } else {
@@ -23,7 +23,7 @@ pub fn address_from_script(slice: &[u8]) -> Result<String, Error> {
 }
 
 pub fn script_from_address(address: String) -> Result<Script, Error> {
-    let addr = Address::from_str(&address).map_err(|e| Error::CKBRPCError(e.to_string()))?;
+    let addr = Address::from_str(&address).map_err(|e| Error::CKBRPCInvalid(e))?;
     let payload = addr.payload();
     let script = Script::new_builder()
         .hash_type(payload.hash_type().into())

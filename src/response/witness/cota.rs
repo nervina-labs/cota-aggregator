@@ -35,12 +35,12 @@ type CotaMap = Map<String, Value>;
 
 pub fn parse_cota_witness(witness: Vec<u8>, version: u8) -> Result<Value, Error> {
     if version > 2 {
-        return Err(Error::WitnessParseError("Version invalid".to_string()));
+        return Err(Error::WitnessParseInvalid("Version invalid".to_string()));
     }
     let witness_args = WitnessArgs::from_slice(&witness)
-        .map_err(|_| Error::WitnessParseError("Parse witness args error".to_string()))?;
+        .map_err(|_| Error::WitnessParseInvalid("Parse witness args error".to_string()))?;
     if witness_args.input_type().is_none() && witness_args.output_type().is_none() {
-        return Err(Error::WitnessParseError("Not cota witness".to_string()));
+        return Err(Error::WitnessParseInvalid("Not cota witness".to_string()));
     }
     let mut cota_map = Map::new();
     cota_map = parse_cota(witness_args.input_type(), version, cota_map)?;
@@ -64,7 +64,7 @@ fn parse_cota(input_type: BytesOpt, version: u8, mut cota_map: CotaMap) -> Resul
                 return Ok(cota_map);
             }
             if tx_type > TRANSFER_UPDATE || tx_type == 0 {
-                return Err(Error::WitnessParseError("Not cota witness".to_string()));
+                return Err(Error::WitnessParseInvalid("Not cota witness".to_string()));
             }
             let cota_entries: Map<String, Value> = match tx_type {
                 CREATE => {
@@ -136,7 +136,7 @@ fn parse_cota(input_type: BytesOpt, version: u8, mut cota_map: CotaMap) -> Resul
 }
 
 fn entries_error(_e: VerificationError) -> Error {
-    Error::WitnessParseError("Parse cota entries error".to_string())
+    Error::WitnessParseInvalid("Parse cota entries error".to_string())
 }
 
 fn parse_metadata(output_type: BytesOpt, mut cota_map: CotaMap) -> Result<CotaMap, Error> {
@@ -155,7 +155,7 @@ fn parse_metadata(output_type: BytesOpt, mut cota_map: CotaMap) -> Result<CotaMa
         }
     }
     if cota_map.is_empty() {
-        return Err(Error::WitnessParseError(
+        return Err(Error::WitnessParseInvalid(
             "Invalid CoTA entries or metadata".to_string(),
         ));
     } else {
@@ -165,5 +165,5 @@ fn parse_metadata(output_type: BytesOpt, mut cota_map: CotaMap) -> Result<CotaMa
 }
 
 fn json_error(e: serde_json::Error) -> Error {
-    Error::WitnessParseError(format!("Parse metadata json error: {}", e.to_string()))
+    Error::WitnessParseInvalid(format!("Parse metadata json error: {}", e.to_string()))
 }

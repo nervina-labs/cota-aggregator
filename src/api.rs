@@ -277,10 +277,10 @@ pub async fn get_issuer_info(params: Params) -> Result<Value, Error> {
         lock_hash,
     } = FetchIssuerReq::from_map(&map).map_err(rpc_err)?;
     let lock_hash_ = if lock_script.is_some() {
-        blake2b_256(&lock_script.unwrap())
+        blake2b_256(lock_script.unwrap())
     } else if address.is_some() {
         let lock = script_from_address(address.unwrap()).map_err(rpc_err)?;
-        blake2b_256(&lock.as_slice())
+        blake2b_256(lock.as_slice())
     } else {
         lock_hash.unwrap()
     };
@@ -350,10 +350,10 @@ pub async fn get_joyid_info(params: Params) -> Result<Value, Error> {
         address,
     } = FetchJoyIDReq::from_map(&map).map_err(rpc_err)?;
     let lock_hash = if lock_script.is_some() {
-        blake2b_256(&lock_script.unwrap())
+        blake2b_256(lock_script.unwrap())
     } else {
         let lock = script_from_address(address.unwrap()).map_err(rpc_err)?;
-        blake2b_256(&lock.as_slice())
+        blake2b_256(lock.as_slice())
     };
     let joyid_info_opt = get_joyid_info_by_lock_hash(lock_hash).map_err(rpc_err)?;
     parse_joyid_metadata_response(joyid_info_opt, tip_number()?).map_err(rpc_err)

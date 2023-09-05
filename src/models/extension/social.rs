@@ -37,7 +37,7 @@ pub fn get_social_config_by_lock(lock_hash_: [u8; 32]) -> Result<Option<SocialRe
         .map_or_else(
             |e| {
                 error!("Query social error: {}", e.to_string());
-                Err(Error::DatabaseQueryError(e.to_string()))
+                Err(Error::DatabaseQueryInvalid(e.to_string()))
             },
             |socials_| Ok(parse_social(socials_)),
         )?;
@@ -59,8 +59,7 @@ fn parse_social(socials: Vec<SocialRecovery>) -> Vec<SocialRecoveryDb> {
 
 fn parse_signers(signers_str: String) -> Vec<Vec<u8>> {
     signers_str
-        .split(",")
-        .into_iter()
+        .split(',')
         .map(|str| hex::decode(str).unwrap())
         .collect()
 }

@@ -14,7 +14,7 @@ pub fn get_syncer_tip_block_number() -> Result<u64, Error> {
         .first::<u64>(&get_conn())
         .map_err(|e| {
             error!("Query tip block number error: {}", e.to_string());
-            Error::DatabaseQueryError(e.to_string())
+            Error::DatabaseQueryInvalid(e.to_string())
         })
 }
 
@@ -28,7 +28,7 @@ pub fn get_syncer_tip_block_numbers() -> Result<(u64, u64), Error> {
         .first::<u64>(&get_conn())
         .map_err(|e| {
             error!("Query tip metadata number error: {}", e.to_string());
-            Error::DatabaseQueryError(e.to_string())
+            Error::DatabaseQueryInvalid(e.to_string())
         })?;
     Ok((tip_block_number, tip_metadata_number))
 }

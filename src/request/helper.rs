@@ -12,12 +12,12 @@ pub fn parse_vec_map<T: ReqParser>(map: &Map<String, Value>, key: &str) -> Resul
         .get(key)
         .ok_or(Error::RequestParamNotFound(key.to_owned()))?;
     if !value.is_array() {
-        return Err(Error::RequestParamTypeError(key.to_owned()));
+        return Err(Error::RequestParamTypeInvalid(key.to_owned()));
     }
     let mut vec: Vec<T> = Vec::new();
     for element in value.as_array().unwrap() {
         if !element.is_object() {
-            return Err(Error::RequestParamTypeError(key.to_owned()));
+            return Err(Error::RequestParamTypeInvalid(key.to_owned()));
         }
         vec.push(T::from_map(element.as_object().unwrap())?)
     }
@@ -29,12 +29,12 @@ pub fn parse_vec_bytes(map: &Map<String, Value>, key: &str) -> Result<Vec<Vec<u8
         .get(key)
         .ok_or(Error::RequestParamNotFound(key.to_owned()))?;
     if !value.is_array() {
-        return Err(Error::RequestParamTypeError(key.to_owned()));
+        return Err(Error::RequestParamTypeInvalid(key.to_owned()));
     }
     let mut vec: Vec<Vec<u8>> = Vec::new();
     for element in value.as_array().unwrap() {
         if !element.is_string() {
-            return Err(Error::RequestParamTypeError(key.to_owned()));
+            return Err(Error::RequestParamTypeInvalid(key.to_owned()));
         }
         vec.push(parse_bytes(element.as_str().unwrap().to_owned())?);
     }
@@ -70,7 +70,7 @@ impl HexParser for Map<String, Value> {
         let result = hex::decode(hex_without_0x)
             .map_err(|_| Error::RequestParamHexInvalid(v.to_string()))?;
         if result.len() != N {
-            return Err(Error::RequestParamHexLenError {
+            return Err(Error::RequestParamHexLenInvalid {
                 msg:      key.to_owned(),
                 got:      result.len(),
                 expected: N,
@@ -84,7 +84,7 @@ impl HexParser for Map<String, Value> {
             .get(key)
             .ok_or(Error::RequestParamNotFound(key.to_owned()))?;
         if !v.is_string() {
-            return Err(Error::RequestParamTypeError(key.to_owned()));
+            return Err(Error::RequestParamTypeInvalid(key.to_owned()));
         }
         let result = parse_bytes(v.as_str().unwrap().to_owned())?;
         Ok(result)
@@ -115,10 +115,10 @@ impl HexParser for Map<String, Value> {
                 temp = remove_0x(temp);
                 return Ok(u64::from_str_radix(temp, 16).unwrap());
             } else {
-                return Ok(u64::from_str_radix(temp, 10).unwrap());
+                return Ok(temp.parse::<u64>().unwrap());
             }
         }
-        return Err(Error::RequestParamTypeError(key.to_owned()));
+        Err(Error::RequestParamTypeInvalid(key.to_owned()))
     }
 
     fn get_i64_filed(&self, key: &str) -> Result<i64, Error> {
@@ -126,7 +126,7 @@ impl HexParser for Map<String, Value> {
     }
 
     fn get_u64_filed(&self, key: &str) -> Result<u64, Error> {
-        Ok(self.get_int_filed(key)?)
+        self.get_int_filed(key)
     }
 
     fn get_u32_filed(&self, key: &str) -> Result<u32, Error> {
@@ -146,7 +146,7 @@ impl HexParser for Map<String, Value> {
             .get(key)
             .ok_or(Error::RequestParamNotFound(key.to_owned()))?;
         if !v.is_string() {
-            return Err(Error::RequestParamTypeError(key.to_owned()));
+            return Err(Error::RequestParamTypeInvalid(key.to_owned()));
         }
         let result: String = v.as_str().unwrap().parse().unwrap();
         Ok(result)
@@ -186,7 +186,7 @@ mod tests {
 
         assert_eq!(
             map.get_hex_bytes_filed::<30>("lock_hash"),
-            Err(Error::RequestParamHexLenError {
+            Err(Error::RequestParamHexLenInvalid {
                 msg:      "lock_hash".to_owned(),
                 got:      32,
                 expected: 30,

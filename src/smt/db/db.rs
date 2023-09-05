@@ -31,7 +31,9 @@ impl RocksDB {
             .collect();
 
         let db = OptimisticTransactionDB::open_cf_descriptors(&opts, path, cf_descriptors)
-            .map_err(|e| Error::RocksDBError(format!("RocksDB open error: {:?}", e.to_string())))?;
+            .map_err(|e| {
+                Error::RocksDBInvalid(format!("RocksDB open error: {:?}", e.to_string()))
+            })?;
         Ok(RocksDB {
             inner: Arc::new(db),
         })
@@ -51,5 +53,5 @@ impl RocksDB {
 #[inline]
 pub(crate) fn cf_handle(db: &OptimisticTransactionDB, col: Col) -> Result<&ColumnFamily, Error> {
     db.cf_handle(&col.to_string())
-        .ok_or_else(|| Error::RocksDBError(format!("column {} not found", col)))
+        .ok_or_else(|| Error::RocksDBInvalid(format!("column {} not found", col)))
 }

@@ -58,7 +58,7 @@ pub async fn generate_sequential_transfer_smt(
 
         if index == transfers_len - 1 {
             current_withdrawal = withdrawals.first().unwrap().clone();
-            if &current_withdrawal.receiver_lock_script != &transfer_lock_script {
+            if current_withdrawal.receiver_lock_script != transfer_lock_script {
                 return Err(Error::CotaIdAndTokenIndexHasNotWithdrawn);
             }
             let is_claimed = is_exist_in_claim(
@@ -145,12 +145,12 @@ pub async fn generate_sequential_transfer_smt(
         generate_history_smt(&mut transfer_smt, transfer_lock_hash, transfer_smt_root)?;
         transfer_smt
             .update_all(transfer_pervious_leaves.clone())
-            .map_err(|e| Error::SMTError(e.to_string()))?;
+            .map_err(|e| Error::SMTInvalid(e.to_string()))?;
         current_subkey_entries =
             generate_subkey_smt(transfer_lock_hash, &subkey_opt, &transfer_smt)?;
         transfer_smt
             .update_all(transfer_update_leaves.clone())
-            .map_err(|e| Error::SMTError(e.to_string()))?;
+            .map_err(|e| Error::SMTInvalid(e.to_string()))?;
         next_subkey_entries = generate_subkey_smt(transfer_lock_hash, &subkey_opt, &transfer_smt)?;
         transfer_smt.save_root_and_leaves(previous_leaves.clone())?;
         transfer_smt.commit()
@@ -159,10 +159,10 @@ pub async fn generate_sequential_transfer_smt(
     let leaf_keys: Vec<H256> = transfer_update_leaves.iter().map(|leave| leave.0).collect();
     let transfer_merkle_proof = transfer_smt
         .merkle_proof(leaf_keys.clone())
-        .map_err(|_e| Error::SMTProofError("Transfer".to_string()))?;
+        .map_err(|_e| Error::SMTProofInvalid("Transfer".to_string()))?;
     let transfer_merkle_proof_compiled = transfer_merkle_proof
         .compile(leaf_keys)
-        .map_err(|_e| Error::SMTProofError("Transfer".to_string()))?;
+        .map_err(|_e| Error::SMTProofInvalid("Transfer".to_string()))?;
 
     let transfer_merkel_proof_vec: Vec<u8> = transfer_merkle_proof_compiled.into();
     let transfer_merkel_proof_bytes = BytesBuilder::default()
@@ -238,10 +238,10 @@ fn generate_subkey_smt(
 
         let subkey_merkle_proof = smt
             .merkle_proof(vec![key])
-            .map_err(|_| Error::SMTProofError("Subkey unlock".to_owned()))?;
+            .map_err(|_| Error::SMTProofInvalid("Subkey unlock".to_owned()))?;
         let subkey_merkle_proof_compiled = subkey_merkle_proof
             .compile(vec![key])
-            .map_err(|_| Error::SMTProofError("Subkey unlock".to_owned()))?;
+            .map_err(|_| Error::SMTProofInvalid("Subkey unlock".to_owned()))?;
 
         let merkel_proof_vec: Vec<u8> = subkey_merkle_proof_compiled.into();
         let merkel_proof_bytes = joyid_smt::common::BytesBuilder::default()

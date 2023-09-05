@@ -58,7 +58,7 @@ pub fn get_class_info_by_cota_id(cota_id_: [u8; 20]) -> Result<Option<ClassInfo>
         .map_or_else(
             |e| {
                 error!("Query class info error: {}", e.to_string());
-                Err(Error::DatabaseQueryError(e.to_string()))
+                Err(Error::DatabaseQueryInvalid(e.to_string()))
             },
             Ok,
         )?;
@@ -98,7 +98,7 @@ pub fn get_class_audios_by_cota_id(cota_id_hex: String) -> Result<Vec<ClassAudio
         .map_or_else(
             |e| {
                 error!("Query class audios error: {}", e.to_string());
-                Err(Error::DatabaseQueryError(e.to_string()))
+                Err(Error::DatabaseQueryInvalid(e.to_string()))
             },
             Ok,
         )?;

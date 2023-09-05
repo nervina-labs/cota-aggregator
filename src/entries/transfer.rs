@@ -44,7 +44,7 @@ pub async fn generate_transfer_smt(
     }
     let is_receiver = sender_withdrawals
         .iter()
-        .any(|withdrawal| &withdrawal.receiver_lock_script == &transfer_lock_script);
+        .any(|withdrawal| withdrawal.receiver_lock_script == transfer_lock_script);
     if !is_receiver {
         return Err(Error::CotaIdAndTokenIndexHasNotWithdrawn);
     }
@@ -132,7 +132,7 @@ pub async fn generate_transfer_smt(
         generate_history_smt(&mut transfer_smt, transfer_lock_hash, transfer_smt_root)?;
         transfer_smt
             .update_all(transfer_update_leaves.clone())
-            .map_err(|e| Error::SMTError(e.to_string()))?;
+            .map_err(|e| Error::SMTInvalid(e.to_string()))?;
         transfer_smt.save_root_and_leaves(previous_leaves.clone())?;
         transfer_smt.commit()
     })?;
@@ -141,11 +141,11 @@ pub async fn generate_transfer_smt(
     let leaf_keys: Vec<H256> = transfer_update_leaves.iter().map(|leave| leave.0).collect();
     let transfer_merkle_proof = transfer_smt.merkle_proof(leaf_keys.clone()).map_err(|e| {
         error!("Transfer SMT proof error: {:?}", e.to_string());
-        Error::SMTProofError("Transfer".to_string())
+        Error::SMTProofInvalid("Transfer".to_string())
     })?;
     let transfer_merkle_proof_compiled = transfer_merkle_proof.compile(leaf_keys).map_err(|e| {
         error!("Transfer SMT proof error: {:?}", e.to_string());
-        Error::SMTProofError("Transfer".to_string())
+        Error::SMTProofInvalid("Transfer".to_string())
     })?;
     diff_time(start_time, "Generate transfer smt proof");
 

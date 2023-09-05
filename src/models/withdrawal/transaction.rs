@@ -45,7 +45,7 @@ pub fn get_all_transactions(
         .get_result::<i64>(conn)
         .map_err(|e| {
             error!("Query withdraw error: {}", e.to_string());
-            Error::DatabaseQueryError(e.to_string())
+            Error::DatabaseQueryInvalid(e.to_string())
         })?;
 
     let db_history_txs: Vec<WithdrawTxDb> = withdraw_cota_nft_kv_pairs
@@ -67,7 +67,7 @@ pub fn get_all_transactions(
                 "Query withdraw history transactions error: {}",
                 e.to_string()
             );
-            Error::DatabaseQueryError(e.to_string())
+            Error::DatabaseQueryInvalid(e.to_string())
         })?;
 
     let mut script_id_set = BTreeSet::<i64>::new();
@@ -107,7 +107,7 @@ pub fn get_first_tx_block_number(cota_id_: [u8; 20], token_index_: [u8; 4]) -> R
         .first::<u64>(&get_conn())
         .map_err(|e| {
             error!("Query withdraw tx block number error: {}", e.to_string());
-            Error::DatabaseQueryError(e.to_string())
+            Error::DatabaseQueryInvalid(e.to_string())
         })
 }
 
@@ -142,7 +142,7 @@ pub fn get_transactions_by_block_number(block_number_: u64) -> DBResult<Withdraw
         .load::<WithdrawTransactionDb>(&get_conn())
         .map_err(|e| {
             error!("Query withdraw transaction error: {}", e.to_string());
-            Error::DatabaseQueryError(e.to_string())
+            Error::DatabaseQueryInvalid(e.to_string())
         })?;
 
     let mut script_id_set = BTreeSet::<i64>::new();

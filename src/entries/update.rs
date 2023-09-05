@@ -55,7 +55,7 @@ pub async fn generate_update_smt(
     with_lock(lock_hash, || {
         generate_history_smt(&mut smt, lock_hash, smt_root)?;
         smt.update_all(update_leaves.clone())
-            .map_err(|e| Error::SMTError(e.to_string()))?;
+            .map_err(|e| Error::SMTInvalid(e.to_string()))?;
         smt.save_root_and_leaves(previous_leaves.clone())?;
         smt.commit()
     })?;
@@ -63,11 +63,11 @@ pub async fn generate_update_smt(
     let leaf_keys: Vec<H256> = update_leaves.iter().map(|leave| leave.0).collect();
     let update_merkle_proof = smt.merkle_proof(leaf_keys.clone()).map_err(|e| {
         error!("Update SMT proof error: {:?}", e.to_string());
-        Error::SMTProofError("Update".to_string())
+        Error::SMTProofInvalid("Update".to_string())
     })?;
     let update_merkle_proof_compiled = update_merkle_proof.compile(leaf_keys).map_err(|e| {
         error!("Update SMT proof error: {:?}", e.to_string());
-        Error::SMTProofError("Update".to_string())
+        Error::SMTProofInvalid("Update".to_string())
     })?;
 
     let merkel_proof_vec: Vec<u8> = update_merkle_proof_compiled.into();

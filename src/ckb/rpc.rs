@@ -44,8 +44,8 @@ pub async fn get_withdraw_info(
         let mut client = ckb_node_client()?;
         let block = client
             .get_block_by_number(Uint64::from(block_number))
-            .map_err(|_e| Error::CKBRPCError("get_block_by_number".to_string()))?
-            .ok_or(Error::CKBRPCError("get_block error".to_string()))?;
+            .map_err(|_e| Error::CKBRPCInvalid("get_block_by_number".to_string()))?
+            .ok_or(Error::CKBRPCInvalid("get_block error".to_string()))?;
         let block_hash = block.header.hash;
         let block_number = block.header.inner.number.value();
         let mut output_index = Uint32::default();
@@ -56,20 +56,19 @@ pub async fn get_withdraw_info(
                 let position = tx.inner.outputs.clone().into_iter().position(|output| {
                     let lock: Script = output.lock.clone().into();
                     let lock_ret: bool = blake2b_256(lock.as_slice()) == withdrawal_lock_hash;
-                    let type_ret: bool = output.type_.clone().map_or(false, |type_: RPCScript| {
-                        type_.code_hash.as_bytes() == &cota_code_hash
+                    let type_ret: bool = output.type_.map_or(false, |type_: RPCScript| {
+                        type_.code_hash.as_bytes() == cota_code_hash
                     });
                     lock_ret && type_ret
                 });
-                if position.is_some() {
-                    output_index =
-                        Uint32::from_slice(&(position.unwrap() as u32).to_be_bytes()).unwrap();
+                if let Some(pos) = position {
+                    output_index = Uint32::from_slice(&(pos).to_be_bytes()).unwrap();
                 }
-                tx.hash.as_bytes() == &withdrawal_tx_hash
+                tx.hash.as_bytes() == withdrawal_tx_hash
             })
             .collect();
         if txs.is_empty() {
-            return Err(Error::CKBRPCError(format!(
+            return Err(Error::CKBRPCInvalid(format!(
                 "The tx dose not exist in the block#{:?}",
                 block_number
             )));
@@ -89,7 +88,7 @@ pub async fn get_withdraw_info(
 
         let transaction_proof = client
             .get_transaction_proof(vec![tx_view.hash], Some(block_hash.clone()))
-            .map_err(|_e| Error::CKBRPCError("get_transaction_proof".to_string()))?;
+            .map_err(|_e| Error::CKBRPCInvalid("get_transaction_proof".to_string()))?;
         let tx_proof = get_tx_proof(transaction_proof);
 
         let withdraw_info = WithdrawRawTx {
@@ -112,7 +111,7 @@ pub async fn get_node_tip_block_number() -> Result<u64, Error> {
         let mut client = ckb_node_client()?;
         let block_number = client
             .get_tip_block_number()
-            .map_err(|_e| Error::CKBRPCError("get_tip_block_number".to_string()))?;
+            .map_err(|_e| Error::CKBRPCInvalid("get_tip_block_number".to_string()))?;
         Ok(u64::from(block_number))
     })
     .await
@@ -124,8 +123,8 @@ pub async fn get_block_timestamp(block_number: u64) -> Result<u64, Error> {
         let mut client = ckb_node_client()?;
         let header = client
             .get_header_by_number(BlockNumber::from(block_number))
-            .map_err(|_e| Error::CKBRPCError("get_header_by_number".to_string()))?
-            .ok_or(Error::CKBRPCError("get_header_by_number".to_string()))?;
+            .map_err(|_e| Error::CKBRPCInvalid("get_header_by_number".to_string()))?
+            .ok_or(Error::CKBRPCInvalid("get_header_by_number".to_string()))?;
         Ok(header.inner.timestamp.value())
     })
     .await

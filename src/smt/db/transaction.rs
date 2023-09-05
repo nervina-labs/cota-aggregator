@@ -15,26 +15,26 @@ impl RocksDBTransaction {
         let cf = cf_handle(&self.db, col)?;
         self.inner
             .get_cf(cf, key)
-            .map_err(|_e| Error::RocksDBError("transaction get_cf".to_owned()))
+            .map_err(|_e| Error::RocksDBInvalid("transaction get_cf".to_owned()))
     }
 
     pub fn put(&self, col: Col, key: &[u8], value: &[u8]) -> Result<(), Error> {
         let cf = cf_handle(&self.db, col)?;
         self.inner
             .put_cf(cf, key, value)
-            .map_err(|_e| Error::RocksDBError("transaction put_cf".to_owned()))
+            .map_err(|_e| Error::RocksDBInvalid("transaction put_cf".to_owned()))
     }
 
     pub fn delete(&self, col: Col, key: &[u8]) -> Result<(), Error> {
         let cf = cf_handle(&self.db, col)?;
         self.inner
             .delete_cf(cf, key)
-            .map_err(|_e| Error::RocksDBError("transaction delete_cf".to_owned()))
+            .map_err(|_e| Error::RocksDBInvalid("transaction delete_cf".to_owned()))
     }
 
     pub fn commit(&self) -> Result<(), Error> {
         self.inner
             .commit()
-            .map_err(|e| Error::RocksDBError(format!("transaction commit: {:?}", e.to_string())))
+            .map_err(|e| Error::RocksDBInvalid(format!("transaction commit: {:?}", e.to_string())))
     }
 }
