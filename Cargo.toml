@@ -13,7 +13,7 @@ failure = "0.1.8"
 crc = "3.0.1"
 diesel = { version = "1.4.8", features = ["mysql", "r2d2", "numeric"] }
 dotenv = "0.15.0"
-chrono = "0.4.28"
+chrono = "0.4.31"
 molecule = "0.7.2"
 lazy_static = "1.4"
 rocksdb = { package = "ckb-rocksdb", version = "=0.21.1", features = ["snappy"] }
