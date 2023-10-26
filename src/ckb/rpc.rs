@@ -62,7 +62,7 @@ pub async fn get_withdraw_info(
                     lock_ret && type_ret
                 });
                 if let Some(pos) = position {
-                    output_index = Uint32::from_slice(&(pos).to_be_bytes()).unwrap();
+                    output_index = Uint32::from_slice(&(pos as u32).to_be_bytes()).unwrap();
                 }
                 tx.hash.as_bytes() == withdrawal_tx_hash
             })
