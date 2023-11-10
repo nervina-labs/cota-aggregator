@@ -87,7 +87,7 @@ pub async fn generate_sequential_transfer_smt(
     let mut claimed_values: Vec<Byte32> = Vec::new();
     let mut withdrawal_keys: Vec<WithdrawalCotaNFTKeyV1> = Vec::new();
     let mut withdrawal_values: Vec<WithdrawalCotaNFTValueV1> = Vec::new();
-    let mut transfer_pervious_leaves: Vec<(H256, H256)> = Vec::with_capacity(transfers_len * 2 - 2);
+    let mut transfer_previous_leaves: Vec<(H256, H256)> = Vec::with_capacity(transfers_len * 2 - 2);
     let mut transfer_update_leaves: Vec<(H256, H256)> = Vec::with_capacity(2);
     let mut previous_leaves: Vec<(H256, H256)> = Vec::with_capacity(transfers_len * 2);
     for (index, (withdrawal_db, transfer)) in sender_withdrawals
@@ -118,7 +118,7 @@ pub async fn generate_sequential_transfer_smt(
             withdrawal_values.push(withdrawal_value);
             transfer_update_leaves.push((key, value));
         } else {
-            transfer_pervious_leaves.push((key, value));
+            transfer_previous_leaves.push((key, value));
         }
 
         let (claimed_key, key) = generate_claim_key(cota_id, token_index, out_point);
@@ -130,7 +130,7 @@ pub async fn generate_sequential_transfer_smt(
             claimed_values.push(claimed_value);
             transfer_update_leaves.push((key, value));
         } else {
-            transfer_pervious_leaves.push((key, value));
+            transfer_previous_leaves.push((key, value));
         }
     }
 
@@ -144,7 +144,7 @@ pub async fn generate_sequential_transfer_smt(
     with_lock(transfer_lock_hash, || {
         generate_history_smt(&mut transfer_smt, transfer_lock_hash, transfer_smt_root)?;
         transfer_smt
-            .update_all(transfer_pervious_leaves.clone())
+            .update_all(transfer_previous_leaves.clone())
             .map_err(|e| Error::SMTInvalid(e.to_string()))?;
         current_subkey_entries =
             generate_subkey_smt(transfer_lock_hash, &subkey_opt, &transfer_smt)?;
