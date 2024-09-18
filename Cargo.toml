@@ -18,7 +18,7 @@ molecule = "0.7.2"
 lazy_static = "1.4"
 rocksdb = { package = "ckb-rocksdb", version = "=0.21.1", features = ["snappy"] }
 sparse-merkle-tree = "0.6.1"
-ckb-types = "=0.108.0"
+ckb-types = "=0.118.0"
 ckb-jsonrpc-types = "=0.108.0"
 reqwest = { version = "0.11.22", features = ["json"] }
 tokio = { version = "1.32.0", features = ["rt", "net"] }
